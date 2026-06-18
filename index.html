@@ -324,26 +324,13 @@
 
                         <!-- 5. 客戶簽章 -->
                         <section class="pt-2">
-                            <div class="flex items-center justify-between mb-2">
-                                <h3 class="text-lg font-bold text-pink-700 flex items-center gap-2"><i class="ph ph-pen-nib"></i> 5. 客戶簽章 <span class="text-red-500">*</span></h3>
-                                <div class="text-stone-500 text-sm font-medium">日期：<span id="consultDisplayDate" class="text-stone-800 border-b border-stone-300 pb-0.5 px-2"></span></div>
-                            </div>
+                            <h3 class="text-lg font-bold text-pink-700 mb-1 flex items-center gap-2"><i class="ph ph-pen-nib"></i> 5. 客戶簽章 <span class="text-red-500">*</span></h3>
+                            <div class="text-stone-500 text-sm font-medium mb-3">日期時間：<span id="consultDisplayDate" class="text-stone-800 border-b border-stone-300 pb-0.5 px-2"></span></div>
                             
-                            <p class="text-xs text-stone-400 mb-3">(請將裝置轉為橫向以獲得最佳簽名空間)</p>
-                            
-                            <!-- Signature Area Container (Relative for overlay) -->
+                            <!-- Signature Area Container -->
                             <div id="consultSignatureContainer" class="relative w-full border-2 border-dashed border-pink-200 rounded-xl overflow-hidden bg-pink-50 touch-none">
-                                <canvas id="padConsultation" class="w-full bg-white cursor-crosshair h-[200px] sm:h-[300px]"></canvas>
+                                <canvas id="padConsultation" class="w-full bg-white cursor-crosshair h-[300px]"></canvas>
                                 <div class="absolute top-2 right-2 text-xs text-pink-300 pointer-events-none font-medium tracking-widest">SIGN HERE</div>
-                                
-                                <!-- Landscape Enforcement Overlay -->
-                                <div id="landscapeOverlay" class="absolute inset-0 bg-white/95 backdrop-blur-sm hidden flex-col items-center justify-center z-20 text-center p-6 transition-all duration-300">
-                                    <div class="w-20 h-20 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mb-4 shadow-inner animate-pulse">
-                                        <i class="ph ph-device-mobile-camera text-4xl transform rotate-90"></i>
-                                    </div>
-                                    <h3 class="text-xl font-bold text-stone-800 mb-2">請旋轉您的裝置</h3>
-                                    <p class="text-stone-500 text-sm">為了確保簽名品質與完整性，<br/>請將手機轉為「橫向」後再進行簽名。</p>
-                                </div>
                             </div>
                             
                             <div class="flex justify-between w-full mt-4">
@@ -602,6 +589,20 @@
         </div>
     </div>
 
+    <!-- 6. Consult Success Modal -->
+    <div id="modalConsultSuccess" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalConsultSuccessInner">
+            <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                <i class="ph ph-cloud-check text-4xl"></i>
+            </div>
+            <h3 class="font-bold text-xl text-stone-800 mb-2">已儲存至雲端</h3>
+            <p class="text-stone-500 text-sm mb-6">顧客諮詢登記表已成功送出並建檔。</p>
+            <button id="btnConfirmConsultSuccess" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+                <i class="ph ph-check-circle text-lg"></i> 確認並返回首頁
+            </button>
+        </div>
+    </div>
+
     <!-- Firebase SDKs & Application Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -633,8 +634,9 @@
         let isProcessing = false;
         
         // RBAC State
-        let loggedInBeautician = null; // null = 未登入, 'LARMO' 或 '小Q'
+        let loggedInBeautician = null; // null = 未登入, 'LARMO', '小Q' 或 'Jerry'
         let currentActiveViewId = 'consultation'; // 初始頁面改為顧客諮詢登記表
+        let clockInterval = null;
 
         // ==========================================
         // UI Helpers
@@ -732,8 +734,10 @@
             const user = document.getElementById('loginUser').value.trim();
             const pwd = document.getElementById('loginPwd').value;
             
-            // 驗證邏輯: LARMO(8888) 或 小Q(9999)
-            if ((user === 'LARMO' && pwd === '8888') || (user === '小Q' && pwd === '9999')) {
+            // 驗證邏輯: LARMO(8888), 小Q(9999), Jerry(7310168888)
+            if ((user === 'LARMO' && pwd === '8888') || 
+                (user === '小Q' && pwd === '9999') || 
+                (user === 'Jerry' && pwd === '7310168888')) {
                 loggedInBeautician = user;
                 closeModal('modalLogin');
                 updateRBACUI();
@@ -822,6 +826,12 @@
         function switchView(view) {
             currentActiveViewId = view;
             
+            // 清除時鐘計時器
+            if (clockInterval) {
+                clearInterval(clockInterval);
+                clockInterval = null;
+            }
+
             // Hide all views first
             hideElement(DOM.viewList);
             hideElement(DOM.viewDetail);
@@ -847,11 +857,17 @@
                 hideElement(DOM.btnAddMemberView);
                 hideElement(DOM.btnOpenConsultationView);
                 setTimeout(initConsultationPad, 100);
-                checkOrientation(); // Trigger orientation check immediately
                 
-                // 動態設定今天日期
-                const today = new Date();
-                document.getElementById('consultDisplayDate').textContent = `${today.getFullYear()} / ${String(today.getMonth()+1).padStart(2,'0')} / ${String(today.getDate()).padStart(2,'0')}`;
+                // 動態設定即時日期與時間
+                const updateClock = () => {
+                    const now = new Date();
+                    const d = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
+                    const t = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+                    const el = document.getElementById('consultDisplayDate');
+                    if(el) el.textContent = `${d} ${t}`;
+                };
+                updateClock();
+                clockInterval = setInterval(updateClock, 1000); // 每秒更新
             }
         }
 
@@ -860,9 +876,12 @@
             DOM.memberList.innerHTML = '';
             
             const filtered = members.filter(m => {
-                const matchName = m.name.toLowerCase().includes(term);
-                const matchBirthday = m.birthday && m.birthday.includes(term);
-                return matchName || matchBirthday;
+                const matchName = (m.name || '').toLowerCase().includes(term);
+                const matchPhone = (m.phone || '').includes(term);
+                const rawDate = (m.birthday || '').replace(/-/g, '');
+                const matchBirthday = (m.birthday || '').includes(term) || rawDate.includes(term);
+                
+                return matchName || matchPhone || matchBirthday;
             }).sort((a, b) => b.createdAt - a.createdAt);
 
             if (filtered.length === 0) {
@@ -1414,8 +1433,8 @@
                     createdAt: new Date().toISOString()
                 });
 
-                // 成功送出顯示提示
-                showElement(document.getElementById('successConsult'));
+                // 成功送出顯示美化對話框
+                openModal('modalConsultSuccess');
                 
                 // 清空表單
                 document.getElementById('consultName').value = '';
@@ -1427,17 +1446,17 @@
                 document.querySelectorAll('input[name="consultArea"]:checked').forEach(cb => cb.checked = false);
                 document.querySelectorAll('input[name="consultPrecautions"]').forEach(cb => cb.checked = false);
                 consultPad.clear();
-                
-                // 3秒後自動切回列表
-                setTimeout(() => {
-                    switchView('list');
-                    hideElement(document.getElementById('successConsult'));
-                }, 3000);
 
             } catch (err) {
                 showError('errConsult', '表單儲存失敗: ' + err.message);
             }
             clearProcessing('btnSubmitConsultation');
+        });
+
+        // 綁定成功對話框的確認按鈕
+        document.getElementById('btnConfirmConsultSuccess').addEventListener('click', () => {
+            closeModal('modalConsultSuccess');
+            switchView('list');
         });
 
         // ==========================================
@@ -1471,6 +1490,7 @@
                     else if (openModalEl.id === 'modalAdjustForm') document.getElementById('btnSubmitAdjust').click();
                     else if (openModalEl.id === 'modalConvert') document.getElementById('btnSubmitConvert').click();
                     else if (openModalEl.id === 'modalTransaction') document.getElementById('btnSubmitTx').click();
+                    else if (openModalEl.id === 'modalConsultSuccess') document.getElementById('btnConfirmConsultSuccess').click();
                 }
             }
         });
