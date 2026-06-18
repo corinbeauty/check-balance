@@ -76,7 +76,7 @@
             <!-- ==========================================
                  VIEW 1: MEMBER LIST
                  ========================================== -->
-            <div id="viewList" class="space-y-4 animate-fade-in view-transition block">
+            <div id="viewList" class="hidden space-y-4 animate-fade-in view-transition">
                 <!-- Search Bar -->
                 <div class="relative">
                     <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xl text-stone-400"></i>
@@ -191,10 +191,10 @@
             <!-- ==========================================
                  VIEW 3: CONSULTATION FORM
                  ========================================== -->
-            <div id="viewConsultation" class="hidden space-y-6 view-transition relative">
+            <div id="viewConsultation" class="space-y-6 view-transition relative block animate-fade-in">
                 <div class="bg-white p-4 sm:p-8 rounded-2xl shadow-sm border border-stone-100">
                     <div class="border-b border-stone-100 pb-4 mb-6 text-center">
-                        <h2 class="text-2xl font-bold text-stone-800 mb-2">日式除毛顧客諮詢登記表</h2>
+                        <h2 class="text-2xl font-bold text-stone-800 mb-2">顧客諮詢登記表</h2>
                         <p class="text-sm text-stone-500">為了提供您最安全、專業的服務，請詳細填寫以下資訊</p>
                     </div>
 
@@ -370,7 +370,7 @@
                     <div class="relative">
                         <i class="ph ph-user absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></i>
                         <select id="loginUser" class="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none appearance-none bg-white">
-                            <option value="LARMO">美容師A (LARMO)</option>
+                            <option value="LARMO">LARMO</option>
                             <option value="小Q">小Q</option>
                         </select>
                         <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none"></i>
@@ -623,7 +623,7 @@
         
         // RBAC State
         let loggedInBeautician = null; // null = 未登入, 'LARMO' 或 '小Q'
-        let currentActiveViewId = 'viewList'; // 追蹤目前畫面
+        let currentActiveViewId = 'consultation'; // 初始頁面改為顧客諮詢登記表
 
         // ==========================================
         // UI Helpers
@@ -714,6 +714,7 @@
                 loggedInBeautician = user;
                 closeModal('modalLogin');
                 updateRBACUI();
+                switchView('list'); // 登入成功後跳轉至會員列表
             } else {
                 showError('errLogin', '密碼錯誤，請重新輸入');
             }
@@ -754,6 +755,7 @@
                 updateRBACUI(); // 初始化權限 UI
                 hideElement(document.getElementById('loadingScreen'));
                 showElement(document.getElementById('appContent'));
+                switchView('consultation'); // 確保一開始切換至諮詢表
             }
         });
         
@@ -1400,6 +1402,37 @@
                 showError('errConsult', '表單儲存失敗: ' + err.message);
             }
             clearProcessing('btnSubmitConsultation');
+        });
+
+        // ==========================================
+        // Keyboard Events (ESC & ENTER)
+        // ==========================================
+        document.addEventListener('keydown', (e) => {
+            // 尋找目前是否有開啟的 Modal (非 hidden 狀態)
+            const openModalEl = Array.from(document.querySelectorAll('[id^="modal"]')).find(el => !el.classList.contains('hidden'));
+            
+            if (e.key === 'Escape') {
+                if (openModalEl) {
+                    closeModal(openModalEl.id);
+                }
+            } else if (e.key === 'Enter') {
+                if (openModalEl) {
+                    // 若在多行文字輸入框 (textarea) 按下 Enter，則允許換行，不觸發送出
+                    if (document.activeElement.tagName.toLowerCase() === 'textarea') {
+                        return;
+                    }
+                    
+                    e.preventDefault(); // 防止預設的表單行為
+                    
+                    // 根據不同的 Modal 觸發對應的確認按鈕
+                    if (openModalEl.id === 'modalLogin') document.getElementById('btnSubmitLogin').click();
+                    else if (openModalEl.id === 'modalAddMember') document.getElementById('btnSubmitAddMember').click();
+                    else if (openModalEl.id === 'modalAdjustAuth') document.getElementById('btnVerifyPin').click();
+                    else if (openModalEl.id === 'modalAdjustForm') document.getElementById('btnSubmitAdjust').click();
+                    else if (openModalEl.id === 'modalConvert') document.getElementById('btnSubmitConvert').click();
+                    else if (openModalEl.id === 'modalTransaction') document.getElementById('btnSubmitTx').click();
+                }
+            }
         });
 
     </script>
