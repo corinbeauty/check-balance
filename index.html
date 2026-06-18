@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>美業儲值金會員查詢系統 V1.5</title>
+    <title>美業儲值金會員查詢系統 V1.6</title>
     
     <!-- LINE與社群分享預覽設定 (OG Tags) -->
     <meta property="og:title" content="美業會員系統">
@@ -16,6 +16,9 @@
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
 
+    <!-- SheetJS (XLSX) for Excel Import -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
         /* 防止畫布在手機上簽名時被滑動 */
         canvas { touch-action: none; }
@@ -23,7 +26,7 @@
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="bg-stone-50 font-sans text-stone-800 antialiased selection:bg-pink-200 selection:text-pink-900">
+<body class="bg-stone-50 font-sans text-stone-800 antialiased selection:bg-pink-200 selection:text-pink-900 overflow-x-hidden">
 
     <!-- Loading Screen -->
     <div id="loadingScreen" class="fixed inset-0 bg-pink-50 flex items-center justify-center z-[100] transition-opacity duration-300">
@@ -47,11 +50,16 @@
                         <i class="ph ph-sparkle text-xl"></i>
                     </div>
                     <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600 truncate max-w-[150px] sm:max-w-none">
-                        美業管理系統 <span class="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full ml-1 align-middle">V1.5</span>
+                        美業管理系統 <span class="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full ml-1 align-middle">V1.6</span>
                     </h1>
                 </div>
                 
                 <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="btnOpenImportExcel" class="hidden items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 px-3 py-2 rounded-lg text-sm font-semibold transition shadow-sm">
+                        <i class="ph ph-file-xls text-lg"></i>
+                        <span class="hidden sm:inline">Excel匯入</span>
+                    </button>
+
                     <button id="btnOpenOperatorsView" class="hidden items-center gap-1 bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200 px-3 py-2 rounded-lg text-sm font-semibold transition shadow-sm">
                         <i class="ph ph-users-three text-lg"></i>
                         <span class="hidden sm:inline">帳號管理</span>
@@ -373,7 +381,7 @@
                             <p class="text-sm text-stone-500" id="reportSubtitle">店務與業績綜合區塊</p>
                         </div>
                         
-                        <!-- 報表與店務分頁切換按鈕 (只開放給管理者與老闆，美容師看不見) -->
+                        <!-- 報表與店務分頁切換按鈕 -->
                         <div id="reportTabContainer" class="flex bg-stone-100 p-1 rounded-xl w-full sm:w-auto">
                             <button id="btnTabCommission" class="flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-lg bg-white shadow text-stone-800">
                                 <i class="ph ph-users-three"></i> 業績抽成結算
@@ -410,12 +418,11 @@
                     <!-- 分頁內容 1: 業績抽成結算 -->
                     <div id="tabCommissionContent" class="space-y-6">
                         <div id="reportResults" class="hidden space-y-6">
-                            <!-- 業績卡片將由 JS 根據期間交易數據動態渲染 -->
                             <div id="dynamicOperatorCards" class="grid grid-cols-1 gap-6"></div>
                         </div>
                     </div>
 
-                    <!-- 分頁內容 2: 店務收支損益 (房租支出、雜項，美容師不可見) -->
+                    <!-- 分頁內容 2: 店務收支損益 -->
                     <div id="tabExpensesContent" class="hidden space-y-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                             
@@ -508,20 +515,18 @@
     </div>
 
     <!-- ==========================================
-         MODALS
+         MODALS (Standard Modal overlays)
          ========================================== -->
     
     <!-- 0. Beautician Login Modal -->
-    <div id="modalLogin" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalLogin" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <div class="w-16 h-16 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="ph ph-user-circle text-4xl"></i>
             </div>
             <h3 class="font-bold text-xl text-stone-800 mb-2">員工 / 管理員登入</h3>
             <p class="text-stone-500 text-sm mb-6">請輸入帳號與密碼</p>
-            
             <div id="errLogin" class="hidden text-red-600 text-sm mb-4 bg-red-50 p-2 rounded"></div>
-            
             <div class="space-y-4 mb-6 text-left">
                 <div>
                     <label class="block text-sm font-medium text-stone-700 mb-1">輸入帳號</label>
@@ -538,7 +543,6 @@
                     </div>
                 </div>
             </div>
-            
             <div class="flex gap-3">
                 <button id="btnCancelLogin" class="flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200">取消</button>
                 <button id="btnSubmitLogin" class="flex-1 py-3 bg-stone-800 text-white font-medium rounded-xl hover:bg-stone-900 shadow-sm">登入</button>
@@ -547,7 +551,7 @@
     </div>
 
     <!-- 1. Add Member Modal -->
-    <div id="modalAddMember" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalAddMember" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                 <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-user-plus text-xl text-pink-600"></i> 新增會員資料</h3>
@@ -583,18 +587,15 @@
     </div>
 
     <!-- 2. Transaction Modal -->
-    <div id="modalTransaction" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
+    <div id="modalTransaction" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-start sm:items-center justify-center p-4 z-[70] overflow-y-auto">
         <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden my-8">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                 <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-pen-nib text-xl text-pink-600"></i> 結帳與儲值作業</h3>
                 <button class="modal-close text-stone-400 hover:text-stone-600"><i class="ph ph-x text-xl"></i></button>
             </div>
-            
             <div class="p-5 space-y-5">
                 <div id="errTx" class="hidden p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2"></div>
-                
                 <div class="space-y-4">
-                    <!-- 消費金額 -->
                     <div>
                         <label class="block text-sm font-medium text-stone-700 mb-1">本次服務消費總額 <span class="text-rose-500 text-xs font-normal ml-1">(若純儲值無消費請留空)</span></label>
                         <div class="relative">
@@ -602,7 +603,6 @@
                             <input type="number" id="txConsumeTotal" class="w-full pl-8 pr-4 py-3 border border-rose-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none text-lg font-bold text-rose-600" placeholder="0" />
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-4 pt-2 border-t border-stone-100">
                         <div class="col-span-2 sm:col-span-1">
                             <label class="block text-sm font-medium text-stone-700 mb-1">儲值本金</label>
@@ -626,7 +626,6 @@
                             <input type="number" id="txPoints" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0" />
                         </div>
                     </div>
-
                     <!-- 即時結帳預覽區 -->
                     <div class="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-2 relative overflow-hidden">
                         <div class="flex justify-between text-sm">
@@ -642,7 +641,6 @@
                             <span id="lblRemainingBalance" class="text-stone-800">$0</span>
                         </div>
                     </div>
-
                     <!-- 差額區 -->
                     <div id="shortfallSection" class="hidden bg-red-50 p-4 rounded-xl border border-red-200 space-y-3">
                         <div class="flex justify-between text-sm font-bold text-red-800 pb-2">
@@ -660,14 +658,12 @@
                         </div>
                     </div>
                 </div>
-
                 <!-- Signature Pad -->
                 <div class="pt-4 border-t border-stone-100">
                     <label class="flex items-center gap-2 cursor-pointer p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-100 mb-4">
                         <input type="checkbox" id="chkNoConsumeOnlyDeposit" class="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500">
                         <span class="text-sm font-medium">僅儲值尚未消費，免簽名直接存檔</span>
                     </label>
-
                     <div id="signaturePadContainer" class="flex flex-col items-center w-full">
                         <label class="block text-sm font-medium text-stone-700 mb-2 w-full">請顧客確認金額無誤後簽名 <span class="text-red-500">*</span></label>
                         <div class="border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50 relative w-full touch-none">
@@ -675,7 +671,6 @@
                             <div class="absolute top-2 right-2 text-xs text-gray-400 pointer-events-none">請在此簽名</div>
                         </div>
                     </div>
-                    
                     <div class="flex justify-between w-full mt-4 space-x-2">
                         <button id="btnClearSignature" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200">
                             清除重寫
@@ -693,16 +688,13 @@
     </div>
 
     <!-- 3. Admin Auth Modal -->
-    <div id="modalAdjustAuth" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalAdjustAuth" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalAdjustAuthInner">
             <i class="ph ph-shield-check text-5xl text-stone-800 mx-auto mb-4 block"></i>
             <h3 class="font-bold text-xl text-stone-800 mb-2">需要最高管理權限</h3>
             <p class="text-stone-500 text-sm mb-6">請輸入最高授權碼以調整系統餘額</p>
-            
             <div id="errAuth" class="hidden text-red-600 text-sm mb-4"></div>
-            
             <input type="password" id="adminPin" class="w-full text-center tracking-[0.2em] text-xl sm:text-2xl p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-800 outline-none mb-6 font-mono" placeholder="••••••••••" maxlength="10" />
-            
             <div class="flex gap-3">
                 <button class="modal-close flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200">取消</button>
                 <button id="btnVerifyPin" class="flex-1 py-3 bg-stone-800 text-white font-medium rounded-xl hover:bg-stone-900 shadow-sm">驗證</button>
@@ -711,7 +703,7 @@
     </div>
 
     <!-- 4. Adjust Form Modal -->
-    <div id="modalAdjustForm" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalAdjustForm" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalAdjustFormInner">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-red-50">
                 <h3 class="font-bold text-lg text-red-800 flex items-center gap-2"><i class="ph ph-wrench text-xl"></i> 系統資料強制調整</h3>
@@ -722,7 +714,6 @@
                     警告：所有的調整皆會永久記錄於系統日誌中。輸入正數增加，負數減少（如：-500）。
                 </div>
                 <div id="errAdjust" class="hidden p-2 bg-red-50 text-red-600 text-sm rounded"></div>
-                
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-stone-700 mb-1">本金異動</label>
@@ -752,14 +743,13 @@
     </div>
 
     <!-- 5. Convert Points Modal -->
-    <div id="modalConvert" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalConvert" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalConvertInner">
             <i class="ph ph-gift text-5xl text-amber-500 mx-auto mb-4 block"></i>
             <h3 class="font-bold text-xl text-stone-800 mb-2">滿額點數兌換</h3>
             <p class="text-stone-500 text-sm mb-6">
                 是否要將 <span class="font-bold text-amber-600">5 點</span> 滿額點數<br/>轉換為 <span class="font-bold text-purple-600">$399</span> 贈送金？
             </p>
-            
             <div class="bg-amber-50 rounded-xl p-4 mb-6 border border-amber-100 flex justify-between items-center">
                 <div class="text-left">
                     <div class="text-xs text-amber-600 font-medium">目前點數</div>
@@ -771,9 +761,7 @@
                     <div id="convAfter" class="text-xl font-bold text-stone-800">0</div>
                 </div>
             </div>
-
             <div id="errConvert" class="hidden text-red-600 text-sm mb-4"></div>
-            
             <div class="flex gap-3">
                 <button class="modal-close flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200">取消</button>
                 <button id="btnSubmitConvert" class="flex-1 py-3 bg-amber-500 text-white font-medium rounded-xl hover:bg-amber-600 shadow-sm flex justify-center items-center gap-2">
@@ -784,7 +772,7 @@
     </div>
 
     <!-- 6. Consult Success Modal -->
-    <div id="modalConsultSuccess" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalConsultSuccess" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalConsultSuccessInner">
             <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <i class="ph ph-cloud-check text-4xl"></i>
@@ -797,77 +785,8 @@
         </div>
     </div>
 
-    <!-- 8. Operator Management Modal (Super Admin Only) -->
-    <div id="modalOperators" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalOperatorsInner">
-            <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50">
-                <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2">
-                    <i class="ph ph-users-three text-xl text-pink-600"></i> 員工與帳號權限管理
-                </h3>
-                <button class="modal-close text-stone-400 hover:text-stone-600"><i class="ph ph-x text-xl"></i></button>
-            </div>
-            
-            <div class="p-5 space-y-6 max-h-[70vh] overflow-y-auto hide-scroll">
-                <!-- Form to Add/Edit Operator -->
-                <div class="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-4">
-                    <h4 class="font-bold text-sm text-stone-700 flex items-center gap-1" id="operatorFormTitle">
-                        <i class="ph ph-user-plus text-emerald-600"></i> 新增/修改帳號
-                    </h4>
-                    <div id="errOperator" class="hidden p-2 bg-red-50 text-red-600 text-xs rounded"></div>
-                    <input type="hidden" id="opEditId" value="" />
-                    
-                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-sm">
-                        <div>
-                            <label class="block text-xs text-stone-500 mb-1">帳號名稱 *</label>
-                            <input type="text" id="opUsername" class="w-full p-2 border border-stone-200 rounded-lg outline-none" placeholder="例如: LARMO" />
-                        </div>
-                        <div>
-                            <label class="block text-xs text-stone-500 mb-1">登入密碼 *</label>
-                            <input type="text" id="opPassword" class="w-full p-2 border border-stone-200 rounded-lg outline-none" placeholder="例如: 8888" />
-                        </div>
-                        <div>
-                            <label class="block text-xs text-stone-500 mb-1">角色權限 *</label>
-                            <select id="opRole" class="w-full p-2 border border-stone-200 rounded-lg outline-none bg-white">
-                                <option value="beautician">美容師</option>
-                                <option value="owner">老闆</option>
-                                <option value="admin">最高管理者</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs text-stone-500 mb-1">抽成比例 (%) *</label>
-                            <input type="number" id="opCommission" class="w-full p-2 border border-stone-200 rounded-lg outline-none" placeholder="0-100" min="0" max="100" />
-                        </div>
-                    </div>
-                    <div class="flex justify-end gap-2">
-                        <button id="btnResetOpForm" class="px-3 py-1.5 bg-stone-200 text-stone-600 rounded-lg text-xs font-medium hover:bg-stone-300">清空重填</button>
-                        <button id="btnSaveOperator" class="px-4 py-1.5 bg-pink-600 text-white rounded-lg text-xs font-medium hover:bg-pink-700 shadow-sm">儲存帳號設定</button>
-                    </div>
-                </div>
-
-                <!-- Operators List -->
-                <div class="border border-stone-200 rounded-xl overflow-hidden bg-white">
-                    <table class="w-full text-left border-collapse text-sm">
-                        <thead>
-                            <tr class="bg-stone-50 text-stone-500 text-xs font-semibold">
-                                <th class="p-3 border-b border-stone-100">帳號</th>
-                                <th class="p-3 border-b border-stone-100">密碼</th>
-                                <th class="p-3 border-b border-stone-100">權限級別</th>
-                                <th class="p-3 border-b border-stone-100 text-center">抽成 (%)</th>
-                                <th class="p-3 border-b border-stone-100 text-center">狀態</th>
-                                <th class="p-3 border-b border-stone-100 text-center">操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="operatorsTableBody" class="divide-y divide-stone-100">
-                            <!-- Populated dynamically via JS -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 9. Edit Transaction Modal (Jerry/Admin Only) -->
-    <div id="modalEditTx" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <!-- 7. Edit Transaction Modal (Jerry/Admin Only) -->
+    <div id="modalEditTx" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-amber-50">
                 <h3 class="font-bold text-lg text-amber-800 flex items-center gap-2">
@@ -878,7 +797,6 @@
             <div class="p-5 space-y-4">
                 <div id="errEditTx" class="hidden p-2 bg-red-50 text-red-600 text-xs rounded"></div>
                 <input type="hidden" id="editTxId" value="" />
-                
                 <div>
                     <label class="block text-xs text-stone-500 mb-1">服務消費總額</label>
                     <input type="number" id="editTxConsume" class="w-full p-3 border border-stone-200 rounded-xl outline-none" placeholder="0" />
@@ -911,6 +829,120 @@
         </div>
     </div>
 
+
+    <!-- ==========================================
+         SIDE DRAWERS (No dark overlay)
+         ========================================== -->
+
+    <!-- A. Operator Management Drawer (Super Admin Only) -->
+    <div id="modalOperators" class="fixed inset-y-0 right-0 w-full sm:w-[500px] bg-white shadow-2xl border-l border-stone-200 transform translate-x-full transition-transform duration-300 z-[60] flex flex-col hidden">
+        <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50 shrink-0">
+            <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2">
+                <i class="ph ph-users-three text-xl text-pink-600"></i> 員工與帳號權限管理
+            </h3>
+            <button class="modal-close text-stone-400 hover:text-stone-600 bg-stone-200 hover:bg-stone-300 p-1 rounded-md transition"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        
+        <div class="p-5 space-y-6 overflow-y-auto flex-grow hide-scroll bg-white">
+            <!-- Form to Add/Edit Operator -->
+            <div class="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-4">
+                <h4 class="font-bold text-sm text-stone-700 flex items-center gap-1" id="operatorFormTitle">
+                    <i class="ph ph-user-plus text-emerald-600"></i> 新增/修改帳號
+                </h4>
+                <div id="errOperator" class="hidden p-2 bg-red-50 text-red-600 text-xs rounded"></div>
+                <input type="hidden" id="opEditId" value="" />
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                    <div>
+                        <label class="block text-xs text-stone-500 mb-1">帳號名稱 *</label>
+                        <input type="text" id="opUsername" class="w-full p-2 border border-stone-200 rounded-lg outline-none" placeholder="例如: LARMO" />
+                    </div>
+                    <div>
+                        <label class="block text-xs text-stone-500 mb-1">登入密碼 *</label>
+                        <input type="text" id="opPassword" class="w-full p-2 border border-stone-200 rounded-lg outline-none" placeholder="例如: 8888" />
+                    </div>
+                    <div>
+                        <label class="block text-xs text-stone-500 mb-1">角色權限 *</label>
+                        <select id="opRole" class="w-full p-2 border border-stone-200 rounded-lg outline-none bg-white">
+                            <option value="beautician">美容師</option>
+                            <option value="owner">老闆</option>
+                            <option value="admin">最高管理者</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs text-stone-500 mb-1">抽成比例 (%) *</label>
+                        <input type="number" id="opCommission" class="w-full p-2 border border-stone-200 rounded-lg outline-none" placeholder="0-100" min="0" max="100" />
+                    </div>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button id="btnResetOpForm" class="px-3 py-1.5 bg-stone-200 text-stone-600 rounded-lg text-xs font-medium hover:bg-stone-300 transition">清空重填</button>
+                    <button id="btnSaveOperator" class="px-4 py-1.5 bg-pink-600 text-white rounded-lg text-xs font-medium hover:bg-pink-700 shadow-sm transition">儲存帳號設定</button>
+                </div>
+            </div>
+
+            <!-- Operators List -->
+            <div class="border border-stone-200 rounded-xl overflow-hidden bg-white">
+                <table class="w-full text-left border-collapse text-sm">
+                    <thead>
+                        <tr class="bg-stone-50 text-stone-500 text-xs font-semibold">
+                            <th class="p-3 border-b border-stone-100">帳號</th>
+                            <th class="p-3 border-b border-stone-100">權限級別</th>
+                            <th class="p-3 border-b border-stone-100 text-center">抽成 (%)</th>
+                            <th class="p-3 border-b border-stone-100 text-center">狀態</th>
+                            <th class="p-3 border-b border-stone-100 text-center">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="operatorsTableBody" class="divide-y divide-stone-100">
+                        <!-- Populated dynamically via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- B. Excel Import Drawer -->
+    <div id="modalImportExcel" class="fixed inset-y-0 right-0 w-full sm:w-[450px] bg-white shadow-2xl border-l border-stone-200 transform translate-x-full transition-transform duration-300 z-[60] flex flex-col hidden">
+        <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-emerald-50 shrink-0">
+            <h3 class="font-bold text-lg text-emerald-800 flex items-center gap-2">
+                <i class="ph ph-file-xls text-xl"></i> Excel 會員資料批次匯入
+            </h3>
+            <button class="modal-close text-emerald-400 hover:text-emerald-600 bg-emerald-100 hover:bg-emerald-200 p-1 rounded-md transition"><i class="ph ph-x text-xl"></i></button>
+        </div>
+        
+        <div class="p-6 flex-grow overflow-y-auto bg-white space-y-6">
+            <div class="bg-emerald-50 text-emerald-800 text-sm p-4 rounded-xl border border-emerald-200 leading-relaxed shadow-sm">
+                <p class="font-bold mb-2 flex items-center gap-1"><i class="ph ph-info"></i> 欄位對應說明 (請確保有標題行)</p>
+                <ul class="list-disc pl-5 space-y-1 text-emerald-700">
+                    <li><b>姓名</b> 或 <b>Name</b> (必填)</li>
+                    <li><b>電話</b> 或 <b>Phone</b> 或 <b>手機</b> (必填，以手機號碼作為唯一識別)</li>
+                    <li><b>生日</b> (選填，如 1990-01-01)</li>
+                    <li><b>居住地區</b> 或 <b>地區</b> (選填)</li>
+                    <li><b>本金餘額</b> 或 <b>儲值本金</b> (選填數字)</li>
+                    <li><b>贈送金餘額</b> 或 <b>贈送金</b> (選填數字)</li>
+                    <li><b>滿額點數</b> 或 <b>點數</b> (選填數字)</li>
+                </ul>
+            </div>
+
+            <div id="errImportExcel" class="hidden p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2"></div>
+            
+            <div class="space-y-3">
+                <label class="block text-sm font-medium text-stone-700">請選擇您的 Excel 檔案 (.xlsx, .csv)</label>
+                <div class="relative border-2 border-dashed border-stone-300 rounded-xl p-8 text-center hover:bg-stone-50 transition cursor-pointer group">
+                    <input type="file" id="excelFileInput" accept=".xlsx, .xls, .csv" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                    <i class="ph ph-upload-simple text-4xl text-stone-400 group-hover:text-emerald-500 transition mb-2"></i>
+                    <p class="text-sm text-stone-500 font-medium" id="excelFileName">點擊此處選擇檔案，或將檔案拖曳至此</p>
+                </div>
+            </div>
+            
+            <div class="pt-4">
+                <button id="btnSubmitImportExcel" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold shadow-sm transition flex items-center justify-center gap-2">
+                    <i class="ph ph-play-circle text-lg"></i> 開始批次匯入
+                </button>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Firebase SDKs & Application Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -933,19 +965,20 @@
         const db = getFirestore(app);
         const APP_ID = "check-balance-13da9"; 
 
+        // State Variables
         let currentUser = null;
         let members = [];
         let transactions = [];
         let consultations = [];
         let expenses = []; 
-        let operators = []; // V1.5 動態帳號
+        let operators = []; 
         let selectedMember = null;
         let isProcessing = false;
         
-        let loggedInBeautician = null; // 帳號名稱
-        let loggedInRole = null; // 'admin', 'owner', 'beautician'
+        let loggedInBeautician = null; 
+        let loggedInRole = null; 
         let currentActiveViewId = 'consultation'; 
-        let currentReportTab = 'commission'; // 'commission' or 'expenses'
+        let currentReportTab = 'commission'; 
         let clockInterval = null;
 
         const DOM = {
@@ -958,6 +991,7 @@
             btnOpenConsultationView: document.getElementById('btnOpenConsultationView'),
             btnOpenReport: document.getElementById('btnOpenReport'),
             btnOpenOperatorsView: document.getElementById('btnOpenOperatorsView'),
+            btnOpenImportExcel: document.getElementById('btnOpenImportExcel'),
             searchInput: document.getElementById('searchInput'),
             memberList: document.getElementById('memberList'),
             emptyListState: document.getElementById('emptyListState'),
@@ -966,7 +1000,7 @@
         };
 
         // ------------------------------------------
-        // Unified Element & Modal Controller (No stuck backdrops)
+        // Unified Element & Modal Controller
         // ------------------------------------------
         const showElement = (el) => { 
             if(el) { 
@@ -984,22 +1018,44 @@
             }
         };
 
-        function openModal(id) {
+        window.openModal = function(id) {
             const modal = document.getElementById(id);
             if(!modal) return;
-            // 隱藏該 Modal 裡面的所有錯誤提示訊息
+            
             modal.querySelectorAll('[id^="err"]').forEach(hideElement);
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-            modal.style.setProperty('display', 'flex', 'important');
+            
+            if (id === 'modalOperators' || id === 'modalImportExcel') {
+                // Side Drawer logic (no backdrop)
+                modal.classList.remove('hidden');
+                setTimeout(() => {
+                    modal.classList.remove('translate-x-full');
+                    modal.classList.add('translate-x-0');
+                }, 10);
+            } else {
+                // Standard Overlay Modal
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+                modal.style.setProperty('display', 'flex', 'important');
+            }
         }
 
-        function closeModal(id) {
+        window.closeModal = function(id) {
             const modal = document.getElementById(id);
             if(!modal) return;
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            modal.style.setProperty('display', 'none', 'important');
+            
+            if (id === 'modalOperators' || id === 'modalImportExcel') {
+                // Side Drawer logic
+                modal.classList.remove('translate-x-0');
+                modal.classList.add('translate-x-full');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            } else {
+                // Standard Overlay Modal
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+                modal.style.setProperty('display', 'none', 'important');
+            }
             isProcessing = false;
         }
 
@@ -1014,6 +1070,36 @@
                 }
             });
         });
+
+        const showError = (id, msg) => {
+            const el = document.getElementById(id);
+            if(el) {
+                el.innerHTML = `<i class="ph ph-warning-circle"></i> ${msg}`;
+                showElement(el);
+            }
+            isProcessing = false;
+        };
+
+        const setProcessing = (btnId, text) => {
+            isProcessing = true;
+            const btn = document.getElementById(btnId);
+            if(btn) {
+                btn.dataset.original = btn.innerHTML;
+                btn.innerHTML = `<i class="ph ph-spinner-gap animate-spin"></i> ${text}`;
+                btn.disabled = true;
+                btn.classList.add('opacity-70');
+            }
+        };
+        
+        const clearProcessing = (btnId) => {
+            isProcessing = false;
+            const btn = document.getElementById(btnId);
+            if(btn) {
+                if (btn.dataset.original) btn.innerHTML = btn.dataset.original;
+                btn.disabled = false;
+                btn.classList.remove('opacity-70');
+            }
+        };
         
         function formatNumber(num) { return (num || 0).toLocaleString(); }
         function formatDate(ts) {
@@ -1028,15 +1114,6 @@
             const day = String(d.getDate()).padStart(2, '0');
             return `${y}-${m}-${day}`;
         }
-
-        const showError = (id, msg) => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.innerHTML = `<i class="ph ph-warning-circle"></i> ${msg}`;
-                showElement(el);
-            }
-            isProcessing = false;
-        };
 
         // ==========================================
         // Role Based Access Control (RBAC) UI Update
@@ -1063,7 +1140,6 @@
                     switchView('consultation');
                 });
                 
-                // 1. 新增會員權限
                 if (loggedInRole === 'admin' || loggedInRole === 'beautician') {
                     showElement(DOM.btnAddMemberView);
                 } else {
@@ -1073,28 +1149,24 @@
                 hideElement(DOM.noticeNotLoggedIn);
                 authRequiredElements.forEach(el => showElement(el));
 
-                // 2. 帳號管理按鈕 (只有最高管理者 Jerry 可見)
                 if (loggedInRole === 'admin') {
                     showElement(DOM.btnOpenOperatorsView);
+                    showElement(DOM.btnOpenImportExcel); // Admin only can import Excel
                 } else {
                     hideElement(DOM.btnOpenOperatorsView);
+                    hideElement(DOM.btnOpenImportExcel);
                 }
 
-                // 3. 業績與店務按鈕 (所有登入帳號皆可讀取)
                 showElement(DOM.btnOpenReport);
                 
-                // 4. 店務收支分頁顯示控制 (老闆與最高管理者Jerry可見，美容師隱藏)
                 const btnTabExpenses = document.getElementById('btnTabExpenses');
                 if (loggedInRole === 'beautician') {
                     hideElement(btnTabExpenses);
-                    if (currentReportTab === 'expenses') {
-                        switchReportTab('commission');
-                    }
+                    if (currentReportTab === 'expenses') switchReportTab('commission');
                 } else {
                     showElement(btnTabExpenses);
                 }
                 
-                // 5. 系統強制調整按鈕控制 (只限最高管理者 admin 顯示)
                 const btnOpenAdjust = document.getElementById('btnOpenAdjust');
                 if (loggedInRole === 'admin') {
                     showElement(btnOpenAdjust);
@@ -1117,6 +1189,7 @@
                 hideElement(DOM.btnAddMemberView);
                 hideElement(DOM.btnOpenReport);
                 hideElement(DOM.btnOpenOperatorsView);
+                hideElement(DOM.btnOpenImportExcel);
                 showElement(DOM.noticeNotLoggedIn);
                 authRequiredElements.forEach(el => hideElement(el));
             }
@@ -1129,7 +1202,7 @@
             const user = document.getElementById('loginUser').value.trim();
             const pwd = document.getElementById('loginPwd').value;
             
-            const matchedOp = operators.find(o => o.username && o.username.toLowerCase() === user.toLowerCase());
+            const matchedOp = operators.find(o => (o.username || '').toLowerCase() === user.toLowerCase());
             
             if (matchedOp) {
                 if (matchedOp.status === 'disabled') {
@@ -1163,7 +1236,6 @@
             switchView('consultation');
         });
 
-        // 業績計算公式 (單筆儲值獎金)
         function calculateDepositBonus(count) {
             let bonus = 0;
             let c = count;
@@ -1184,12 +1256,7 @@
                 onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members'), (snapshot) => {
                     members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     mergeData();
-                }, (err) => {
-                    console.error("Members snapshot error: ", err);
-                    // 萬一權限阻擋，強制降級隱藏載入框，防止永久卡圈圈
-                    hideElement(document.getElementById('loadingScreen'));
-                    showElement(document.getElementById('appContent'));
-                });
+                }, (err) => console.error("Members snapshot error: ", err));
 
                 onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions'), (snapshot) => {
                     transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -1222,13 +1289,10 @@
                             await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators'), op);
                         });
                     }
-                    
                     renderOperatorsList();
                 }, (err) => console.error("Operators snapshot error: ", err));
             } catch(e) {
-                console.error("Error setting up Firestore listeners: ", e);
-                hideElement(document.getElementById('loadingScreen'));
-                showElement(document.getElementById('appContent'));
+                console.error("Fetch Data Initialization Error:", e);
             }
         }
 
@@ -1283,6 +1347,7 @@
                 showElement(DOM.btnBack);
                 hideElement(DOM.btnAddMemberView);
                 hideElement(DOM.btnOpenConsultationView);
+                hideElement(DOM.btnOpenReport);
                 setTimeout(initConsultationPad, 100);
                 
                 const updateClock = () => {
@@ -1328,7 +1393,7 @@
                 showElement(contentComm);
                 hideElement(contentExp);
             } else {
-                if (loggedInRole === 'beautician') return; // 美容師隔離
+                if (loggedInRole === 'beautician') return; 
                 btnExp.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-lg bg-white shadow text-stone-800";
                 btnComm.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-lg text-stone-500 hover:text-stone-700";
                 showElement(contentExp);
@@ -1413,9 +1478,9 @@
         function renderMemberDetail() {
             if (!selectedMember) return;
             
-            document.getElementById('detailAvatar').textContent = selectedMember.name ? selectedMember.name.charAt(0) : '-';
-            document.getElementById('detailName').textContent = selectedMember.name || '';
-            document.getElementById('detailPhone').textContent = selectedMember.phone || '';
+            document.getElementById('detailAvatar').textContent = selectedMember.name.charAt(0);
+            document.getElementById('detailName').textContent = selectedMember.name;
+            document.getElementById('detailPhone').textContent = selectedMember.phone;
             document.getElementById('detailBirthday').innerHTML = `<i class="ph ph-cake"></i> ${selectedMember.birthday || '未填寫'}`;
             document.getElementById('detailArea').innerHTML = `<i class="ph ph-map-pin"></i> ${selectedMember.area || '未填寫'}`;
             
@@ -1808,7 +1873,7 @@
         });
 
         // ==========================================
-        // Jerry/Admin Edit Transaction details (V1.5)
+        // Jerry/Admin Edit Transaction details
         // ==========================================
         function openEditTxModal(txId) {
             const tx = transactions.find(t => t.id === txId);
@@ -1827,10 +1892,9 @@
             document.getElementById('editTxRemark').value = tx.remark || '';
 
             const opSelect = document.getElementById('editTxOperator');
-            opSelect.innerHTML = operators.map(o => {
-                const opName = o.username || '';
-                return `<option value="${opName}" ${tx.operator === opName ? 'selected' : ''}>${opName}</option>`;
-            }).join('');
+            opSelect.innerHTML = operators.map(o => `
+                <option value="${o.username || ''}" ${tx.operator === o.username ? 'selected' : ''}>${o.username || '未知'}</option>
+            `).join('');
             if (!operators.find(o => o.username === tx.operator)) {
                 opSelect.innerHTML += `<option value="${tx.operator || '系統'}" selected>${tx.operator || '系統'}</option>`;
             }
@@ -1892,7 +1956,7 @@
         });
 
         // ==========================================
-        // dynamic Operator Statistics and Commission Calculations
+        // Commission Calculations & P&L Logic
         // ==========================================
         const setReportDates = (start, end) => {
             document.getElementById('reportStartDate').value = getLocalYMD(start);
@@ -1913,9 +1977,6 @@
             setReportDates(firstDay, lastDay);
         });
 
-        // ==========================================
-        // Main Report Generator (P&L and Performance)
-        // ==========================================
         document.getElementById('btnGenerateReport').addEventListener('click', () => {
             const startDateStr = document.getElementById('reportStartDate').value;
             const endDateStr = document.getElementById('reportEndDate').value;
@@ -1925,11 +1986,8 @@
                 return;
             }
 
-            // 採用純數值陣列拆解，完全避開行動裝置 iOS/Safari 特殊時區與 NaN 的 Date 解析問題
-            const startParts = startDateStr.split('-');
-            const endParts = endDateStr.split('-');
-            const startTs = new Date(startParts[0], startParts[1] - 1, startParts[2], 0, 0, 0).getTime();
-            const endTs = new Date(endParts[0], endParts[1] - 1, endParts[2], 23, 59, 59).getTime();
+            const startTs = new Date(startDateStr + 'T00:00:00').getTime();
+            const endTs = new Date(endDateStr + 'T23:59:59').getTime();
 
             const periodTx = transactions.filter(tx => tx.timestamp >= startTs && tx.timestamp <= endTs);
 
@@ -1968,7 +2026,7 @@
                 const stats = operatorStats[op];
                 totalServiceSales += stats.consume;
 
-                const opRecord = operators.find(o => o.username && o.username.toLowerCase() === op.toLowerCase());
+                const opRecord = operators.find(o => (o.username || '').toLowerCase() === op.toLowerCase());
                 let commPercent = 100; 
                 if (opRecord) {
                     commPercent = parseFloat(opRecord.commission) !== undefined ? parseFloat(opRecord.commission) : 100;
@@ -2087,10 +2145,8 @@
             const endDateStr = document.getElementById('reportEndDate').value;
             if (!startDateStr || !endDateStr) return;
 
-            const startParts = startDateStr.split('-');
-            const endParts = endDateStr.split('-');
-            const startTs = new Date(startParts[0], startParts[1] - 1, startParts[2], 0, 0, 0).getTime();
-            const endTs = new Date(endParts[0], endParts[1] - 1, endParts[2], 23, 59, 59).getTime();
+            const startTs = new Date(startDateStr + 'T00:00:00').getTime();
+            const endTs = new Date(endDateStr + 'T23:59:59').getTime();
 
             const periodExpenses = expenses
                 .filter(e => e.timestamp >= startTs && e.timestamp <= endTs)
@@ -2140,7 +2196,7 @@
         }
 
         // ==========================================
-        // Submit Consultation Form
+        // Submit Consultation Form (With Auto-Scroll to Errors)
         // ==========================================
         document.getElementById('btnSubmitConsultation').addEventListener('click', async () => {
             if (isProcessing) return;
@@ -2165,7 +2221,7 @@
 
             if (!name) { errorMsg = '請填寫真實姓名'; targetEl = document.getElementById('consultName'); }
             else if (!phone.startsWith('09') || phone.length !== 10) { errorMsg = '手機號碼格式錯誤'; targetEl = document.getElementById('consultPhone'); }
-            else if (!bYear || !bMonth || !bDay) { errorMsg = '請選擇生日'; targetEl = document.getElementById('consultYear').parentElement; }
+            else if (!bYear || !bMonth || !bDay) { errorMsg = '請選擇完整生日'; targetEl = document.getElementById('consultYear').parentElement; }
             else if (areas.length === 0) { errorMsg = '請勾選服務部位'; targetEl = document.getElementById('sectionAreas'); }
             else if (!allPrecautionsChecked) { errorMsg = '請勾選所有注意事項'; targetEl = document.getElementById('sectionPrecautions'); }
             else if (!isConsentChecked) { errorMsg = '請同意聲明'; targetEl = document.getElementById('sectionConsent'); }
@@ -2173,8 +2229,12 @@
 
             if (errorMsg) {
                 showError('errConsult', errorMsg);
+                
+                // 動態滑動到錯誤提示區塊，確保使用者一定看得到報錯
+                const errBox = document.getElementById('errConsult');
+                errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
                 if (targetEl) {
-                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     targetEl.classList.add('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50', 'transition', 'duration-300');
                     setTimeout(() => targetEl.classList.remove('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50'), 2500);
                 }
@@ -2218,6 +2278,8 @@
 
             } catch (err) {
                 showError('errConsult', '儲存失敗: ' + err.message);
+                const errBox = document.getElementById('errConsult');
+                errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
             clearProcessing('btnSubmitConsultation');
         });
@@ -2228,7 +2290,45 @@
         });
 
         // ==========================================
-        // Operator Manager Modal Logic (V1.5)
+        // 新增會員 (手動)
+        // ==========================================
+        document.getElementById('btnSubmitAddMember').addEventListener('click', async () => {
+            if (isProcessing) return;
+            
+            const name = document.getElementById('newMemName').value.trim();
+            const phone = document.getElementById('newMemPhone').value.trim();
+            const birthday = document.getElementById('newMemBirthday').value;
+            const area = document.getElementById('newMemArea').value.trim();
+            
+            hideElement(document.getElementById('errAddMember'));
+            
+            if (!name || !phone) {
+                return showError('errAddMember', '姓名與聯絡電話為必填欄位');
+            }
+            
+            const existingMember = members.find(m => m.phone === phone);
+            if (existingMember) {
+                return showError('errAddMember', '該手機號碼已存在系統中');
+            }
+            
+            setProcessing('btnSubmitAddMember', '建立中...');
+            try {
+                await robustAddDoc('beauty_members', {
+                    name, phone, birthday, area,
+                    balance: 0, bonusBalance: 0, points: 0,
+                    createdAt: new Date().getTime(),
+                    createdBy: loggedInBeautician || 'System'
+                });
+                
+                closeModal('modalAddMember');
+            } catch (err) {
+                showError('errAddMember', '建立失敗: ' + err.message);
+            }
+            clearProcessing('btnSubmitAddMember');
+        });
+
+        // ==========================================
+        // Operator Manager Modal Logic (Side Drawer)
         // ==========================================
         document.getElementById('btnOpenOperatorsView').addEventListener('click', () => {
             resetOperatorForm();
@@ -2281,7 +2381,7 @@
                     }
                     await updateDoc(opRef, updateData);
                 } else {
-                    const exist = operators.find(o => o.username && o.username.toLowerCase() === username.toLowerCase());
+                    const exist = operators.find(o => (o.username || '').toLowerCase() === username.toLowerCase());
                     if (exist) {
                         showError('errOperator', '此帳號名稱已存在');
                         return;
@@ -2311,27 +2411,19 @@
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-stone-50 transition border-b border-stone-100";
                 
-                const roleMap = {
-                    admin: "最高管理者",
-                    owner: "老闆",
-                    beautician: "美容師"
-                };
+                const roleMap = { admin: "最高管理者", owner: "老闆", beautician: "美容師" };
                 const opRole = op.role || 'beautician';
                 const roleName = roleMap[opRole] || opRole;
                 const statusColor = op.status === 'active' ? 'text-emerald-600 bg-emerald-50' : 'text-stone-400 bg-stone-100';
                 const statusText = op.status === 'active' ? '啟用中' : '已停用';
                 
-                const opUser = op.username || '';
-                const isJerry = opUser.toLowerCase() === 'jerry';
+                const isJerry = (op.username || '').toLowerCase() === 'jerry';
                 
                 tr.innerHTML = `
-                    <td class="p-3 font-semibold text-stone-800">${opUser}</td>
-                    <td class="p-3 font-mono text-stone-500">${op.password || ''}</td>
+                    <td class="p-3 font-semibold text-stone-800">${op.username || '未知'}</td>
                     <td class="p-3"><span class="bg-gray-100 text-stone-700 px-2 py-0.5 rounded text-xs font-semibold">${roleName}</span></td>
                     <td class="p-3 text-center font-bold text-stone-700">${op.commission !== undefined ? op.commission : 100}%</td>
-                    <td class="p-3 text-center">
-                        <span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">${statusText}</span>
-                    </td>
+                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">${statusText}</span></td>
                     <td class="p-3 text-center space-x-1 whitespace-nowrap">
                         <button class="btn-edit-op px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded text-xs font-semibold text-stone-700" data-id="${op.id}">修改</button>
                         ${isJerry ? '' : `
@@ -2344,7 +2436,7 @@
                 
                 tr.querySelector('.btn-edit-op').addEventListener('click', () => {
                     document.getElementById('opEditId').value = op.id;
-                    document.getElementById('opUsername').value = opUser;
+                    document.getElementById('opUsername').value = op.username || '';
                     
                     if (isJerry) {
                         document.getElementById('opUsername').disabled = true;
@@ -2355,9 +2447,9 @@
                     }
                     
                     document.getElementById('opPassword').value = op.password || '';
-                    document.getElementById('opRole').value = opRole;
-                    document.getElementById('opCommission').value = op.commission !== undefined ? op.commission : '';
-                    document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-pencil-simple text-amber-600"></i> 修改帳號: ${opUser}`;
+                    document.getElementById('opRole').value = op.role || 'beautician';
+                    document.getElementById('opCommission').value = op.commission !== undefined ? op.commission : 100;
+                    document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-pencil-simple text-amber-600"></i> 修改帳號: ${op.username || ''}`;
                 });
                 
                 if (!isJerry) {
@@ -2365,7 +2457,6 @@
                         const id = e.currentTarget.getAttribute('data-id');
                         const currentStatus = e.currentTarget.getAttribute('data-status');
                         const nextStatus = currentStatus === 'active' ? 'disabled' : 'active';
-                        
                         try {
                             const opRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators', id);
                             await updateDoc(opRef, { status: nextStatus });
@@ -2374,10 +2465,108 @@
                         }
                     });
                 }
-                
                 tbody.appendChild(tr);
             });
         }
+
+        // ==========================================
+        // Excel Import Logic (V1.6)
+        // ==========================================
+        document.getElementById('btnOpenImportExcel').addEventListener('click', () => {
+            document.getElementById('excelFileInput').value = '';
+            document.getElementById('excelFileName').textContent = '點擊此處選擇檔案，或將檔案拖曳至此';
+            hideElement(document.getElementById('errImportExcel'));
+            openModal('modalImportExcel');
+        });
+
+        document.getElementById('excelFileInput').addEventListener('change', (e) => {
+            const fileNameLabel = document.getElementById('excelFileName');
+            if (e.target.files.length > 0) {
+                fileNameLabel.textContent = e.target.files[0].name;
+                fileNameLabel.classList.add('text-emerald-600', 'font-bold');
+            } else {
+                fileNameLabel.textContent = '點擊此處選擇檔案，或將檔案拖曳至此';
+                fileNameLabel.classList.remove('text-emerald-600', 'font-bold');
+            }
+        });
+
+        document.getElementById('btnSubmitImportExcel').addEventListener('click', async () => {
+            const fileInput = document.getElementById('excelFileInput');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return showError('errImportExcel', '請先選擇您的 Excel 檔案 (.xlsx 或 .csv)');
+            }
+
+            const file = fileInput.files[0];
+            setProcessing('btnSubmitImportExcel', '分析與寫入雲端中...');
+            hideElement(document.getElementById('errImportExcel'));
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" }); // 將空單元格讀為空字串
+
+                    if (json.length === 0) throw new Error("您上傳的表格為空或無法解析");
+
+                    let successCount = 0;
+                    let skipCount = 0;
+
+                    for (const row of json) {
+                        const name = row['姓名'] || row['Name'] || row['name'] || '';
+                        const phoneRaw = row['電話'] || row['Phone'] || row['手機'] || row['phone'] || '';
+                        
+                        // 嘗試將 Excel 中被轉為科學記號或數字的電話號碼強制轉回文字 (例如 0912 開頭)
+                        let phoneStr = String(phoneRaw).trim();
+                        // 處理若 Excel 儲存格為純數字時首位 0 被吃掉的問題
+                        if (phoneStr && phoneStr.length === 9 && !phoneStr.startsWith('0')) {
+                            phoneStr = '0' + phoneStr;
+                        }
+
+                        if (!name || !phoneStr) {
+                            skipCount++;
+                            continue; 
+                        }
+
+                        // 判斷雲端是否已存在此電話號碼
+                        const exist = members.find(m => m.phone === phoneStr);
+                        if (!exist) {
+                            await robustAddDoc('beauty_members', {
+                                name: String(name),
+                                phone: phoneStr,
+                                birthday: row['生日'] ? String(row['生日']) : '',
+                                area: row['居住地區'] || row['地區'] || '',
+                                balance: parseFloat(row['本金餘額'] || row['儲值本金'] || 0) || 0,
+                                bonusBalance: parseFloat(row['贈送金餘額'] || row['贈送金'] || 0) || 0,
+                                points: parseInt(row['滿額點數'] || row['點數'] || 0) || 0,
+                                createdAt: new Date().getTime(),
+                                createdBy: loggedInBeautician || 'Excel Batch Import'
+                            });
+                            successCount++;
+                        } else {
+                            skipCount++; // 已存在的跳過，防止重複匯入
+                        }
+                    }
+
+                    closeModal('modalImportExcel');
+                    alert(`✅ 雲端匯入完成！\n成功建立：${successCount} 筆\n跳過重複或無效：${skipCount} 筆`);
+                    fileInput.value = '';
+
+                } catch (err) {
+                    showError('errImportExcel', '解析失敗: ' + err.message);
+                }
+                clearProcessing('btnSubmitImportExcel');
+            };
+            
+            reader.onerror = () => {
+                showError('errImportExcel', '檔案讀取發生錯誤，請檢查檔案格式');
+                clearProcessing('btnSubmitImportExcel');
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
 
         // ==========================================
         // Initialization & Auth Setup (MANDATORY RULE 3)
@@ -2431,6 +2620,7 @@
         DOM.btnBack.addEventListener('click', () => switchView('list'));
         DOM.btnOpenConsultationView.addEventListener('click', () => switchView('consultation'));
         DOM.btnOpenReport.addEventListener('click', () => switchView('report'));
+        
         DOM.btnAddMemberView.addEventListener('click', () => {
             document.getElementById('newMemName').value = '';
             document.getElementById('newMemPhone').value = '';
@@ -2439,7 +2629,6 @@
             openModal('modalAddMember');
         });
 
-        // 結帳與儲值作業按鈕，開啟並進行初始化試算 (修復舊 V1.5 updateTxUI 錯誤)
         document.getElementById('btnOpenTransaction').addEventListener('click', () => {
             document.getElementById('txConsumeTotal').value = '';
             document.getElementById('txAmount').value = '';
