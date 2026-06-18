@@ -867,31 +867,95 @@
         initAuth();
 
         // ==========================================
-        // Data Fetching
+        // Data Fetching & Robust Merging (雙路徑融合技術)
         // ==========================================
+        let publicMembers = [];
+        let privateMembers = [];
+        let publicTx = [];
+        let privateTx = [];
+
+        function mergeData() {
+            // 合併並過濾重複的會員資料
+            const allMem = [...publicMembers, ...privateMembers];
+            const uniqueMem = [];
+            const seenMem = new Set();
+            for(let m of allMem) {
+                if(!seenMem.has(m.id)) { seenMem.add(m.id); uniqueMem.push(m); }
+            }
+            members = uniqueMem;
+
+            // 合併並過濾重複的交易紀錄
+            const allTx = [...publicTx, ...privateTx];
+            const uniqueTx = [];
+            const seenTx = new Set();
+            for(let t of allTx) {
+                if(!seenTx.has(t.id)) { seenTx.add(t.id); uniqueTx.push(t); }
+            }
+            transactions = uniqueTx;
+
+            if (selectedMember) {
+                const updated = members.find(m => m.id === selectedMember.id);
+                if (updated) selectedMember = updated;
+            }
+            
+            if(currentActiveViewId === 'list') renderMembers();
+            if(currentActiveViewId === 'detail') renderMemberDetail();
+        }
+
         function fetchData() {
             if (!currentUser) return;
             
-            // 變更為共用路徑，讓所有裝置都能讀取相同的會員資料
-            const membersRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members');
-            onSnapshot(membersRef, (snapshot) => {
-                members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (selectedMember) {
-                    const updated = members.find(m => m.id === selectedMember.id);
-                    if (updated) {
-                        selectedMember = updated;
-                        renderMemberDetail();
-                    }
-                }
-                if(currentActiveViewId === 'list') renderMembers();
+            // 讀取全店共用會員庫
+            onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members'), (snapshot) => {
+                publicMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                mergeData();
+            }, (err) => console.warn("Public DB read denied."));
+
+            // 讀取個人舊版會員庫 (防止舊資料遺失)
+            onSnapshot(collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_members'), (snapshot) => {
+                privateMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                mergeData();
             });
 
-            // 變更為共用路徑，讓所有裝置都能讀取相同的交易紀錄
-            const txRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions');
-            onSnapshot(txRef, (snapshot) => {
-                transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (selectedMember && currentActiveViewId === 'detail') renderMemberDetail();
+            // 讀取全店共用交易紀錄
+            onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions'), (snapshot) => {
+                publicTx = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                mergeData();
+            }, (err) => console.warn("Public DB read denied."));
+
+            // 讀取個人舊版交易紀錄
+            onSnapshot(collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_transactions'), (snapshot) => {
+                privateTx = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                mergeData();
             });
+        }
+
+        // ==========================================
+        // Robust Firebase Writers (權限降級防護)
+        // ==========================================
+        async function robustAddDoc(collName, data) {
+            try {
+                // 優先嘗試寫入全店共用資料庫
+                return await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', collName), data);
+            } catch (err) {
+                if (err.code === 'permission-denied') {
+                    // 若權限不足，降級寫入舊版個人資料庫，確保營業不中斷
+                    return await addDoc(collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, collName), data);
+                }
+                throw err;
+            }
+        }
+
+        async function robustUpdateMember(memberId, data) {
+            try {
+                await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', memberId), data);
+            } catch (err) {
+                if (err.code === 'permission-denied' || err.code === 'not-found') {
+                    await updateDoc(doc(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_members', memberId), data);
+                } else {
+                    throw err;
+                }
+            }
         }
 
         // ==========================================
@@ -900,18 +964,15 @@
         function switchView(view) {
             currentActiveViewId = view;
             
-            // 清除時鐘計時器
             if (clockInterval) {
                 clearInterval(clockInterval);
                 clockInterval = null;
             }
 
-            // Hide all views first
             hideElement(DOM.viewList);
             hideElement(DOM.viewDetail);
             hideElement(DOM.viewConsultation);
             
-            // Context sensitive header buttons
             if (view === 'list') {
                 showElement(DOM.viewList);
                 hideElement(DOM.btnBack);
@@ -932,7 +993,6 @@
                 hideElement(DOM.btnOpenConsultationView);
                 setTimeout(initConsultationPad, 100);
                 
-                // 動態設定即時日期與時間
                 const updateClock = () => {
                     const now = new Date();
                     const d = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,'0')}/${String(now.getDate()).padStart(2,'0')}`;
@@ -941,7 +1001,7 @@
                     if(el) el.textContent = `${d} ${t}`;
                 };
                 updateClock();
-                clockInterval = setInterval(updateClock, 1000); // 每秒更新
+                clockInterval = setInterval(updateClock, 1000); 
             }
         }
 
@@ -949,7 +1009,6 @@
             const term = DOM.searchInput.value.trim().toLowerCase();
             DOM.memberList.innerHTML = '';
             
-            // 【權限過濾邏輯】如果不是最高權限 Jerry，且沒有輸入搜尋關鍵字，強制不顯示任何清單
             if (loggedInBeautician !== 'Jerry' && term === '') {
                 DOM.emptyListState.innerHTML = `
                     <div class="bg-pink-50 text-pink-700 p-6 rounded-2xl w-full max-w-sm mx-auto shadow-sm border border-pink-100">
@@ -962,16 +1021,21 @@
                 return;
             }
 
-            // 強化搜尋邏輯: 姓名、電話、生日(含去橫槓)、總餘額
+            // 強力模糊比對：支援多關鍵字，並全面比對姓名、電話、生日、總額
+            const terms = term.split(/\s+/).filter(t => t);
             const filtered = members.filter(m => {
-                const matchName = (m.name || '').toLowerCase().includes(term);
-                const matchPhone = (m.phone || '').includes(term);
-                const rawDate = (m.birthday || '').replace(/-/g, '');
-                const matchBirthday = (m.birthday || '').includes(term) || rawDate.includes(term);
-                const totalBal = (m.balance || 0) + (m.bonusBalance || 0);
-                const matchBalance = totalBal.toString() === term;
+                if (terms.length === 0) return true; // Jerry 登入且未輸入搜尋時，顯示全部
                 
-                return matchName || matchPhone || matchBirthday || matchBalance;
+                const name = (m.name || '').toLowerCase();
+                const phone = (m.phone || '');
+                const rawDate = (m.birthday || '').replace(/-/g, '');
+                const bday = (m.birthday || '');
+                const totalBal = ((m.balance || 0) + (m.bonusBalance || 0)).toString();
+
+                // 必須符合使用者輸入的每一個關鍵字
+                return terms.every(t => 
+                    name.includes(t) || phone.includes(t) || bday.includes(t) || rawDate.includes(t) || totalBal === t
+                );
             }).sort((a, b) => b.createdAt - a.createdAt);
 
             if (filtered.length === 0) {
@@ -1126,13 +1190,18 @@
             setTimeout(() => {
                 hideElement(modal);
                 isProcessing = false;
-            }, 200); // 確保過渡動畫完成後再 hidden
+            }, 200); 
         }
 
         document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const modalId = e.target.closest('[id^="modal"]').id;
                 closeModal(modalId);
+                
+                // 強制導向：若關閉的是新增會員視窗，確保背景跳轉回會員搜尋主頁面
+                if (modalId === 'modalAddMember') {
+                    switchView('list');
+                }
             });
         });
 
@@ -1285,9 +1354,8 @@
             
             setProcessing('btnSubmitAddMember', '處理中...');
             try {
-                // 變更為共用路徑寫入會員
-                const membersRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members');
-                await addDoc(membersRef, {
+                // 使用具有防護機制的寫入法
+                await robustAddDoc('beauty_members', {
                     name, phone, birthday, area,
                     balance: 0, bonusBalance: 0, points: 0,
                     createdAt: new Date().getTime(),
@@ -1300,6 +1368,7 @@
                 document.getElementById('newMemArea').value = '';
                 
                 closeModal('modalAddMember');
+                switchView('list'); // 建立成功後主動畫回查詢頁面
             } catch (err) {
                 showError('errAddMember', "新增失敗: " + err.message);
             }
@@ -1392,13 +1461,9 @@
                 operator: loggedInBeautician || '系統'
             };
 
-            // 變更為共用路徑寫入交易
-            const txRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions');
-            await addDoc(txRef, txDoc);
-
-            // 變更為共用路徑更新會員餘額
-            const memberDocRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', selectedMember.id);
-            await updateDoc(memberDocRef, { balance: newBalance, bonusBalance: newBonus, points: newPoints });
+            // 使用具有防護機制的寫入與更新法
+            await robustAddDoc('beauty_transactions', txDoc);
+            await robustUpdateMember(selectedMember.id, { balance: newBalance, bonusBalance: newBonus, points: newPoints });
         }
 
         document.getElementById('btnSubmitTx').addEventListener('click', async () => {
@@ -1573,9 +1638,7 @@
             if (errorMsg) {
                 showError('errConsult', errorMsg);
                 if (targetEl) {
-                    // 平滑捲動至未填寫的區塊
                     targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    // 暫時加上紅色外框與背景，強烈提示顧客
                     targetEl.classList.add('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50', 'transition', 'duration-300');
                     setTimeout(() => {
                         targetEl.classList.remove('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50');
@@ -1588,9 +1651,8 @@
             try {
                 const signatureBase64 = consultPad.getData();
                 
-                // 將諮詢表資料寫入共用路徑的 beauty_consultations 集合
-                const consultRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_consultations');
-                await addDoc(consultRef, {
+                // 使用具有防護機制的寫入法
+                await robustAddDoc('beauty_consultations', {
                     name: name,
                     phone: phone,
                     gender: gender,
@@ -1603,7 +1665,6 @@
                     createdAt: new Date().toISOString()
                 });
 
-                // 成功送出顯示美化對話框
                 openModal('modalConsultSuccess');
                 
                 // 清空表單
