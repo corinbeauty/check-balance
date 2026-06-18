@@ -99,7 +99,7 @@
                     <input 
                         type="text" 
                         id="searchInput"
-                        placeholder="搜尋會員 姓名、電話 或 生日(例:0101)..." 
+                        placeholder="模糊搜尋：姓名、電話、4碼/6碼/8碼生日 (例: 0101)..." 
                         class="w-full pl-10 pr-4 py-3 rounded-xl border border-stone-200 bg-white shadow-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition"
                     />
                 </div>
@@ -689,7 +689,7 @@
 
     <!-- 3. Admin Auth Modal -->
     <div id="modalAdjustAuth" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
-        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalAdjustAuthInner">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <i class="ph ph-shield-check text-5xl text-stone-800 mx-auto mb-4 block"></i>
             <h3 class="font-bold text-xl text-stone-800 mb-2">需要最高管理權限</h3>
             <p class="text-stone-500 text-sm mb-6">請輸入最高授權碼以調整系統餘額</p>
@@ -704,7 +704,7 @@
 
     <!-- 4. Adjust Form Modal -->
     <div id="modalAdjustForm" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
-        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalAdjustFormInner">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-red-50">
                 <h3 class="font-bold text-lg text-red-800 flex items-center gap-2"><i class="ph ph-wrench text-xl"></i> 系統資料強制調整</h3>
                 <button class="modal-close text-red-400 hover:text-red-600"><i class="ph ph-x text-xl"></i></button>
@@ -744,7 +744,7 @@
 
     <!-- 5. Convert Points Modal -->
     <div id="modalConvert" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
-        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalConvertInner">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <i class="ph ph-gift text-5xl text-amber-500 mx-auto mb-4 block"></i>
             <h3 class="font-bold text-xl text-stone-800 mb-2">滿額點數兌換</h3>
             <p class="text-stone-500 text-sm mb-6">
@@ -773,7 +773,7 @@
 
     <!-- 6. Consult Success Modal -->
     <div id="modalConsultSuccess" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
-        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalConsultSuccessInner">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <i class="ph ph-cloud-check text-4xl"></i>
             </div>
@@ -844,7 +844,6 @@
         </div>
         
         <div class="p-5 space-y-6 overflow-y-auto flex-grow hide-scroll bg-white">
-            <!-- Form to Add/Edit Operator -->
             <div class="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-4">
                 <h4 class="font-bold text-sm text-stone-700 flex items-center gap-1" id="operatorFormTitle">
                     <i class="ph ph-user-plus text-emerald-600"></i> 新增/修改帳號
@@ -880,7 +879,6 @@
                 </div>
             </div>
 
-            <!-- Operators List -->
             <div class="border border-stone-200 rounded-xl overflow-hidden bg-white">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead>
@@ -893,7 +891,6 @@
                         </tr>
                     </thead>
                     <tbody id="operatorsTableBody" class="divide-y divide-stone-100">
-                        <!-- Populated dynamically via JS -->
                     </tbody>
                 </table>
             </div>
@@ -941,7 +938,6 @@
             </div>
         </div>
     </div>
-
 
     <!-- Firebase SDKs & Application Logic -->
     <script type="module">
@@ -1005,9 +1001,7 @@
         const showElement = (el) => { 
             if(el) { 
                 el.classList.remove('hidden');
-                if (el.style.display === 'none') {
-                    el.style.display = '';
-                }
+                if (el.style.display === 'none') el.style.display = '';
             }
         };
         
@@ -1025,14 +1019,12 @@
             modal.querySelectorAll('[id^="err"]').forEach(hideElement);
             
             if (id === 'modalOperators' || id === 'modalImportExcel') {
-                // Side Drawer logic (no backdrop)
                 modal.classList.remove('hidden');
                 setTimeout(() => {
                     modal.classList.remove('translate-x-full');
                     modal.classList.add('translate-x-0');
                 }, 10);
             } else {
-                // Standard Overlay Modal
                 modal.classList.remove('hidden');
                 modal.classList.add('flex');
                 modal.style.setProperty('display', 'flex', 'important');
@@ -1044,14 +1036,10 @@
             if(!modal) return;
             
             if (id === 'modalOperators' || id === 'modalImportExcel') {
-                // Side Drawer logic
                 modal.classList.remove('translate-x-0');
                 modal.classList.add('translate-x-full');
-                setTimeout(() => {
-                    modal.classList.add('hidden');
-                }, 300);
+                setTimeout(() => { modal.classList.add('hidden'); }, 300);
             } else {
-                // Standard Overlay Modal
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
                 modal.style.setProperty('display', 'none', 'important');
@@ -1151,7 +1139,7 @@
 
                 if (loggedInRole === 'admin') {
                     showElement(DOM.btnOpenOperatorsView);
-                    showElement(DOM.btnOpenImportExcel); // Admin only can import Excel
+                    showElement(DOM.btnOpenImportExcel);
                 } else {
                     hideElement(DOM.btnOpenOperatorsView);
                     hideElement(DOM.btnOpenImportExcel);
@@ -1193,6 +1181,9 @@
                 showElement(DOM.noticeNotLoggedIn);
                 authRequiredElements.forEach(el => hideElement(el));
             }
+            
+            // Re-render members to toggle between private vs full view based on login
+            if (currentActiveViewId === 'list') renderMembers();
         }
 
         // ==========================================
@@ -1301,7 +1292,6 @@
                 const updated = members.find(m => m.id === selectedMember.id);
                 if (updated) selectedMember = updated;
             }
-            
             if(currentActiveViewId === 'list') renderMembers();
             if(currentActiveViewId === 'detail') renderMemberDetail();
         }
@@ -1403,37 +1393,43 @@
         }
 
         // ==========================================
-        // Member List & Details Renderer
+        // Member List & Details Renderer (Supercharged Search)
         // ==========================================
         function renderMembers() {
             const rawTerm = DOM.searchInput.value.trim().toLowerCase();
             DOM.memberList.innerHTML = '';
             
-            if (loggedInRole !== 'admin' && loggedInRole !== 'owner' && rawTerm === '') {
-                DOM.emptyListState.innerHTML = `
-                    <div class="bg-pink-50 text-pink-700 p-6 rounded-2xl w-full max-w-sm mx-auto shadow-sm border border-pink-100">
-                        <i class="ph ph-magnifying-glass text-5xl mb-3 opacity-50 block"></i>
-                        <h4 class="font-bold text-lg mb-1">請精準搜尋會員資料</h4>
-                        <p class="text-sm opacity-80">請在上方輸入顧客的姓名、電話或生日進行查閱以保護顧客隱私。</p>
-                    </div>
-                `;
-                showElement(DOM.emptyListState);
-                return;
-            }
-
+            // 取消美容師防窺視限制，讓所有帳號登入後都能直接看到所有會員名單
             const terms = rawTerm.split(/\s+/).filter(t => t);
             const filtered = members.filter(m => {
                 if (terms.length === 0) return true; 
                 
                 const name = (m.name || '').toLowerCase();
                 const phone = (m.phone || '');
-                const rawDate = (m.birthday || '').replace(/-/g, '');
-                const bday = (m.birthday || '');
+                
+                // 生日強效模糊比對 (支援4碼、6碼西元/民國、8碼)
+                const bdayStr = m.birthday || '';
+                let raw8 = '', ce6 = '', roc6 = '', md4 = '';
+                if (bdayStr) {
+                    const parts = bdayStr.split('-');
+                    if (parts.length === 3) {
+                        const y = parseInt(parts[0], 10);
+                        const mStr = parts[1];
+                        const dStr = parts[2];
+                        raw8 = `${y}${mStr}${dStr}`; // 19900101
+                        ce6 = `${y.toString().slice(-2)}${mStr}${dStr}`; // 900101
+                        roc6 = `${y - 1911}${mStr}${dStr}`; // 790101 (民國)
+                        md4 = `${mStr}${dStr}`; // 0101
+                    }
+                }
+                
                 const totalBal = ((m.balance || 0) + (m.bonusBalance || 0)).toString();
 
-                return terms.every(t => 
-                    name.includes(t) || phone.includes(t) || bday.includes(t) || rawDate.includes(t) || totalBal === t
-                );
+                // 將該會員所有可被搜尋的特徵組合成一個搜尋池
+                const searchSpace = `${name} ${phone} ${bdayStr} ${raw8} ${ce6} ${roc6} ${md4} ${totalBal}`.toLowerCase();
+
+                // 使用模糊比對 (AND 邏輯：例如輸入 "林 0101" 必須同時符合)
+                return terms.every(t => searchSpace.includes(t));
             }).sort((a, b) => b.createdAt - a.createdAt);
 
             if (filtered.length === 0) {
@@ -2229,11 +2225,8 @@
 
             if (errorMsg) {
                 showError('errConsult', errorMsg);
-                
-                // 動態滑動到錯誤提示區塊，確保使用者一定看得到報錯
                 const errBox = document.getElementById('errConsult');
                 errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                
                 if (targetEl) {
                     targetEl.classList.add('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50', 'transition', 'duration-300');
                     setTimeout(() => targetEl.classList.remove('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50'), 2500);
@@ -2507,7 +2500,7 @@
                     const workbook = XLSX.read(data, { type: 'array' });
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
-                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" }); // 將空單元格讀為空字串
+                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
 
                     if (json.length === 0) throw new Error("您上傳的表格為空或無法解析");
 
@@ -2518,9 +2511,7 @@
                         const name = row['姓名'] || row['Name'] || row['name'] || '';
                         const phoneRaw = row['電話'] || row['Phone'] || row['手機'] || row['phone'] || '';
                         
-                        // 嘗試將 Excel 中被轉為科學記號或數字的電話號碼強制轉回文字 (例如 0912 開頭)
                         let phoneStr = String(phoneRaw).trim();
-                        // 處理若 Excel 儲存格為純數字時首位 0 被吃掉的問題
                         if (phoneStr && phoneStr.length === 9 && !phoneStr.startsWith('0')) {
                             phoneStr = '0' + phoneStr;
                         }
@@ -2530,7 +2521,6 @@
                             continue; 
                         }
 
-                        // 判斷雲端是否已存在此電話號碼
                         const exist = members.find(m => m.phone === phoneStr);
                         if (!exist) {
                             await robustAddDoc('beauty_members', {
@@ -2546,7 +2536,7 @@
                             });
                             successCount++;
                         } else {
-                            skipCount++; // 已存在的跳過，防止重複匯入
+                            skipCount++; 
                         }
                     }
 
@@ -2674,6 +2664,8 @@
                 }
             }
         });
+
+        DOM.searchInput.addEventListener('input', renderMembers);
 
     </script>
 </body>
