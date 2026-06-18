@@ -344,7 +344,6 @@
                         <section id="sectionSignature" class="pt-2">
                             <h3 class="text-lg font-bold text-pink-700 mb-2 flex items-center gap-2"><i class="ph ph-pen-nib"></i> 5. 客戶簽章 <span class="text-red-500">*</span></h3>
                             
-                            <!-- Signature Area Container -->
                             <div id="consultSignatureContainer" class="relative w-full border-2 border-dashed border-pink-200 rounded-xl overflow-hidden bg-pink-50 touch-none mb-3">
                                 <canvas id="padConsultation" class="w-full bg-white cursor-crosshair h-[300px]"></canvas>
                                 <div class="absolute top-2 right-2 text-xs text-pink-300 pointer-events-none font-medium tracking-widest">SIGN HERE</div>
@@ -466,7 +465,6 @@
 
                             <!-- 本期損益(P&L)試算與歷史記帳簿 -->
                             <div class="md:col-span-2 space-y-6">
-                                <!-- P&L Dashboard -->
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
                                         <div class="text-xs text-stone-500 mb-1">總服務消費業績</div>
@@ -482,7 +480,6 @@
                                     </div>
                                 </div>
 
-                                <!-- 歷史記帳簿明細 -->
                                 <div class="bg-white rounded-xl border border-stone-200 overflow-hidden">
                                     <div class="p-4 bg-stone-50 border-b border-stone-200 font-bold text-stone-800">本期收支流水帳明細</div>
                                     <div class="overflow-x-auto hide-scroll">
@@ -504,10 +501,8 @@
                                     </div>
                                 </div>
                             </div>
-
                         </div>
                     </div>
-
                 </div>
             </div>
 
@@ -515,7 +510,7 @@
     </div>
 
     <!-- ==========================================
-         MODALS
+         MODALS (Standard Modal overlays - Instant Toggle)
          ========================================== -->
     
     <!-- 0. Beautician Login Modal -->
@@ -829,6 +824,7 @@
         </div>
     </div>
 
+    <!-- SIDE DRAWERS (No dark overlay) -->
     <!-- 8. Operator Management Drawer (Super Admin Only) -->
     <div id="modalOperators" class="fixed inset-y-0 right-0 w-full sm:w-[500px] bg-white shadow-2xl border-l border-stone-200 transform translate-x-full transition-transform duration-300 z-[60] flex flex-col hidden">
         <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50 shrink-0">
@@ -892,7 +888,7 @@
         </div>
     </div>
 
-    <!-- B. Excel Import Drawer -->
+    <!-- 9. Excel Import Drawer -->
     <div id="modalImportExcel" class="fixed inset-y-0 right-0 w-full sm:w-[450px] bg-white shadow-2xl border-l border-stone-200 transform translate-x-full transition-transform duration-300 z-[60] flex flex-col hidden">
         <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-emerald-50 shrink-0">
             <h3 class="font-bold text-lg text-emerald-800 flex items-center gap-2">
@@ -940,7 +936,6 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 用戶提供的專屬 Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyCe0KE7va2H4-A6XECdzhTUCjhTeT6FOJM",
             authDomain: "check-balance-13da9.firebaseapp.com",
@@ -990,18 +985,16 @@
             noticeNotLoggedIn: document.getElementById('noticeNotLoggedIn')
         };
 
-        // ------------------------------------------
-        // Unified Element & Modal Controller (No stuck masks)
-        // ------------------------------------------
+        // ==========================================
+        // Modal Toggles (No Transition/Stuck masks)
+        // ==========================================
         const showElement = (el) => { 
             if(el) { 
                 el.classList.remove('hidden');
-                if (el.style.display === 'none') {
-                    el.style.display = '';
-                }
+                if (el.classList.contains('items-center') || el.classList.contains('flex')) el.style.display = 'flex';
+                else el.style.display = 'block';
             }
         };
-        
         const hideElement = (el) => { 
             if(el) { 
                 el.classList.add('hidden'); 
@@ -1026,7 +1019,7 @@
                 modal.classList.add('flex');
                 modal.style.setProperty('display', 'flex', 'important');
             }
-        }
+        };
 
         window.closeModal = function(id) {
             const modal = document.getElementById(id);
@@ -1042,7 +1035,7 @@
                 modal.style.setProperty('display', 'none', 'important');
             }
             isProcessing = false;
-        }
+        };
 
         document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
@@ -2371,6 +2364,252 @@
         });
 
         // ==========================================
+        // Operator Manager Modal Logic
+        // ==========================================
+        document.getElementById('btnOpenOperatorsView').addEventListener('click', () => {
+            resetOperatorForm();
+            openModal('modalOperators');
+        });
+
+        function resetOperatorForm() {
+            document.getElementById('opEditId').value = '';
+            document.getElementById('opUsername').value = '';
+            document.getElementById('opUsername').disabled = false;
+            document.getElementById('opPassword').value = '';
+            document.getElementById('opRole').value = 'beautician';
+            document.getElementById('opRole').disabled = false;
+            document.getElementById('opCommission').value = '';
+            document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-user-plus text-emerald-600"></i> 新增/修改帳號`;
+            hideElement(document.getElementById('errOperator'));
+        }
+
+        document.getElementById('btnResetOpForm').addEventListener('click', (e) => {
+            e.preventDefault();
+            resetOperatorForm();
+        });
+
+        document.getElementById('btnSaveOperator').addEventListener('click', async () => {
+            const editId = document.getElementById('opEditId').value;
+            const username = document.getElementById('opUsername').value.trim();
+            const password = document.getElementById('opPassword').value.trim();
+            const role = document.getElementById('opRole').value;
+            const commission = parseFloat(document.getElementById('opCommission').value);
+            
+            hideElement(document.getElementById('errOperator'));
+            
+            if (!username || !password || isNaN(commission)) {
+                showError('errOperator', '所有欄位皆為必填，且抽成比例須為有效數字');
+                return;
+            }
+            if (commission < 0 || commission > 100) {
+                showError('errOperator', '抽成比例須介於 0 至 100 之間');
+                return;
+            }
+            
+            try {
+                if (editId) {
+                    const opRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators', editId);
+                    const updateData = { password: password, commission: commission };
+                    
+                    if (username.toLowerCase() !== 'jerry') {
+                        updateData.username = username;
+                        updateData.role = role;
+                    }
+                    await updateDoc(opRef, updateData);
+                } else {
+                    const exist = operators.find(o => o.username.toLowerCase() === username.toLowerCase());
+                    if (exist) {
+                        showError('errOperator', '此帳號名稱已存在');
+                        return;
+                    }
+                    
+                    const opRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators');
+                    await addDoc(opRef, {
+                        username: username,
+                        password: password,
+                        role: role,
+                        commission: commission,
+                        status: 'active'
+                    });
+                }
+                resetOperatorForm();
+            } catch (err) {
+                showError('errOperator', '儲存失敗: ' + err.message);
+            }
+        });
+
+        function renderOperatorsList() {
+            const tbody = document.getElementById('operatorsTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            operators.forEach(op => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-stone-50 transition border-b border-stone-100";
+                
+                const roleMap = {
+                    admin: "最高管理者",
+                    owner: "老闆",
+                    beautician: "美容師"
+                };
+                const roleName = roleMap[op.role] || op.role;
+                const statusColor = op.status === 'active' ? 'text-emerald-600 bg-emerald-50' : 'text-stone-400 bg-stone-100';
+                const statusText = op.status === 'active' ? '啟用中' : '已停用';
+                
+                const isJerry = op.username.toLowerCase() === 'jerry';
+                
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-stone-800">${op.username}</td>
+                    <td class="p-3 font-mono text-stone-500">${op.password}</td>
+                    <td class="p-3"><span class="bg-gray-100 text-stone-700 px-2 py-0.5 rounded text-xs font-semibold">${roleName}</span></td>
+                    <td class="p-3 text-center font-bold text-stone-700">${op.commission}%</td>
+                    <td class="p-3 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">${statusText}</span>
+                    </td>
+                    <td class="p-3 text-center space-x-1 whitespace-nowrap">
+                        <button class="btn-edit-op px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded text-xs font-semibold text-stone-700" data-id="${op.id}">修改</button>
+                        ${isJerry ? '' : `
+                            <button class="btn-toggle-op px-2 py-1 ${op.status === 'active' ? 'bg-red-50 hover:bg-red-100 text-red-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600'} rounded text-xs font-semibold" data-id="${op.id}" data-status="${op.status}">
+                                ${op.status === 'active' ? '停用' : '啟用'}
+                            </button>
+                        `}
+                    </td>
+                `;
+                
+                tr.querySelector('.btn-edit-op').addEventListener('click', () => {
+                    document.getElementById('opEditId').value = op.id;
+                    document.getElementById('opUsername').value = op.username;
+                    
+                    if (isJerry) {
+                        document.getElementById('opUsername').disabled = true;
+                        document.getElementById('opRole').disabled = true;
+                    } else {
+                        document.getElementById('opUsername').disabled = false;
+                        document.getElementById('opRole').disabled = false;
+                    }
+                    
+                    document.getElementById('opPassword').value = op.password;
+                    document.getElementById('opRole').value = op.role;
+                    document.getElementById('opCommission').value = op.commission;
+                    document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-pencil-simple text-amber-600"></i> 修改帳號: ${op.username}`;
+                });
+                
+                if (!isJerry) {
+                    tr.querySelector('.btn-toggle-op').addEventListener('click', async (e) => {
+                        const id = e.currentTarget.getAttribute('data-id');
+                        const currentStatus = e.currentTarget.getAttribute('data-status');
+                        const nextStatus = currentStatus === 'active' ? 'disabled' : 'active';
+                        
+                        try {
+                            const opRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators', id);
+                            await updateDoc(opRef, { status: nextStatus });
+                        } catch (err) {
+                            alert("更新失敗: " + err.message);
+                        }
+                    });
+                }
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ==========================================
+        // Excel Import
+        // ==========================================
+        document.getElementById('btnOpenImportExcel').addEventListener('click', () => {
+            document.getElementById('excelFileInput').value = '';
+            document.getElementById('excelFileName').textContent = '點擊此處選擇檔案，或將檔案拖曳至此';
+            hideElement(document.getElementById('errImportExcel'));
+            openModal('modalImportExcel');
+        });
+
+        document.getElementById('excelFileInput').addEventListener('change', (e) => {
+            const fileNameLabel = document.getElementById('excelFileName');
+            if (e.target.files.length > 0) {
+                fileNameLabel.textContent = e.target.files[0].name;
+                fileNameLabel.classList.add('text-emerald-600', 'font-bold');
+            } else {
+                fileNameLabel.textContent = '點擊此處選擇檔案，或將檔案拖曳至此';
+                fileNameLabel.classList.remove('text-emerald-600', 'font-bold');
+            }
+        });
+
+        document.getElementById('btnSubmitImportExcel').addEventListener('click', async () => {
+            const fileInput = document.getElementById('excelFileInput');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return showError('errImportExcel', '請先選擇您的 Excel 檔案 (.xlsx 或 .csv)');
+            }
+
+            const file = fileInput.files[0];
+            setProcessing('btnSubmitImportExcel', '分析與寫入雲端中...');
+            hideElement(document.getElementById('errImportExcel'));
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                    if (json.length === 0) throw new Error("您上傳的表格為空或無法解析");
+
+                    let successCount = 0;
+                    let skipCount = 0;
+
+                    for (const row of json) {
+                        const name = row['姓名'] || row['Name'] || row['name'] || '';
+                        const phoneRaw = row['電話'] || row['Phone'] || row['手機'] || row['phone'] || '';
+                        
+                        let phoneStr = String(phoneRaw).trim();
+                        if (phoneStr && phoneStr.length === 9 && !phoneStr.startsWith('0')) {
+                            phoneStr = '0' + phoneStr;
+                        }
+
+                        if (!name || !phoneStr) {
+                            skipCount++;
+                            continue; 
+                        }
+
+                        const exist = members.find(m => m.phone === phoneStr);
+                        if (!exist) {
+                            await robustAddDoc('beauty_members', {
+                                name: String(name),
+                                phone: phoneStr,
+                                birthday: row['生日'] ? String(row['生日']) : '',
+                                area: row['居住地區'] || row['地區'] || '',
+                                balance: parseFloat(row['本金餘額'] || row['儲值本金'] || 0) || 0,
+                                bonusBalance: parseFloat(row['贈送金餘額'] || row['贈送金'] || 0) || 0,
+                                points: parseInt(row['滿額點數'] || row['點數'] || 0) || 0,
+                                createdAt: new Date().getTime(),
+                                createdBy: loggedInBeautician || 'Excel Batch Import'
+                            });
+                            successCount++;
+                        } else {
+                            skipCount++; 
+                        }
+                    }
+
+                    closeModal('modalImportExcel');
+                    alert(`✅ 雲端匯入完成！\n成功建立：${successCount} 筆\n跳過重複或無效：${skipCount} 筆`);
+                    fileInput.value = '';
+
+                } catch (err) {
+                    showError('errImportExcel', '解析失敗: ' + err.message);
+                }
+                clearProcessing('btnSubmitImportExcel');
+            };
+            
+            reader.onerror = () => {
+                showError('errImportExcel', '檔案讀取發生錯誤，請檢查檔案格式');
+                clearProcessing('btnSubmitImportExcel');
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        // ==========================================
         // Initialization & Auth Setup
         // ==========================================
         const initAuth = async () => {
@@ -2415,6 +2654,73 @@
         });
 
         initAuth();
+
+        // ==========================================
+        // General UI Click Bindings & Keydowns
+        // ==========================================
+        DOM.btnBack.addEventListener('click', () => switchView('list'));
+        DOM.btnOpenConsultationView.addEventListener('click', () => switchView('consultation'));
+        DOM.btnOpenReport.addEventListener('click', () => switchView('report'));
+        DOM.btnAddMemberView.addEventListener('click', () => {
+            document.getElementById('newMemName').value = '';
+            document.getElementById('newMemPhone').value = '';
+            document.getElementById('newMemBirthday').value = '';
+            document.getElementById('newMemArea').value = '';
+            openModal('modalAddMember');
+        });
+
+        document.getElementById('btnOpenTransaction').addEventListener('click', () => {
+            document.getElementById('txConsumeTotal').value = '';
+            document.getElementById('txAmount').value = '';
+            document.getElementById('txBonus').value = '';
+            document.getElementById('txPoints').value = '';
+            document.getElementById('txShortfallPaid').value = '';
+            document.getElementById('chkNoConsumeOnlyDeposit').checked = false;
+            calcUnifiedPreview();
+            updateSignatureVisibility();
+            openModal('modalTransaction');
+            setTimeout(initSignaturePad, 100);
+        });
+
+        document.getElementById('btnOpenAdjust').addEventListener('click', () => {
+            document.getElementById('adminPin').value = '';
+            openModal('modalAdjustAuth');
+        });
+
+        document.getElementById('btnConvertPoints').addEventListener('click', () => openModal('modalConvert'));
+        document.getElementById('btnTabCommission').addEventListener('click', () => switchReportTab('commission'));
+        document.getElementById('btnTabExpenses').addEventListener('click', () => switchReportTab('expenses'));
+
+        // ESC & ENTER 全域快捷鍵
+        document.addEventListener('keydown', (e) => {
+            const openModalEl = Array.from(document.querySelectorAll('[id^="modal"]')).find(el => !el.classList.contains('hidden'));
+            
+            if (e.key === 'Escape') {
+                if (openModalEl) {
+                    if (openModalEl.id === 'modalLogin') {
+                        document.getElementById('btnCancelLogin').click();
+                    } else {
+                        closeModal(openModalEl.id);
+                    }
+                }
+            } else if (e.key === 'Enter') {
+                if (openModalEl) {
+                    // 若在 textarea 按下 Enter 則允許換行，不送出
+                    if (document.activeElement.tagName.toLowerCase() === 'textarea') return;
+                    e.preventDefault(); 
+                    
+                    if (openModalEl.id === 'modalLogin') document.getElementById('btnSubmitLogin').click();
+                    else if (openModalEl.id === 'modalAddMember') document.getElementById('btnSubmitAddMember').click();
+                    else if (openModalEl.id === 'modalAdjustAuth') document.getElementById('btnVerifyPin').click();
+                    else if (openModalEl.id === 'modalAdjustForm') document.getElementById('btnSubmitAdjust').click();
+                    else if (openModalEl.id === 'modalConvert') document.getElementById('btnSubmitConvert').click();
+                    else if (openModalEl.id === 'modalTransaction') document.getElementById('btnSubmitTx').click();
+                    else if (openModalEl.id === 'modalConsultSuccess') document.getElementById('btnConfirmConsultSuccess').click();
+                    else if (openModalEl.id === 'modalEditTx') document.getElementById('btnSaveEditTx').click();
+                    else if (openModalEl.id === 'modalOperators') document.getElementById('btnSaveOperator').click();
+                }
+            }
+        });
 
     </script>
 </body>
