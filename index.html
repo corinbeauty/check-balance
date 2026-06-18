@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>美業儲值金會員查詢系統 V1.3</title>
+    <title>美業儲值金會員查詢系統 V1.4</title>
     
     <!-- LINE與社群分享預覽設定 (OG Tags) -->
     <meta property="og:title" content="美業會員系統">
@@ -50,7 +50,7 @@
                         <i class="ph ph-sparkle text-xl"></i>
                     </div>
                     <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600 truncate max-w-[150px] sm:max-w-none">
-                        美業管理系統 <span class="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full ml-1 align-middle">V1.3</span>
+                        美業管理系統 <span class="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full ml-1 align-middle">V1.4</span>
                     </h1>
                 </div>
                 
@@ -67,7 +67,7 @@
                     
                     <button id="btnAddMemberView" class="hidden items-center gap-1 bg-pink-600 hover:bg-pink-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm">
                         <i class="ph ph-user-plus text-lg"></i>
-                        <span class="hidden sm:inline">新增會員</span>
+                        <span class="hidden sm:inline">補登會員</span>
                     </button>
                 </div>
             </div>
@@ -85,14 +85,14 @@
                     <input 
                         type="text" 
                         id="searchInput"
-                        placeholder="搜尋 姓名、電話 或 生日(例:0101)..." 
+                        placeholder="搜尋會員 姓名、電話 或 生日(例:0101)..." 
                         class="w-full pl-10 pr-4 py-3 rounded-xl border border-stone-200 bg-white shadow-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition"
                     />
                 </div>
                 
                 <!-- Notice if not logged in -->
                 <div id="noticeNotLoggedIn" class="bg-amber-50 text-amber-700 border border-amber-200 p-3 rounded-xl text-sm flex items-center gap-2">
-                    <i class="ph ph-info text-lg"></i> 目前為「檢視模式」。若需新增會員或調整儲值金，請先於右上角登入美容師帳號。
+                    <i class="ph ph-info text-lg"></i> 目前為「檢視模式」。若需新增會員或調整儲值金，請先於右上角登入。
                 </div>
 
                 <!-- List Container -->
@@ -122,8 +122,8 @@
                                 <span id="detailPhone">電話</span>
                                 <span class="text-stone-300">|</span>
                                 <span id="detailBirthday" class="flex items-center gap-1"><i class="ph ph-cake"></i> 生日</span>
-                                <span class="text-stone-300">|</span>
-                                <span id="detailArea" class="flex items-center gap-1"><i class="ph ph-map-pin"></i> 居住地</span>
+                                <span class="text-stone-300" id="detailAreaDivider">|</span>
+                                <span id="detailArea" class="flex items-center gap-1"><i class="ph ph-gender-intersex"></i> 性別</span>
                             </div>
                         </div>
                     </div>
@@ -161,11 +161,22 @@
                     </div>
                 </div>
 
+                <!-- Consultation Records -->
+                <div class="bg-white rounded-2xl shadow-sm border border-purple-100 overflow-hidden">
+                    <div class="p-4 sm:p-5 border-b border-purple-100 flex items-center gap-2 bg-purple-50/50">
+                        <i class="ph ph-clipboard-text text-xl text-purple-600"></i>
+                        <h3 class="font-bold text-stone-800 text-lg">顧客諮詢表紀錄 (自動建檔)</h3>
+                    </div>
+                    <div id="memberConsultationList" class="p-4 sm:p-5 text-sm divide-y divide-stone-100">
+                        <!-- Consultations rendered via JS -->
+                    </div>
+                </div>
+
                 <!-- Transaction History -->
                 <div class="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
                     <div class="p-4 sm:p-5 border-b border-stone-100 flex items-center gap-2 bg-stone-50/50">
                         <i class="ph ph-clock-counter-clockwise text-xl text-stone-500"></i>
-                        <h3 class="font-bold text-stone-800 text-lg">歷史交易紀錄</h3>
+                        <h3 class="font-bold text-stone-800 text-lg">歷史結帳紀錄</h3>
                     </div>
                     
                     <div class="overflow-x-auto hide-scroll">
@@ -177,7 +188,7 @@
                                     <th class="p-4 font-medium border-b border-stone-100 text-right">本金異動</th>
                                     <th class="p-4 font-medium border-b border-stone-100 text-right">贈送金異動</th>
                                     <th class="p-4 font-medium border-b border-stone-100 text-right">最終本金</th>
-                                    <th class="p-4 font-medium border-b border-stone-100">確認簽名 / 備註</th>
+                                    <th class="p-4 font-medium border-b border-stone-100">顧客簽章 / 備註</th>
                                 </tr>
                             </thead>
                             <tbody id="transactionList" class="divide-y divide-stone-100 text-sm">
@@ -314,7 +325,7 @@
                                         <input type="checkbox" id="consultConsent" class="w-5 h-5 text-pink-600 rounded focus:ring-pink-500 border-gray-300">
                                     </div>
                                     <div class="text-sm text-stone-600 group-hover:text-stone-800 transition leading-relaxed text-justify">
-                                        本人同意日式除毛/美容效果因人而異。本人瞭解過程中可能有輕微泛紅或不適感。本人保證目前無任何皮膚疾病或過敏問題。本人近期無進行醫美或酸類換膚療程。我在此證明此份表格由本人親自填寫，且同意遵守保養程序。
+                                        本人同意日式除毛效果因人而異。本人瞭解過程中可能有輕微泛紅或不適感。本人保證目前無任何皮膚疾病或過敏問題。本人近期無進行醫美或酸類換膚療程。我在此證明此份表格由本人親自填寫，且同意遵守保養程序。
                                     </div>
                                 </label>
                             </div>
@@ -362,7 +373,7 @@
                 <i class="ph ph-user-circle text-4xl"></i>
             </div>
             <h3 class="font-bold text-xl text-stone-800 mb-2">員工 / 管理員登入</h3>
-            <p class="text-stone-500 text-sm mb-6">請登入以管理會員與儲值金</p>
+            <p class="text-stone-500 text-sm mb-6">請登入以管理會員與結帳</p>
             
             <div id="errLogin" class="hidden text-red-600 text-sm mb-4 bg-red-50 p-2 rounded"></div>
             
@@ -390,14 +401,17 @@
         </div>
     </div>
 
-    <!-- 1. Add Member Modal -->
+    <!-- 1. Add Member Modal (補登用) -->
     <div id="modalAddMember" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalAddMemberInner">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50">
-                <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-user-plus text-xl text-pink-600"></i> 新增會員資料</h3>
+                <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-user-plus text-xl text-pink-600"></i> 直接補登會員資料</h3>
                 <button class="modal-close text-stone-400 hover:text-stone-600"><i class="ph ph-x text-xl"></i></button>
             </div>
             <div class="p-5 space-y-4">
+                <div class="bg-pink-50 text-pink-700 text-xs p-3 rounded-lg border border-pink-200">
+                    提示：若顧客有填寫「諮詢登記表」，系統已自動建檔，不需在此補登。
+                </div>
                 <div id="errAddMember" class="hidden p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2"></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="col-span-2 sm:col-span-1">
@@ -413,8 +427,12 @@
                         <input type="date" id="newMemBirthday" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none" />
                     </div>
                     <div class="col-span-2 sm:col-span-1">
-                        <label class="block text-sm font-medium text-stone-700 mb-1">居住地區</label>
-                        <input type="text" id="newMemArea" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none" placeholder="例: 台北市大安區" />
+                        <label class="block text-sm font-medium text-stone-700 mb-1">性別</label>
+                        <select id="newMemGender" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none bg-white">
+                            <option value="女">女</option>
+                            <option value="男">男</option>
+                            <option value="其他">其他</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -430,7 +448,7 @@
     <div id="modalTransaction" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden my-8 transform scale-95 transition-transform duration-200" id="modalTransactionInner">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50">
-                <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-pen-nib text-xl text-pink-600"></i> 紀錄儲值或結帳</h3>
+                <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-pen-nib text-xl text-pink-600"></i> 結帳與儲值作業</h3>
                 <button class="modal-close text-stone-400 hover:text-stone-600"><i class="ph ph-x text-xl"></i></button>
             </div>
             
@@ -662,7 +680,7 @@
                 <i class="ph ph-cloud-check text-4xl"></i>
             </div>
             <h3 class="font-bold text-xl text-stone-800 mb-2">已儲存至雲端</h3>
-            <p class="text-stone-500 text-sm mb-6">顧客諮詢登記表已成功送出並建檔。</p>
+            <p class="text-stone-500 text-sm mb-6">顧客諮詢登記表已成功送出並為顧客建檔。</p>
             <button id="btnConfirmConsultSuccess" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl shadow-sm transition flex items-center justify-center gap-2">
                 <i class="ph ph-check-circle text-lg"></i> 確認
             </button>
@@ -695,13 +713,14 @@
         let currentUser = null;
         let members = [];
         let transactions = [];
+        let consultations = [];
         let selectedMember = null;
         let txType = 'deposit'; 
         let isProcessing = false;
         
         // RBAC State
         let loggedInBeautician = null; // null = 未登入, 'LARMO', '小Q' 或 'Jerry'
-        let currentActiveViewId = 'consultation'; // 初始頁面改為顧客諮詢登記表
+        let currentActiveViewId = 'consultation'; 
         let clockInterval = null;
 
         // ==========================================
@@ -857,22 +876,23 @@
             if (user) {
                 currentUser = user;
                 fetchData();
-                updateRBACUI(); // 初始化權限 UI
+                updateRBACUI(); 
                 hideElement(document.getElementById('loadingScreen'));
                 showElement(document.getElementById('appContent'));
-                switchView('consultation'); // 確保一開始切換至諮詢表
+                switchView('consultation'); 
             }
         });
         
         initAuth();
 
         // ==========================================
-        // Data Fetching & Robust Merging (雙路徑融合技術)
+        // Data Fetching & Robust Merging
         // ==========================================
         let publicMembers = [];
         let privateMembers = [];
         let publicTx = [];
         let privateTx = [];
+        let publicConsults = [];
 
         function mergeData() {
             // 合併並過濾重複的會員資料
@@ -893,6 +913,9 @@
             }
             transactions = uniqueTx;
 
+            // 諮詢表資料
+            consultations = publicConsults;
+
             if (selectedMember) {
                 const updated = members.find(m => m.id === selectedMember.id);
                 if (updated) selectedMember = updated;
@@ -909,7 +932,7 @@
             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members'), (snapshot) => {
                 publicMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 mergeData();
-            }, (err) => console.warn("Public DB read denied."));
+            }, (err) => console.warn("Public members read denied."));
 
             // 讀取個人舊版會員庫 (防止舊資料遺失)
             onSnapshot(collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_members'), (snapshot) => {
@@ -921,25 +944,29 @@
             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions'), (snapshot) => {
                 publicTx = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 mergeData();
-            }, (err) => console.warn("Public DB read denied."));
+            }, (err) => console.warn("Public tx read denied."));
 
             // 讀取個人舊版交易紀錄
             onSnapshot(collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_transactions'), (snapshot) => {
                 privateTx = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 mergeData();
             });
+
+            // 讀取諮詢表紀錄
+            onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_consultations'), (snapshot) => {
+                publicConsults = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                mergeData();
+            }, (err) => console.warn("Public consults read denied."));
         }
 
         // ==========================================
-        // Robust Firebase Writers (權限降級防護)
+        // Robust Firebase Writers
         // ==========================================
         async function robustAddDoc(collName, data) {
             try {
-                // 優先嘗試寫入全店共用資料庫
                 return await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', collName), data);
             } catch (err) {
                 if (err.code === 'permission-denied') {
-                    // 若權限不足，降級寫入舊版個人資料庫，確保營業不中斷
                     return await addDoc(collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, collName), data);
                 }
                 throw err;
@@ -1021,10 +1048,9 @@
                 return;
             }
 
-            // 強力模糊比對：支援多關鍵字，並全面比對姓名、電話、生日、總額
             const terms = term.split(/\s+/).filter(t => t);
             const filtered = members.filter(m => {
-                if (terms.length === 0) return true; // Jerry 登入且未輸入搜尋時，顯示全部
+                if (terms.length === 0) return true; 
                 
                 const name = (m.name || '').toLowerCase();
                 const phone = (m.phone || '');
@@ -1032,7 +1058,6 @@
                 const bday = (m.birthday || '');
                 const totalBal = ((m.balance || 0) + (m.bonusBalance || 0)).toString();
 
-                // 必須符合使用者輸入的每一個關鍵字
                 return terms.every(t => 
                     name.includes(t) || phone.includes(t) || bday.includes(t) || rawDate.includes(t) || totalBal === t
                 );
@@ -1059,7 +1084,7 @@
                                 <div class="text-xs sm:text-sm text-stone-500 flex flex-wrap gap-x-2 gap-y-1 mt-0.5">
                                     <span class="font-mono">${m.phone}</span>
                                     ${m.birthday ? `<span class="bg-stone-100 px-1.5 py-0.5 rounded text-stone-600 flex items-center gap-1"><i class="ph ph-cake"></i>${m.birthday}</span>` : ''}
-                                    ${m.area ? `<span class="bg-stone-100 px-1.5 py-0.5 rounded text-stone-600 flex items-center gap-1 truncate max-w-[100px] sm:max-w-[150px]"><i class="ph ph-map-pin"></i>${m.area}</span>` : ''}
+                                    ${m.gender ? `<span class="bg-stone-100 px-1.5 py-0.5 rounded text-stone-600 flex items-center gap-1"><i class="ph ph-gender-intersex"></i>${m.gender}</span>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -1084,7 +1109,19 @@
             document.getElementById('detailName').textContent = selectedMember.name;
             document.getElementById('detailPhone').textContent = selectedMember.phone;
             document.getElementById('detailBirthday').innerHTML = `<i class="ph ph-cake"></i> ${selectedMember.birthday || '未填寫'}`;
-            document.getElementById('detailArea').innerHTML = `<i class="ph ph-map-pin"></i> ${selectedMember.area || '未填寫'}`;
+            
+            if (selectedMember.gender) {
+                document.getElementById('detailAreaDivider').classList.remove('hidden');
+                document.getElementById('detailArea').classList.remove('hidden');
+                document.getElementById('detailArea').innerHTML = `<i class="ph ph-gender-intersex"></i> ${selectedMember.gender}`;
+            } else if (selectedMember.area) {
+                document.getElementById('detailAreaDivider').classList.remove('hidden');
+                document.getElementById('detailArea').classList.remove('hidden');
+                document.getElementById('detailArea').innerHTML = `<i class="ph ph-map-pin"></i> ${selectedMember.area}`;
+            } else {
+                document.getElementById('detailAreaDivider').classList.add('hidden');
+                document.getElementById('detailArea').classList.add('hidden');
+            }
             
             document.getElementById('valBalance').textContent = `$${formatNumber(selectedMember.balance)}`;
             document.getElementById('valBonus').textContent = `$${formatNumber(selectedMember.bonusBalance)}`;
@@ -1099,6 +1136,29 @@
                 btnConvert.classList.add('hidden');
             }
 
+            // 渲染諮詢表紀錄
+            const consultListEl = document.getElementById('memberConsultationList');
+            const memberConsults = consultations.filter(c => c.phone === selectedMember.phone).sort((a,b) => b.timestamp - a.timestamp);
+            
+            if(memberConsults.length === 0) {
+                 consultListEl.innerHTML = '<div class="text-stone-400 text-center py-4">尚無顧客諮詢表紀錄</div>';
+            } else {
+                 consultListEl.innerHTML = memberConsults.map(c => `
+                     <div class="py-4 first:pt-0 last:pb-0">
+                         <div class="text-xs font-bold text-purple-600 mb-2">${formatDate(c.timestamp)} 填寫存檔</div>
+                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-stone-600">
+                             <div><span class="text-stone-400 text-xs block mb-0.5">除毛部位需求</span><span class="font-medium text-stone-800">${(c.areas || []).join(', ') || '無'}</span></div>
+                             <div><span class="text-stone-400 text-xs block mb-0.5">性別</span><span class="font-medium text-stone-800">${c.gender || '無'}</span></div>
+                         </div>
+                         <div class="mt-4">
+                             <span class="text-stone-400 text-xs block mb-1">顧客親筆同意聲明簽署：</span>
+                             <img src="${c.signature}" class="h-16 border border-stone-200 rounded-lg bg-white shadow-sm" />
+                         </div>
+                     </div>
+                 `).join('');
+            }
+
+            // 渲染歷史交易紀錄
             const txListEl = document.getElementById('transactionList');
             txListEl.innerHTML = '';
             
@@ -1198,7 +1258,6 @@
                 const modalId = e.target.closest('[id^="modal"]').id;
                 closeModal(modalId);
                 
-                // 強制導向：若關閉的是新增會員視窗，確保背景跳轉回會員搜尋主頁面
                 if (modalId === 'modalAddMember') {
                     switchView('list');
                 }
@@ -1235,11 +1294,9 @@
             const ctx = canvas.getContext('2d');
             let isDrawing = false;
             
-            // 設定正確的解析度與大小
             const resizeCanvas = () => {
                 const rect = canvas.parentElement.getBoundingClientRect();
                 canvas.width = rect.width;
-                // Height based on CSS or default
                 canvas.height = canvas.offsetHeight || 200; 
                 ctx.lineWidth = 3;
                 ctx.lineCap = 'round';
@@ -1250,7 +1307,6 @@
                 const rect = canvas.getBoundingClientRect();
                 const clientX = e.touches ? e.touches[0].clientX : e.clientX;
                 const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                // 必須根據 canvas 的內部解析度進行縮放轉換
                 const scaleX = canvas.width / rect.width;
                 const scaleY = canvas.height / rect.height;
                 return { 
@@ -1296,7 +1352,6 @@
             };
         }
 
-        // Initialize Instances
         const txPad = setupSignaturePad('signaturePad');
         const consultPad = setupSignaturePad('padConsultation');
 
@@ -1314,21 +1369,18 @@
             const monthSelect = document.getElementById('consultMonth');
             const daySelect = document.getElementById('consultDay');
             
-            // 生成年份 (2026 倒序至 1950)
             for (let y = 2026; y >= 1950; y--) {
                 const opt = document.createElement('option');
                 opt.value = y;
                 opt.textContent = `${y}年`;
                 yearSelect.appendChild(opt);
             }
-            // 生成月份 (1-12)
             for (let m = 1; m <= 12; m++) {
                 const opt = document.createElement('option');
                 opt.value = m;
                 opt.textContent = `${m}月`;
                 monthSelect.appendChild(opt);
             }
-            // 生成日期 (1-31)
             for (let d = 1; d <= 31; d++) {
                 const opt = document.createElement('option');
                 opt.value = d;
@@ -1342,21 +1394,20 @@
         // Action Handlers
         // ==========================================
         
-        // 1. Add Member
+        // 1. Add Member (Manual)
         document.getElementById('btnSubmitAddMember').addEventListener('click', async () => {
             if (isProcessing || !loggedInBeautician) return;
             const name = document.getElementById('newMemName').value.trim();
             const phone = document.getElementById('newMemPhone').value.trim();
             const birthday = document.getElementById('newMemBirthday').value;
-            const area = document.getElementById('newMemArea').value.trim();
+            const gender = document.getElementById('newMemGender').value;
 
             if (!name || !phone) return showError('errAddMember', '姓名與電話為必填欄位');
             
             setProcessing('btnSubmitAddMember', '處理中...');
             try {
-                // 使用具有防護機制的寫入法
                 await robustAddDoc('beauty_members', {
-                    name, phone, birthday, area,
+                    name, phone, birthday, gender,
                     balance: 0, bonusBalance: 0, points: 0,
                     createdAt: new Date().getTime(),
                     createdBy: loggedInBeautician
@@ -1365,10 +1416,9 @@
                 document.getElementById('newMemName').value = '';
                 document.getElementById('newMemPhone').value = '';
                 document.getElementById('newMemBirthday').value = '';
-                document.getElementById('newMemArea').value = '';
                 
                 closeModal('modalAddMember');
-                switchView('list'); // 建立成功後主動畫回查詢頁面
+                switchView('list'); 
             } catch (err) {
                 showError('errAddMember', "新增失敗: " + err.message);
             }
@@ -1379,7 +1429,6 @@
         document.getElementById('tabDeposit').addEventListener('click', () => { txType = 'deposit'; updateTxUI(); });
         document.getElementById('tabConsume').addEventListener('click', () => { txType = 'consume'; updateTxUI(); });
 
-        // 即時計算儲值總額預覽
         function calcDepositPreview() {
             const amt = parseFloat(document.getElementById('txAmount').value) || 0;
             const bns = parseFloat(document.getElementById('txBonus').value) || 0;
@@ -1388,7 +1437,6 @@
         document.getElementById('txAmount').addEventListener('input', calcDepositPreview);
         document.getElementById('txBonus').addEventListener('input', calcDepositPreview);
 
-        // 即時計算消費餘額與差額
         function calcConsumePreview() {
             if (!selectedMember) return;
             const consumeTotal = parseFloat(document.getElementById('txConsumeTotal').value) || 0;
@@ -1417,7 +1465,7 @@
                 document.getElementById('lblShortfallAmount').textContent = `$${formatNumber(shortfall)}`;
             } else {
                 hideElement(shortfallSec);
-                document.getElementById('txShortfallPaid').value = ''; // 隱藏時重置差額
+                document.getElementById('txShortfallPaid').value = ''; 
             }
         }
         document.getElementById('txConsumeTotal').addEventListener('input', calcConsumePreview);
@@ -1461,7 +1509,6 @@
                 operator: loggedInBeautician || '系統'
             };
 
-            // 使用具有防護機制的寫入與更新法
             await robustAddDoc('beauty_transactions', txDoc);
             await robustUpdateMember(selectedMember.id, { balance: newBalance, bonusBalance: newBonus, points: newPoints });
         }
@@ -1494,7 +1541,6 @@
                 let deduct = Math.min(consumeTotal, currentTotal);
                 let shortfall = consumeTotal > currentTotal ? consumeTotal - currentTotal : 0;
 
-                // 檢查差額是否正確補足 (防呆正負0)
                 if (shortfall > 0) {
                     const paid = parseFloat(document.getElementById('txShortfallPaid').value);
                     if (isNaN(paid) || paid !== shortfall) {
@@ -1502,7 +1548,6 @@
                     }
                 }
 
-                // 系統優先扣除贈送金，再扣本金
                 let deductBonus = Math.min(selectedMember.bonusBalance || 0, deduct);
                 let deductBalance = deduct - deductBonus;
 
@@ -1536,7 +1581,7 @@
             clearProcessing('btnSubmitTx');
         });
 
-        // 3. Admin Check (Update to 7310168888)
+        // 3. Admin Check 
         document.getElementById('btnVerifyPin').addEventListener('click', () => {
             const pin = document.getElementById('adminPin').value;
             if (pin === '7310168888') {
@@ -1595,14 +1640,13 @@
             clearProcessing('btnSubmitConvert');
         });
 
-        // 6. Submit Consultation Form to Firebase
+        // 6. Submit Consultation Form to Firebase & Auto-Create Member
         document.getElementById('btnSubmitConsultation').addEventListener('click', async () => {
             if (isProcessing) return;
             
             hideElement(document.getElementById('errConsult'));
             hideElement(document.getElementById('successConsult'));
 
-            // 1. 基本個資擷取
             const name = document.getElementById('consultName').value.trim();
             const phone = document.getElementById('consultPhone').value.trim();
             const gender = document.querySelector('input[name="consultGender"]:checked')?.value;
@@ -1612,18 +1656,14 @@
             const bDay = document.getElementById('consultDay').value;
             const birthday = (bYear && bMonth && bDay) ? `${bYear}-${String(bMonth).padStart(2,'0')}-${String(bDay).padStart(2,'0')}` : '';
 
-            // 2. 除毛部位擷取 (陣列)
             const areaCheckboxes = document.querySelectorAll('input[name="consultArea"]:checked');
             const areas = Array.from(areaCheckboxes).map(cb => cb.value);
 
-            // 3. 驗證同意聲明
             const isConsentChecked = document.getElementById('consultConsent').checked;
 
-            // 4. 驗證服務聲明與注意事項是否全勾
             const precautionCheckboxes = document.querySelectorAll('input[name="consultPrecautions"]');
             const allPrecautionsChecked = Array.from(precautionCheckboxes).every(cb => cb.checked);
 
-            // --- 資料嚴格驗證與定位 ---
             let errorMsg = '';
             let targetEl = null;
 
@@ -1651,7 +1691,7 @@
             try {
                 const signatureBase64 = consultPad.getData();
                 
-                // 使用具有防護機制的寫入法
+                // 1. 寫入諮詢表紀錄
                 await robustAddDoc('beauty_consultations', {
                     name: name,
                     phone: phone,
@@ -1665,9 +1705,24 @@
                     createdAt: new Date().toISOString()
                 });
 
+                // 2. 自動判斷並建檔儲值金會員 (使用電話作為唯一識別)
+                const existingMember = members.find(m => m.phone === phone);
+                if (!existingMember) {
+                    await robustAddDoc('beauty_members', {
+                        name: name,
+                        phone: phone,
+                        birthday: birthday,
+                        gender: gender,
+                        balance: 0,
+                        bonusBalance: 0,
+                        points: 0,
+                        createdAt: new Date().getTime(),
+                        createdBy: 'System_Auto'
+                    });
+                }
+
                 openModal('modalConsultSuccess');
                 
-                // 清空表單
                 document.getElementById('consultName').value = '';
                 document.getElementById('consultPhone').value = '';
                 document.getElementById('consultYear').value = '';
@@ -1684,17 +1739,15 @@
             clearProcessing('btnSubmitConsultation');
         });
 
-        // 綁定成功對話框的確認按鈕 (修改跳轉行為)
         document.getElementById('btnConfirmConsultSuccess').addEventListener('click', () => {
             closeModal('modalConsultSuccess');
-            switchView('consultation'); // 改為跳轉回顧客諮詢表首頁
+            switchView('consultation'); 
         });
 
         // ==========================================
         // Keyboard Events (ESC & ENTER)
         // ==========================================
         document.addEventListener('keydown', (e) => {
-            // 尋找目前是否有開啟的 Modal (非 hidden 狀態)
             const openModalEl = Array.from(document.querySelectorAll('[id^="modal"]')).find(el => !el.classList.contains('hidden'));
             
             if (e.key === 'Escape') {
@@ -1707,14 +1760,9 @@
                 }
             } else if (e.key === 'Enter') {
                 if (openModalEl) {
-                    // 若在多行文字輸入框 (textarea) 按下 Enter，則允許換行，不觸發送出
-                    if (document.activeElement.tagName.toLowerCase() === 'textarea') {
-                        return;
-                    }
+                    if (document.activeElement.tagName.toLowerCase() === 'textarea') return;
+                    e.preventDefault(); 
                     
-                    e.preventDefault(); // 防止預設的表單行為
-                    
-                    // 根據不同的 Modal 觸發對應的確認按鈕
                     if (openModalEl.id === 'modalLogin') document.getElementById('btnSubmitLogin').click();
                     else if (openModalEl.id === 'modalAddMember') document.getElementById('btnSubmitAddMember').click();
                     else if (openModalEl.id === 'modalAdjustAuth') document.getElementById('btnVerifyPin').click();
