@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>美業儲值金會員查詢系統 V1.6</title>
+    <title>美業儲值金會員查詢系統 V1.7</title>
     
     <!-- LINE與社群分享預覽設定 (OG Tags) -->
     <meta property="og:title" content="美業會員系統">
@@ -50,7 +50,7 @@
                         <i class="ph ph-sparkle text-xl"></i>
                     </div>
                     <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600 truncate max-w-[150px] sm:max-w-none">
-                        美業管理系統 <span class="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full ml-1 align-middle">V1.6</span>
+                        美業管理系統 <span class="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full ml-1 align-middle">V1.7</span>
                     </h1>
                 </div>
                 
@@ -99,13 +99,13 @@
                     <input 
                         type="text" 
                         id="searchInput"
-                        placeholder="模糊搜尋：姓名、電話、4碼/6碼/8碼生日 (例: 0101)..." 
+                        placeholder="搜尋會員 姓名、電話 或 生日(例:0101)..." 
                         class="w-full pl-10 pr-4 py-3 rounded-xl border border-stone-200 bg-white shadow-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition"
                     />
                 </div>
                 
                 <div id="noticeNotLoggedIn" class="bg-amber-50 text-amber-700 border border-amber-200 p-3 rounded-xl text-sm flex items-center gap-2">
-                    <i class="ph ph-info text-lg"></i> 目前為「檢視模式」。若需新增會員或調整儲值金，請先於右上角登入。
+                    <i class="ph ph-info text-lg"></i> 目前為「檢視模式」。若需新增會員或結帳儲值，請先登入。
                 </div>
 
                 <div class="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden min-h-[300px]">
@@ -515,11 +515,11 @@
     </div>
 
     <!-- ==========================================
-         MODALS (Standard Modal overlays)
+         MODALS
          ========================================== -->
     
     <!-- 0. Beautician Login Modal -->
-    <div id="modalLogin" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+    <div id="modalLogin" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <div class="w-16 h-16 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="ph ph-user-circle text-4xl"></i>
@@ -551,7 +551,7 @@
     </div>
 
     <!-- 1. Add Member Modal -->
-    <div id="modalAddMember" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+    <div id="modalAddMember" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                 <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-user-plus text-xl text-pink-600"></i> 新增會員資料</h3>
@@ -587,7 +587,7 @@
     </div>
 
     <!-- 2. Transaction Modal -->
-    <div id="modalTransaction" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-start sm:items-center justify-center p-4 z-[70] overflow-y-auto">
+    <div id="modalTransaction" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden my-8">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                 <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-pen-nib text-xl text-pink-600"></i> 結帳與儲值作業</h3>
@@ -688,7 +688,7 @@
     </div>
 
     <!-- 3. Admin Auth Modal -->
-    <div id="modalAdjustAuth" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+    <div id="modalAdjustAuth" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <i class="ph ph-shield-check text-5xl text-stone-800 mx-auto mb-4 block"></i>
             <h3 class="font-bold text-xl text-stone-800 mb-2">需要最高管理權限</h3>
@@ -703,7 +703,7 @@
     </div>
 
     <!-- 4. Adjust Form Modal -->
-    <div id="modalAdjustForm" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+    <div id="modalAdjustForm" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-red-50">
                 <h3 class="font-bold text-lg text-red-800 flex items-center gap-2"><i class="ph ph-wrench text-xl"></i> 系統資料強制調整</h3>
@@ -743,7 +743,7 @@
     </div>
 
     <!-- 5. Convert Points Modal -->
-    <div id="modalConvert" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+    <div id="modalConvert" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <i class="ph ph-gift text-5xl text-amber-500 mx-auto mb-4 block"></i>
             <h3 class="font-bold text-xl text-stone-800 mb-2">滿額點數兌換</h3>
@@ -772,7 +772,7 @@
     </div>
 
     <!-- 6. Consult Success Modal -->
-    <div id="modalConsultSuccess" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+    <div id="modalConsultSuccess" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <i class="ph ph-cloud-check text-4xl"></i>
@@ -786,7 +786,7 @@
     </div>
 
     <!-- 7. Edit Transaction Modal (Jerry/Admin Only) -->
-    <div id="modalEditTx" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+    <div id="modalEditTx" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-amber-50">
                 <h3 class="font-bold text-lg text-amber-800 flex items-center gap-2">
@@ -829,12 +829,7 @@
         </div>
     </div>
 
-
-    <!-- ==========================================
-         SIDE DRAWERS (No dark overlay)
-         ========================================== -->
-
-    <!-- A. Operator Management Drawer (Super Admin Only) -->
+    <!-- 8. Operator Management Drawer (Super Admin Only) -->
     <div id="modalOperators" class="fixed inset-y-0 right-0 w-full sm:w-[500px] bg-white shadow-2xl border-l border-stone-200 transform translate-x-full transition-transform duration-300 z-[60] flex flex-col hidden">
         <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50 shrink-0">
             <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2">
@@ -996,12 +991,14 @@
         };
 
         // ------------------------------------------
-        // Unified Element & Modal Controller
+        // Unified Element & Modal Controller (No stuck masks)
         // ------------------------------------------
         const showElement = (el) => { 
             if(el) { 
                 el.classList.remove('hidden');
-                if (el.style.display === 'none') el.style.display = '';
+                if (el.style.display === 'none') {
+                    el.style.display = '';
+                }
             }
         };
         
@@ -1182,7 +1179,6 @@
                 authRequiredElements.forEach(el => hideElement(el));
             }
             
-            // Re-render members to toggle between private vs full view based on login
             if (currentActiveViewId === 'list') renderMembers();
         }
 
@@ -1393,13 +1389,25 @@
         }
 
         // ==========================================
-        // Member List & Details Renderer (Supercharged Search)
+        // Member List & Details Renderer
         // ==========================================
         function renderMembers() {
             const rawTerm = DOM.searchInput.value.trim().toLowerCase();
             DOM.memberList.innerHTML = '';
             
-            // 取消美容師防窺視限制，讓所有帳號登入後都能直接看到所有會員名單
+            // 防窺視機制：只有最高權限(admin)預設全顯示，其餘皆需輸入關鍵字才能查閱
+            if (loggedInRole !== 'admin' && rawTerm === '') {
+                DOM.emptyListState.innerHTML = `
+                    <div class="bg-pink-50 text-pink-700 p-6 rounded-2xl w-full max-w-sm mx-auto shadow-sm border border-pink-100 mt-10">
+                        <i class="ph ph-magnifying-glass text-5xl mb-3 opacity-50 block"></i>
+                        <h4 class="font-bold text-lg mb-1">請精準搜尋會員資料</h4>
+                        <p class="text-sm opacity-80">為保護客資，請在上方輸入顧客的姓名、電話或生日進行查閱。</p>
+                    </div>
+                `;
+                showElement(DOM.emptyListState);
+                return;
+            }
+
             const terms = rawTerm.split(/\s+/).filter(t => t);
             const filtered = members.filter(m => {
                 if (terms.length === 0) return true; 
@@ -1407,7 +1415,6 @@
                 const name = (m.name || '').toLowerCase();
                 const phone = (m.phone || '');
                 
-                // 生日強效模糊比對 (支援4碼、6碼西元/民國、8碼)
                 const bdayStr = m.birthday || '';
                 let raw8 = '', ce6 = '', roc6 = '', md4 = '';
                 if (bdayStr) {
@@ -1416,19 +1423,15 @@
                         const y = parseInt(parts[0], 10);
                         const mStr = parts[1];
                         const dStr = parts[2];
-                        raw8 = `${y}${mStr}${dStr}`; // 19900101
-                        ce6 = `${y.toString().slice(-2)}${mStr}${dStr}`; // 900101
-                        roc6 = `${y - 1911}${mStr}${dStr}`; // 790101 (民國)
-                        md4 = `${mStr}${dStr}`; // 0101
+                        raw8 = `${y}${mStr}${dStr}`; 
+                        ce6 = `${y.toString().slice(-2)}${mStr}${dStr}`; 
+                        roc6 = `${y - 1911}${mStr}${dStr}`; 
+                        md4 = `${mStr}${dStr}`; 
                     }
                 }
                 
                 const totalBal = ((m.balance || 0) + (m.bonusBalance || 0)).toString();
-
-                // 將該會員所有可被搜尋的特徵組合成一個搜尋池
                 const searchSpace = `${name} ${phone} ${bdayStr} ${raw8} ${ce6} ${roc6} ${md4} ${totalBal}`.toLowerCase();
-
-                // 使用模糊比對 (AND 邏輯：例如輸入 "林 0101" 必須同時符合)
                 return terms.every(t => searchSpace.includes(t));
             }).sort((a, b) => b.createdAt - a.createdAt);
 
@@ -1536,12 +1539,12 @@
                     if (tx.depositAmount === undefined && tx.amountChange > 0) depositAmt = tx.amountChange;
 
                     const isJerry = loggedInRole === 'admin';
-                    const editBtnHtml = isJerry ? `<button class="btn-edit-tx ml-2 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded font-bold" data-id="${tx.id}">修改</button>` : '';
+                    const editBtnHtml = isJerry ? `<button class="btn-edit-tx ml-2 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded font-bold shadow-sm" data-id="${tx.id}">修改</button>` : '';
 
                     tr.innerHTML = `
                         <td class="p-4 text-stone-500 whitespace-nowrap">${formatDate(tx.timestamp)}</td>
                         <td class="p-4"><span class="font-medium text-stone-700">${tx.operator || '系統'}</span></td>
-                        <td class="p-4 font-bold text-rose-600">$${formatNumber(consumeAmt)}</td>
+                        <td class="p-4 font-bold text-rose-600">${consumeAmt > 0 ? '$' + formatNumber(consumeAmt) : '-'}</td>
                         <td class="p-4 font-bold text-emerald-600">${depositAmt > 0 ? '$' + formatNumber(depositAmt) : '-'}</td>
                         <td class="p-4 font-bold text-emerald-600">${tx.bonusChange > 0 ? '$' + formatNumber(tx.bonusChange) : '-'}</td>
                         <td class="p-4 text-right font-bold text-stone-800 bg-stone-50">$${formatNumber(tx.newBalance)}</td>
@@ -1739,7 +1742,8 @@
                 previousBonus: selectedMember.bonusBalance || 0,
                 newBalance: newBalance,
                 newBonus: newBonus,
-                operator: loggedInBeautician || '系統'
+                operator: loggedInBeautician || '系統',
+                audited: false // 新增核對狀態
             };
 
             await robustAddDoc('beauty_transactions', txDoc);
@@ -1889,7 +1893,7 @@
 
             const opSelect = document.getElementById('editTxOperator');
             opSelect.innerHTML = operators.map(o => `
-                <option value="${o.username || ''}" ${tx.operator === o.username ? 'selected' : ''}>${o.username || '未知'}</option>
+                <option value="${o.username}" ${tx.operator === o.username ? 'selected' : ''}>${o.username}</option>
             `).join('');
             if (!operators.find(o => o.username === tx.operator)) {
                 opSelect.innerHTML += `<option value="${tx.operator || '系統'}" selected>${tx.operator || '系統'}</option>`;
@@ -1952,7 +1956,7 @@
         });
 
         // ==========================================
-        // Commission Calculations & P&L Logic
+        // dynamic Operator Statistics and Commission Calculations
         // ==========================================
         const setReportDates = (start, end) => {
             document.getElementById('reportStartDate').value = getLocalYMD(start);
@@ -1973,6 +1977,9 @@
             setReportDates(firstDay, lastDay);
         });
 
+        // ==========================================
+        // Main Report Generator (P&L and Performance with Details)
+        // ==========================================
         document.getElementById('btnGenerateReport').addEventListener('click', () => {
             const startDateStr = document.getElementById('reportStartDate').value;
             const endDateStr = document.getElementById('reportEndDate').value;
@@ -1994,7 +2001,7 @@
                 let op = rawOp; 
 
                 if (!operatorStats[op]) {
-                    operatorStats[op] = { consume: 0, depositCount: 0 };
+                    operatorStats[op] = { consume: 0, depositCount: 0, txs: [] };
                 }
 
                 let cAmt = parseFloat(tx.consumeAmount) || 0;
@@ -2007,6 +2014,11 @@
                 if (dAmt > 0) {
                     operatorStats[op].depositCount += 1;
                 }
+                
+                // 儲存明細用於渲染
+                tx._cAmt = cAmt;
+                tx._dAmt = dAmt;
+                operatorStats[op].txs.push(tx);
             });
 
             const container = document.getElementById('dynamicOperatorCards');
@@ -2035,35 +2047,114 @@
                 const depBonus = calculateDepositBonus(stats.depositCount);
                 const totalPayout = commission + depBonus;
 
+                // 產生明細表格 HTML
+                let txRows = '';
+                stats.txs.sort((a,b) => a.timestamp - b.timestamp).forEach(tx => {
+                    const member = members.find(m => m.id === tx.memberId);
+                    const memberName = member ? member.name : '未知';
+                    const cAmtStr = tx._cAmt > 0 ? `$${formatNumber(tx._cAmt)}` : '-';
+                    const dAmtStr = tx._dAmt > 0 ? `$${formatNumber(tx._dAmt)}` : '-';
+                    const remarkStr = tx.remark || '無';
+
+                    let checkboxHtml = '';
+                    if (loggedInRole === 'admin' || loggedInRole === 'owner') {
+                        const isAudited = tx.audited ? 'checked' : '';
+                        checkboxHtml = `
+                            <td class="p-2 text-center border-b border-stone-100">
+                                <input type="checkbox" class="audit-checkbox w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer" data-id="${tx.id}" ${isAudited}>
+                            </td>
+                        `;
+                    }
+
+                    txRows += `
+                        <tr class="hover:bg-stone-50 transition text-sm">
+                            <td class="p-2 border-b border-stone-100 text-stone-500 whitespace-nowrap">${formatDate(tx.timestamp).split(' ')[0]}</td>
+                            <td class="p-2 border-b border-stone-100 font-medium text-stone-700">${memberName}</td>
+                            <td class="p-2 border-b border-stone-100 text-rose-600 text-right font-semibold">${cAmtStr}</td>
+                            <td class="p-2 border-b border-stone-100 text-emerald-600 text-right font-semibold">${dAmtStr}</td>
+                            <td class="p-2 border-b border-stone-100 text-stone-500 text-xs truncate max-w-[200px]" title="${remarkStr}">${remarkStr}</td>
+                            ${checkboxHtml}
+                        </tr>
+                    `;
+                });
+
+                let auditHeader = (loggedInRole === 'admin' || loggedInRole === 'owner') ? `<th class="p-2 text-center border-b border-stone-200">核對</th>` : '';
+
+                let detailTableHtml = `
+                    <div class="mt-4 mb-6 border border-stone-200 rounded-xl overflow-hidden bg-white">
+                        <div class="bg-stone-100 p-3 border-b border-stone-200 text-sm font-bold text-stone-700 flex items-center justify-between">
+                            <span><i class="ph ph-list-dashes"></i> 業績明細紀錄</span>
+                            <span class="text-xs text-stone-500 font-normal">共 ${stats.txs.length} 筆</span>
+                        </div>
+                        <div class="overflow-x-auto hide-scroll max-h-[350px]">
+                            <table class="w-full text-left border-collapse min-w-[600px]">
+                                <thead>
+                                    <tr class="bg-stone-50 text-stone-500 text-xs font-semibold">
+                                        <th class="p-2 border-b border-stone-200 sticky top-0 bg-stone-50">日期</th>
+                                        <th class="p-2 border-b border-stone-200 sticky top-0 bg-stone-50">服務對象</th>
+                                        <th class="p-2 text-right border-b border-stone-200 sticky top-0 bg-stone-50">消費扣款</th>
+                                        <th class="p-2 text-right border-b border-stone-200 sticky top-0 bg-stone-50">儲值入帳</th>
+                                        <th class="p-2 border-b border-stone-200 sticky top-0 bg-stone-50">備註/支付方式</th>
+                                        ${auditHeader}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${txRows || `<tr><td colspan="6" class="p-4 text-center text-stone-400">無交易明細</td></tr>`}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
                 const card = document.createElement('div');
                 card.className = "bg-gradient-to-r from-stone-50 to-white p-5 rounded-xl border border-stone-200 shadow-sm relative overflow-hidden";
                 card.innerHTML = `
                     <div class="absolute right-0 top-0 h-full w-2 ${op === 'Jerry' ? 'bg-blue-500' : (op === 'LARMO' ? 'bg-pink-500' : 'bg-purple-500')}"></div>
-                    <h3 class="text-lg font-bold text-stone-800 mb-4">${op} <span class="text-sm font-normal text-stone-500 ml-2">(消費業績抽成 ${commPercent}%)</span></h3>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                        <div>
-                            <div class="text-xs text-stone-500 mb-1">服務消費業績</div>
-                            <div class="text-xl font-bold text-stone-800">$${formatNumber(stats.consume)}</div>
+                    <h3 class="text-lg font-bold text-stone-800 mb-2">${op} <span class="text-sm font-normal text-stone-500 ml-2">(消費業績抽成 ${commPercent}%)</span></h3>
+                    
+                    ${detailTableHtml}
+
+                    <div class="bg-stone-50 p-4 rounded-xl border border-stone-200">
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                            <div>
+                                <div class="text-xs text-stone-500 mb-1">服務消費業績總計</div>
+                                <div class="text-xl font-bold text-stone-800">$${formatNumber(stats.consume)}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-stone-500 mb-1">消費抽成金額</div>
+                                <div class="text-xl font-bold text-emerald-600">$${formatNumber(commission)}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-stone-500 mb-1">儲值成功筆數</div>
+                                <div class="text-xl font-bold text-stone-800">${stats.depositCount} 筆</div>
+                            </div>
+                            <div>
+                                <div class="text-xs text-stone-500 mb-1">儲值級距獎金</div>
+                                <div class="text-xl font-bold text-emerald-600">$${formatNumber(depBonus)}</div>
+                            </div>
                         </div>
-                        <div>
-                            <div class="text-xs text-stone-500 mb-1">消費抽成金額</div>
-                            <div class="text-xl font-bold text-emerald-600">$${formatNumber(commission)}</div>
+                        <div class="mt-4 pt-4 border-t border-stone-200 flex justify-between items-center">
+                            <span class="text-sm font-medium text-stone-600">本期應領總所得 (抽成 + 儲值獎金)</span>
+                            <span class="text-2xl font-bold text-stone-800">$${formatNumber(totalPayout)}</span>
                         </div>
-                        <div>
-                            <div class="text-xs text-stone-500 mb-1">儲值成功筆數</div>
-                            <div class="text-xl font-bold text-stone-800">${stats.depositCount} 筆</div>
-                        </div>
-                        <div>
-                            <div class="text-xs text-stone-500 mb-1">儲值級距獎金</div>
-                            <div class="text-xl font-bold text-emerald-600">$${formatNumber(depBonus)}</div>
-                        </div>
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-stone-100 flex justify-between items-center">
-                        <span class="text-sm font-medium text-stone-600">本期應領總所得 (抽成 + 儲值獎金)</span>
-                        <span class="text-2xl font-bold text-stone-800">$${formatNumber(totalPayout)}</span>
                     </div>
                 `;
                 container.appendChild(card);
+            });
+
+            // 綁定動態生成的 Audit Checkboxes (寫入 Firebase)
+            document.querySelectorAll('.audit-checkbox').forEach(cb => {
+                cb.addEventListener('change', async (e) => {
+                    const txId = e.target.getAttribute('data-id');
+                    const isChecked = e.target.checked;
+                    try {
+                        const txRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId);
+                        await updateDoc(txRef, { audited: isChecked });
+                    } catch (err) {
+                        alert('核對狀態更新失敗: ' + err.message);
+                        e.target.checked = !isChecked; // revert on fail
+                    }
+                });
             });
 
             if (loggedInRole !== 'beautician') {
@@ -2192,7 +2283,7 @@
         }
 
         // ==========================================
-        // Submit Consultation Form (With Auto-Scroll to Errors)
+        // Submit Consultation Form
         // ==========================================
         document.getElementById('btnSubmitConsultation').addEventListener('click', async () => {
             if (isProcessing) return;
@@ -2217,7 +2308,7 @@
 
             if (!name) { errorMsg = '請填寫真實姓名'; targetEl = document.getElementById('consultName'); }
             else if (!phone.startsWith('09') || phone.length !== 10) { errorMsg = '手機號碼格式錯誤'; targetEl = document.getElementById('consultPhone'); }
-            else if (!bYear || !bMonth || !bDay) { errorMsg = '請選擇完整生日'; targetEl = document.getElementById('consultYear').parentElement; }
+            else if (!bYear || !bMonth || !bDay) { errorMsg = '請選擇生日'; targetEl = document.getElementById('consultYear').parentElement; }
             else if (areas.length === 0) { errorMsg = '請勾選服務部位'; targetEl = document.getElementById('sectionAreas'); }
             else if (!allPrecautionsChecked) { errorMsg = '請勾選所有注意事項'; targetEl = document.getElementById('sectionPrecautions'); }
             else if (!isConsentChecked) { errorMsg = '請同意聲明'; targetEl = document.getElementById('sectionConsent'); }
@@ -2225,9 +2316,8 @@
 
             if (errorMsg) {
                 showError('errConsult', errorMsg);
-                const errBox = document.getElementById('errConsult');
-                errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     targetEl.classList.add('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50', 'transition', 'duration-300');
                     setTimeout(() => targetEl.classList.remove('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50'), 2500);
                 }
@@ -2271,8 +2361,6 @@
 
             } catch (err) {
                 showError('errConsult', '儲存失敗: ' + err.message);
-                const errBox = document.getElementById('errConsult');
-                errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
             clearProcessing('btnSubmitConsultation');
         });
@@ -2283,283 +2371,7 @@
         });
 
         // ==========================================
-        // 新增會員 (手動)
-        // ==========================================
-        document.getElementById('btnSubmitAddMember').addEventListener('click', async () => {
-            if (isProcessing) return;
-            
-            const name = document.getElementById('newMemName').value.trim();
-            const phone = document.getElementById('newMemPhone').value.trim();
-            const birthday = document.getElementById('newMemBirthday').value;
-            const area = document.getElementById('newMemArea').value.trim();
-            
-            hideElement(document.getElementById('errAddMember'));
-            
-            if (!name || !phone) {
-                return showError('errAddMember', '姓名與聯絡電話為必填欄位');
-            }
-            
-            const existingMember = members.find(m => m.phone === phone);
-            if (existingMember) {
-                return showError('errAddMember', '該手機號碼已存在系統中');
-            }
-            
-            setProcessing('btnSubmitAddMember', '建立中...');
-            try {
-                await robustAddDoc('beauty_members', {
-                    name, phone, birthday, area,
-                    balance: 0, bonusBalance: 0, points: 0,
-                    createdAt: new Date().getTime(),
-                    createdBy: loggedInBeautician || 'System'
-                });
-                
-                closeModal('modalAddMember');
-            } catch (err) {
-                showError('errAddMember', '建立失敗: ' + err.message);
-            }
-            clearProcessing('btnSubmitAddMember');
-        });
-
-        // ==========================================
-        // Operator Manager Modal Logic (Side Drawer)
-        // ==========================================
-        document.getElementById('btnOpenOperatorsView').addEventListener('click', () => {
-            resetOperatorForm();
-            openModal('modalOperators');
-        });
-
-        function resetOperatorForm() {
-            document.getElementById('opEditId').value = '';
-            document.getElementById('opUsername').value = '';
-            document.getElementById('opUsername').disabled = false;
-            document.getElementById('opPassword').value = '';
-            document.getElementById('opRole').value = 'beautician';
-            document.getElementById('opRole').disabled = false;
-            document.getElementById('opCommission').value = '';
-            document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-user-plus text-emerald-600"></i> 新增/修改帳號`;
-            hideElement(document.getElementById('errOperator'));
-        }
-
-        document.getElementById('btnResetOpForm').addEventListener('click', (e) => {
-            e.preventDefault();
-            resetOperatorForm();
-        });
-
-        document.getElementById('btnSaveOperator').addEventListener('click', async () => {
-            const editId = document.getElementById('opEditId').value;
-            const username = document.getElementById('opUsername').value.trim();
-            const password = document.getElementById('opPassword').value.trim();
-            const role = document.getElementById('opRole').value;
-            const commission = parseFloat(document.getElementById('opCommission').value);
-            
-            hideElement(document.getElementById('errOperator'));
-            
-            if (!username || !password || isNaN(commission)) {
-                showError('errOperator', '所有欄位皆為必填，且抽成比例須為有效數字');
-                return;
-            }
-            if (commission < 0 || commission > 100) {
-                showError('errOperator', '抽成比例須介於 0 至 100 之間');
-                return;
-            }
-            
-            try {
-                if (editId) {
-                    const opRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators', editId);
-                    const updateData = { password: password, commission: commission };
-                    
-                    if (username.toLowerCase() !== 'jerry') {
-                        updateData.username = username;
-                        updateData.role = role;
-                    }
-                    await updateDoc(opRef, updateData);
-                } else {
-                    const exist = operators.find(o => (o.username || '').toLowerCase() === username.toLowerCase());
-                    if (exist) {
-                        showError('errOperator', '此帳號名稱已存在');
-                        return;
-                    }
-                    
-                    const opRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators');
-                    await addDoc(opRef, {
-                        username: username,
-                        password: password,
-                        role: role,
-                        commission: commission,
-                        status: 'active'
-                    });
-                }
-                resetOperatorForm();
-            } catch (err) {
-                showError('errOperator', '儲存失敗: ' + err.message);
-            }
-        });
-
-        function renderOperatorsList() {
-            const tbody = document.getElementById('operatorsTableBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            
-            operators.forEach(op => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-stone-50 transition border-b border-stone-100";
-                
-                const roleMap = { admin: "最高管理者", owner: "老闆", beautician: "美容師" };
-                const opRole = op.role || 'beautician';
-                const roleName = roleMap[opRole] || opRole;
-                const statusColor = op.status === 'active' ? 'text-emerald-600 bg-emerald-50' : 'text-stone-400 bg-stone-100';
-                const statusText = op.status === 'active' ? '啟用中' : '已停用';
-                
-                const isJerry = (op.username || '').toLowerCase() === 'jerry';
-                
-                tr.innerHTML = `
-                    <td class="p-3 font-semibold text-stone-800">${op.username || '未知'}</td>
-                    <td class="p-3"><span class="bg-gray-100 text-stone-700 px-2 py-0.5 rounded text-xs font-semibold">${roleName}</span></td>
-                    <td class="p-3 text-center font-bold text-stone-700">${op.commission !== undefined ? op.commission : 100}%</td>
-                    <td class="p-3 text-center"><span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">${statusText}</span></td>
-                    <td class="p-3 text-center space-x-1 whitespace-nowrap">
-                        <button class="btn-edit-op px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded text-xs font-semibold text-stone-700" data-id="${op.id}">修改</button>
-                        ${isJerry ? '' : `
-                            <button class="btn-toggle-op px-2 py-1 ${op.status === 'active' ? 'bg-red-50 hover:bg-red-100 text-red-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600'} rounded text-xs font-semibold" data-id="${op.id}" data-status="${op.status}">
-                                ${op.status === 'active' ? '停用' : '啟用'}
-                            </button>
-                        `}
-                    </td>
-                `;
-                
-                tr.querySelector('.btn-edit-op').addEventListener('click', () => {
-                    document.getElementById('opEditId').value = op.id;
-                    document.getElementById('opUsername').value = op.username || '';
-                    
-                    if (isJerry) {
-                        document.getElementById('opUsername').disabled = true;
-                        document.getElementById('opRole').disabled = true;
-                    } else {
-                        document.getElementById('opUsername').disabled = false;
-                        document.getElementById('opRole').disabled = false;
-                    }
-                    
-                    document.getElementById('opPassword').value = op.password || '';
-                    document.getElementById('opRole').value = op.role || 'beautician';
-                    document.getElementById('opCommission').value = op.commission !== undefined ? op.commission : 100;
-                    document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-pencil-simple text-amber-600"></i> 修改帳號: ${op.username || ''}`;
-                });
-                
-                if (!isJerry) {
-                    tr.querySelector('.btn-toggle-op').addEventListener('click', async (e) => {
-                        const id = e.currentTarget.getAttribute('data-id');
-                        const currentStatus = e.currentTarget.getAttribute('data-status');
-                        const nextStatus = currentStatus === 'active' ? 'disabled' : 'active';
-                        try {
-                            const opRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators', id);
-                            await updateDoc(opRef, { status: nextStatus });
-                        } catch (err) {
-                            alert("更新失敗: " + err.message);
-                        }
-                    });
-                }
-                tbody.appendChild(tr);
-            });
-        }
-
-        // ==========================================
-        // Excel Import Logic (V1.6)
-        // ==========================================
-        document.getElementById('btnOpenImportExcel').addEventListener('click', () => {
-            document.getElementById('excelFileInput').value = '';
-            document.getElementById('excelFileName').textContent = '點擊此處選擇檔案，或將檔案拖曳至此';
-            hideElement(document.getElementById('errImportExcel'));
-            openModal('modalImportExcel');
-        });
-
-        document.getElementById('excelFileInput').addEventListener('change', (e) => {
-            const fileNameLabel = document.getElementById('excelFileName');
-            if (e.target.files.length > 0) {
-                fileNameLabel.textContent = e.target.files[0].name;
-                fileNameLabel.classList.add('text-emerald-600', 'font-bold');
-            } else {
-                fileNameLabel.textContent = '點擊此處選擇檔案，或將檔案拖曳至此';
-                fileNameLabel.classList.remove('text-emerald-600', 'font-bold');
-            }
-        });
-
-        document.getElementById('btnSubmitImportExcel').addEventListener('click', async () => {
-            const fileInput = document.getElementById('excelFileInput');
-            if (!fileInput.files || fileInput.files.length === 0) {
-                return showError('errImportExcel', '請先選擇您的 Excel 檔案 (.xlsx 或 .csv)');
-            }
-
-            const file = fileInput.files[0];
-            setProcessing('btnSubmitImportExcel', '分析與寫入雲端中...');
-            hideElement(document.getElementById('errImportExcel'));
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
-
-                    if (json.length === 0) throw new Error("您上傳的表格為空或無法解析");
-
-                    let successCount = 0;
-                    let skipCount = 0;
-
-                    for (const row of json) {
-                        const name = row['姓名'] || row['Name'] || row['name'] || '';
-                        const phoneRaw = row['電話'] || row['Phone'] || row['手機'] || row['phone'] || '';
-                        
-                        let phoneStr = String(phoneRaw).trim();
-                        if (phoneStr && phoneStr.length === 9 && !phoneStr.startsWith('0')) {
-                            phoneStr = '0' + phoneStr;
-                        }
-
-                        if (!name || !phoneStr) {
-                            skipCount++;
-                            continue; 
-                        }
-
-                        const exist = members.find(m => m.phone === phoneStr);
-                        if (!exist) {
-                            await robustAddDoc('beauty_members', {
-                                name: String(name),
-                                phone: phoneStr,
-                                birthday: row['生日'] ? String(row['生日']) : '',
-                                area: row['居住地區'] || row['地區'] || '',
-                                balance: parseFloat(row['本金餘額'] || row['儲值本金'] || 0) || 0,
-                                bonusBalance: parseFloat(row['贈送金餘額'] || row['贈送金'] || 0) || 0,
-                                points: parseInt(row['滿額點數'] || row['點數'] || 0) || 0,
-                                createdAt: new Date().getTime(),
-                                createdBy: loggedInBeautician || 'Excel Batch Import'
-                            });
-                            successCount++;
-                        } else {
-                            skipCount++; 
-                        }
-                    }
-
-                    closeModal('modalImportExcel');
-                    alert(`✅ 雲端匯入完成！\n成功建立：${successCount} 筆\n跳過重複或無效：${skipCount} 筆`);
-                    fileInput.value = '';
-
-                } catch (err) {
-                    showError('errImportExcel', '解析失敗: ' + err.message);
-                }
-                clearProcessing('btnSubmitImportExcel');
-            };
-            
-            reader.onerror = () => {
-                showError('errImportExcel', '檔案讀取發生錯誤，請檢查檔案格式');
-                clearProcessing('btnSubmitImportExcel');
-            };
-
-            reader.readAsArrayBuffer(file);
-        });
-
-        // ==========================================
-        // Initialization & Auth Setup (MANDATORY RULE 3)
+        // Initialization & Auth Setup
         // ==========================================
         const initAuth = async () => {
             try {
@@ -2603,69 +2415,6 @@
         });
 
         initAuth();
-
-        // ==========================================
-        // General UI Click Bindings & Keydowns
-        // ==========================================
-        DOM.btnBack.addEventListener('click', () => switchView('list'));
-        DOM.btnOpenConsultationView.addEventListener('click', () => switchView('consultation'));
-        DOM.btnOpenReport.addEventListener('click', () => switchView('report'));
-        
-        DOM.btnAddMemberView.addEventListener('click', () => {
-            document.getElementById('newMemName').value = '';
-            document.getElementById('newMemPhone').value = '';
-            document.getElementById('newMemBirthday').value = '';
-            document.getElementById('newMemArea').value = '';
-            openModal('modalAddMember');
-        });
-
-        document.getElementById('btnOpenTransaction').addEventListener('click', () => {
-            document.getElementById('txConsumeTotal').value = '';
-            document.getElementById('txAmount').value = '';
-            document.getElementById('txBonus').value = '';
-            document.getElementById('txPoints').value = '';
-            document.getElementById('txShortfallPaid').value = '';
-            document.getElementById('chkNoConsumeOnlyDeposit').checked = false;
-            
-            calcUnifiedPreview();
-            updateSignatureVisibility();
-            
-            openModal('modalTransaction');
-            setTimeout(initSignaturePad, 50);
-        });
-
-        document.getElementById('btnOpenAdjust').addEventListener('click', () => {
-            document.getElementById('adminPin').value = '';
-            openModal('modalAdjustAuth');
-        });
-
-        document.getElementById('btnConvertPoints').addEventListener('click', () => openModal('modalConvert'));
-
-        document.getElementById('btnTabCommission').addEventListener('click', () => switchReportTab('commission'));
-        document.getElementById('btnTabExpenses').addEventListener('click', () => switchReportTab('expenses'));
-
-        // ESC & ENTER 快捷鍵處理
-        document.addEventListener('keydown', (e) => {
-            const openModalEl = Array.from(document.querySelectorAll('[id^="modal"]')).find(el => !el.classList.contains('hidden'));
-            if (e.key === 'Escape') {
-                if (openModalEl) closeModal(openModalEl.id);
-            } else if (e.key === 'Enter') {
-                if (openModalEl) {
-                    if (document.activeElement.tagName.toLowerCase() === 'textarea') return;
-                    e.preventDefault(); 
-                    if (openModalEl.id === 'modalLogin') document.getElementById('btnSubmitLogin').click();
-                    else if (openModalEl.id === 'modalAddMember') document.getElementById('btnSubmitAddMember').click();
-                    else if (openModalEl.id === 'modalAdjustAuth') document.getElementById('btnVerifyPin').click();
-                    else if (openModalEl.id === 'modalAdjustForm') document.getElementById('btnSubmitAdjust').click();
-                    else if (openModalEl.id === 'modalConvert') document.getElementById('btnSubmitConvert').click();
-                    else if (openModalEl.id === 'modalTransaction') document.getElementById('btnSubmitTx').click();
-                    else if (openModalEl.id === 'modalConsultSuccess') document.getElementById('btnConfirmConsultSuccess').click();
-                    else if (openModalEl.id === 'modalEditTx') document.getElementById('btnSaveEditTx').click();
-                }
-            }
-        });
-
-        DOM.searchInput.addEventListener('input', renderMembers);
 
     </script>
 </body>
