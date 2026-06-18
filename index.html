@@ -1434,20 +1434,6 @@
             const rawTerm = DOM.searchInput.value.trim().toLowerCase();
             DOM.memberList.innerHTML = '';
             
-            // 防窺視機制：只有最高權限(admin)、LARMO、小Q預設全顯示(模糊搜尋)，其餘皆需輸入關鍵字才能查閱
-            const isFuzzyAllowed = loggedInRole === 'admin' || (loggedInBeautician && (loggedInBeautician.toLowerCase() === 'larmo' || loggedInBeautician === '小q'));
-            if (!isFuzzyAllowed && rawTerm === '') {
-                DOM.emptyListState.innerHTML = `
-                    <div class="bg-pink-50 text-pink-700 p-6 rounded-2xl w-full max-w-sm mx-auto shadow-sm border border-pink-100 mt-10">
-                        <i class="ph ph-magnifying-glass text-5xl mb-3 opacity-50 block"></i>
-                        <h4 class="font-bold text-lg mb-1">請精準搜尋會員資料</h4>
-                        <p class="text-sm opacity-80">為保護客資，請在上方輸入顧客的姓名、電話或生日進行查閱。</p>
-                    </div>
-                `;
-                showElement(DOM.emptyListState);
-                return;
-            }
-
             const terms = rawTerm.split(/\s+/).filter(t => t);
             const filtered = members.filter(m => {
                 if (terms.length === 0) return true; 
@@ -2757,6 +2743,9 @@
         document.getElementById('btnConvertPoints').addEventListener('click', () => openModal('modalConvert'));
         document.getElementById('btnTabCommission').addEventListener('click', () => switchReportTab('commission'));
         document.getElementById('btnTabExpenses').addEventListener('click', () => switchReportTab('expenses'));
+
+        // 新增搜尋框即時監聽事件，達成打字動態隱藏/顯示功能
+        DOM.searchInput.addEventListener('input', renderMembers);
 
         // ESC & ENTER 全域快捷鍵
         document.addEventListener('keydown', (e) => {
