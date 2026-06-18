@@ -1149,24 +1149,24 @@
             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members'), (snapshot) => {
                 members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 mergeData();
-            });
+            }, (err) => console.error("Members snapshot error: ", err));
 
             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions'), (snapshot) => {
                 transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 mergeData();
-            });
+            }, (err) => console.error("Transactions snapshot error: ", err));
 
             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_consultations'), (snapshot) => {
                 consultations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 mergeData();
-            });
+            }, (err) => console.error("Consultations snapshot error: ", err));
 
             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_expenses'), (snapshot) => {
                 expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 if (currentActiveViewId === 'report' && currentReportTab === 'expenses') {
                     renderExpensesList();
                 }
-            });
+            }, (err) => console.error("Expenses snapshot error: ", err));
 
             // 監聽並讀取 帳號管理 集合
             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators'), (snapshot) => {
@@ -1186,7 +1186,7 @@
                 }
                 
                 renderOperatorsList();
-            });
+            }, (err) => console.error("Operators snapshot error: ", err));
         }
 
         function mergeData() {
@@ -2247,6 +2247,53 @@
                 tbody.appendChild(tr);
             });
         }
+
+        // ==========================================
+        // Initialization & Auth Setup (MANDATORY RULE 3)
+        // ==========================================
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (customError) {
+                        console.warn("自訂 Token 驗證失敗，切換為匿名登入:", customError);
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+                document.getElementById('loadingContent').innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm mx-4 text-left border border-red-100 animate-in fade-in">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+                                <i class="ph ph-warning-circle text-2xl"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-stone-800">資料庫連線錯誤</h3>
+                        </div>
+                        <p class="text-stone-600 text-sm leading-relaxed mb-4">
+                            請確認專案已啟用匿名登入。<br/>${error.message}
+                        </p>
+                    </div>
+                `;
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                fetchData();
+                updateRBACUI(); // 初始化權限 UI
+                hideElement(document.getElementById('loadingScreen'));
+                showElement(document.getElementById('appContent'));
+                switchView('consultation'); // 確保一開始切換至諮詢表
+            }
+        });
+
+        // 啟動身分驗證
+        initAuth();
 
         // ==========================================
         // General UI Click Bindings & Keydowns
