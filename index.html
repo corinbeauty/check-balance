@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>美業儲值金會員查詢系統 V1.4</title>
+    <title>美業儲值金會員查詢系統 V1.2.2</title>
     
     <!-- LINE與社群分享預覽設定 (OG Tags) -->
     <meta property="og:title" content="美業會員系統">
@@ -21,15 +21,12 @@
         canvas { touch-action: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        
-        /* 諮詢表單的平滑過渡 */
-        .view-transition { transition: opacity 0.3s ease, transform 0.3s ease; }
     </style>
 </head>
 <body class="bg-stone-50 font-sans text-stone-800 antialiased selection:bg-pink-200 selection:text-pink-900">
 
     <!-- Loading Screen -->
-    <div id="loadingScreen" class="fixed inset-0 bg-pink-50 flex items-center justify-center z-[100] transition-opacity duration-300">
+    <div id="loadingScreen" class="fixed inset-0 bg-pink-50 flex items-center justify-center z-[100]">
         <div class="text-center" id="loadingContent">
             <i class="ph ph-spinner-gap animate-spin text-4xl text-pink-600 mb-2"></i>
             <p class="text-stone-500 font-medium tracking-widest">系統初始化中...</p>
@@ -37,7 +34,7 @@
     </div>
 
     <!-- Main Application Container -->
-    <div id="appContent" class="min-h-screen hidden flex flex-col">
+    <div id="appContent" class="min-h-screen hidden flex-col">
         
         <!-- Header -->
         <header class="bg-white shadow-sm border-b border-pink-100 sticky top-0 z-10 shrink-0">
@@ -83,7 +80,7 @@
             <!-- ==========================================
                  VIEW 1: MEMBER LIST
                  ========================================== -->
-            <div id="viewList" class="hidden space-y-4 animate-fade-in view-transition">
+            <div id="viewList" class="hidden space-y-4">
                 <div class="relative">
                     <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xl text-stone-400"></i>
                     <input 
@@ -94,12 +91,10 @@
                     />
                 </div>
                 
-                <!-- Notice if not logged in -->
                 <div id="noticeNotLoggedIn" class="bg-amber-50 text-amber-700 border border-amber-200 p-3 rounded-xl text-sm flex items-center gap-2">
                     <i class="ph ph-info text-lg"></i> 目前為「檢視模式」。若需新增會員或調整儲值金，請先於右上角登入。
                 </div>
 
-                <!-- List Container -->
                 <div class="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden min-h-[300px]">
                     <ul id="memberList" class="divide-y divide-stone-100">
                         <!-- Members rendered via JS -->
@@ -113,7 +108,7 @@
             <!-- ==========================================
                  VIEW 2: MEMBER DETAILS
                  ========================================== -->
-            <div id="viewDetail" class="hidden space-y-6 view-transition">
+            <div id="viewDetail" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div class="flex items-center gap-4 w-full sm:w-auto">
                         <div id="detailAvatar" class="shrink-0 w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-md">
@@ -140,7 +135,6 @@
                     </div>
                 </div>
 
-                <!-- Asset Dashboard -->
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div class="bg-gradient-to-br from-pink-50 to-pink-100 p-5 rounded-2xl border border-pink-200 shadow-sm relative overflow-hidden">
                         <div class="text-pink-600 text-sm font-medium mb-1">本金餘額</div>
@@ -164,7 +158,6 @@
                     </div>
                 </div>
 
-                <!-- Consultation Records -->
                 <div class="bg-white rounded-2xl shadow-sm border border-purple-100 overflow-hidden">
                     <div class="p-4 sm:p-5 border-b border-purple-100 flex items-center gap-2 bg-purple-50/50">
                         <i class="ph ph-clipboard-text text-xl text-purple-600"></i>
@@ -175,7 +168,6 @@
                     </div>
                 </div>
 
-                <!-- Transaction History -->
                 <div class="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
                     <div class="p-4 sm:p-5 border-b border-stone-100 flex items-center gap-2 bg-stone-50/50">
                         <i class="ph ph-clock-counter-clockwise text-xl text-stone-500"></i>
@@ -183,7 +175,7 @@
                     </div>
                     
                     <div class="overflow-x-auto hide-scroll">
-                        <table class="w-full text-left border-collapse min-w-[800px]">
+                        <table class="w-full text-left border-collapse min-w-[850px]">
                             <thead>
                                 <tr class="bg-stone-50 text-stone-500 text-xs uppercase tracking-wider">
                                     <th class="p-4 font-medium border-b border-stone-100">時間</th>
@@ -207,7 +199,7 @@
             <!-- ==========================================
                  VIEW 3: CONSULTATION FORM
                  ========================================== -->
-            <div id="viewConsultation" class="space-y-6 view-transition relative block animate-fade-in">
+            <div id="viewConsultation" class="space-y-6 block">
                 <div class="bg-white p-4 sm:p-8 rounded-2xl shadow-sm border border-stone-100">
                     <div class="border-b border-stone-100 pb-4 mb-6 text-center">
                         <h2 class="text-2xl font-bold text-stone-800 mb-2">顧客諮詢登記表</h2>
@@ -339,7 +331,6 @@
                         <section id="sectionSignature" class="pt-2">
                             <h3 class="text-lg font-bold text-pink-700 mb-2 flex items-center gap-2"><i class="ph ph-pen-nib"></i> 5. 客戶簽章 <span class="text-red-500">*</span></h3>
                             
-                            <!-- Signature Area Container -->
                             <div id="consultSignatureContainer" class="relative w-full border-2 border-dashed border-pink-200 rounded-xl overflow-hidden bg-pink-50 touch-none mb-3">
                                 <canvas id="padConsultation" class="w-full bg-white cursor-crosshair h-[300px]"></canvas>
                                 <div class="absolute top-2 right-2 text-xs text-pink-300 pointer-events-none font-medium tracking-widest">SIGN HERE</div>
@@ -364,9 +355,9 @@
             </div>
 
             <!-- ==========================================
-                 VIEW 4: COMMISSION REPORT (All Beauticians)
+                 VIEW 4: COMMISSION REPORT
                  ========================================== -->
-            <div id="viewReport" class="hidden space-y-6 view-transition relative block animate-fade-in">
+            <div id="viewReport" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100">
                     <div class="border-b border-stone-100 pb-4 mb-6 flex justify-between items-center">
                         <div>
@@ -377,7 +368,6 @@
                         </div>
                     </div>
 
-                    <!-- Date Range Selection with Shortcuts -->
                     <div class="flex justify-between w-full mb-1 items-end">
                         <label class="block text-sm font-medium text-stone-700">選擇結算區間</label>
                         <div class="space-x-2">
@@ -464,12 +454,12 @@
     </div>
 
     <!-- ==========================================
-         MODALS (Opacity-0 by default, controlled via JS)
+         MODALS (Instant display:none/flex toggle)
          ========================================== -->
     
-    <!-- 0. Beautician Login Modal -->
-    <div id="modalLogin" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex-col items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
-        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalLoginInner">
+    <!-- 0. Login Modal -->
+    <div id="modalLogin" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <div class="w-16 h-16 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="ph ph-user-circle text-4xl"></i>
             </div>
@@ -496,15 +486,15 @@
             </div>
             
             <div class="flex gap-3">
-                <button id="btnCancelLogin" class="flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200 transition">取消</button>
-                <button id="btnSubmitLogin" class="flex-1 py-3 bg-stone-800 text-white font-medium rounded-xl hover:bg-stone-900 shadow-sm transition">登入</button>
+                <button id="btnCancelLogin" class="flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200">取消</button>
+                <button id="btnSubmitLogin" class="flex-1 py-3 bg-stone-800 text-white font-medium rounded-xl hover:bg-stone-900 shadow-sm">登入</button>
             </div>
         </div>
     </div>
 
-    <!-- 1. Add Member Modal (補登用) -->
-    <div id="modalAddMember" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex-col items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
-        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalAddMemberInner">
+    <!-- 1. Add Member Modal -->
+    <div id="modalAddMember" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                 <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-user-plus text-xl text-pink-600"></i> 直接補登會員資料</h3>
                 <button class="modal-close text-stone-400 hover:text-stone-600"><i class="ph ph-x text-xl"></i></button>
@@ -546,8 +536,8 @@
     </div>
 
     <!-- 2. Transaction Modal -->
-    <div id="modalTransaction" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex-col items-start sm:items-center justify-center p-4 z-50 overflow-y-auto transition-opacity duration-200 opacity-0">
-        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden my-8 transform scale-95 transition-transform duration-200" id="modalTransactionInner">
+    <div id="modalTransaction" class="fixed inset-0 bg-black/40 hidden items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden my-8">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                 <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-pen-nib text-xl text-pink-600"></i> 結帳與儲值作業</h3>
                 <button class="modal-close text-stone-400 hover:text-stone-600"><i class="ph ph-x text-xl"></i></button>
@@ -557,7 +547,7 @@
                 <div id="errTx" class="hidden p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2"></div>
                 
                 <div class="space-y-4">
-                    <!-- 消費金額 (移至最前方) -->
+                    <!-- 消費金額 -->
                     <div>
                         <label class="block text-sm font-medium text-stone-700 mb-1">本次服務消費總額 <span class="text-rose-500 text-xs font-normal ml-1">(若純儲值無消費請留空)</span></label>
                         <div class="relative">
@@ -656,9 +646,60 @@
         </div>
     </div>
 
+    <!-- Jerry Edit Transaction Modal -->
+    <div id="modalEditTx" class="fixed inset-0 bg-black/40 hidden items-start sm:items-center justify-center p-4 z-[60] overflow-y-auto">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden my-8">
+            <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-blue-50">
+                <h3 class="font-bold text-lg text-blue-800 flex items-center gap-2"><i class="ph ph-pencil-simple text-xl"></i> 修改歷史交易紀錄</h3>
+                <button class="modal-close text-blue-400 hover:text-blue-600"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="bg-blue-100 text-blue-800 text-xs p-3 rounded-lg border border-blue-200 mb-2">
+                    管理員專屬權限：修改後，系統會依據差額自動補正該會員的當前儲值金總額。
+                </div>
+                <div id="errEditTx" class="hidden p-2 bg-red-50 text-red-600 text-sm rounded"></div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-stone-700 mb-1">操作員 (歸屬業績用)</label>
+                    <input type="text" id="editTxOperator" class="w-full p-2 border border-stone-200 rounded-lg outline-none focus:border-blue-500" />
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1">消費總額</label>
+                        <input type="number" id="editTxConsume" class="w-full p-2 border border-stone-200 rounded-lg outline-none focus:border-blue-500" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1">儲值本金</label>
+                        <input type="number" id="editTxDeposit" class="w-full p-2 border border-stone-200 rounded-lg outline-none focus:border-blue-500" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1 text-rose-600">淨本金異動</label>
+                        <input type="number" id="editTxAmountChange" class="w-full p-2 border border-rose-200 rounded-lg outline-none focus:border-rose-500 font-bold" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1 text-emerald-600">贈送金異動</label>
+                        <input type="number" id="editTxBonusChange" class="w-full p-2 border border-emerald-200 rounded-lg outline-none focus:border-emerald-500 font-bold" />
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-stone-700 mb-1">備註/調整原因</label>
+                    <textarea id="editTxRemark" class="w-full p-2 border border-stone-200 rounded-lg outline-none focus:border-blue-500 h-20 resize-none"></textarea>
+                </div>
+            </div>
+            <div class="p-5 border-t border-stone-100 bg-stone-50 flex gap-3 justify-end">
+                <button class="modal-close px-5 py-2.5 text-stone-500 font-medium hover:bg-stone-200 rounded-xl">取消</button>
+                <button id="btnSubmitEditTx" class="px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 shadow-sm flex items-center justify-center gap-2">
+                    確認強制修改
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 3. Admin Auth Modal -->
-    <div id="modalAdjustAuth" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex-col items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
-        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalAdjustAuthInner">
+    <div id="modalAdjustAuth" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <i class="ph ph-shield-check text-5xl text-stone-800 mx-auto mb-4 block"></i>
             <h3 class="font-bold text-xl text-stone-800 mb-2">需要最高管理權限</h3>
             <p class="text-stone-500 text-sm mb-6">請輸入最高授權碼以強制調整餘額</p>
@@ -668,15 +709,15 @@
             <input type="password" id="adminPin" class="w-full text-center tracking-[0.2em] text-xl sm:text-2xl p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-800 outline-none mb-6 font-mono" placeholder="••••••••••" maxlength="10" />
             
             <div class="flex gap-3">
-                <button class="modal-close flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200 transition">取消</button>
-                <button id="btnVerifyPin" class="flex-1 py-3 bg-stone-800 text-white font-medium rounded-xl hover:bg-stone-900 shadow-sm transition">驗證</button>
+                <button class="modal-close flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200">取消</button>
+                <button id="btnVerifyPin" class="flex-1 py-3 bg-stone-800 text-white font-medium rounded-xl hover:bg-stone-900 shadow-sm">驗證</button>
             </div>
         </div>
     </div>
 
     <!-- 4. Adjust Form Modal -->
-    <div id="modalAdjustForm" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden flex-col items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
-        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalAdjustFormInner">
+    <div id="modalAdjustForm" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-red-50">
                 <h3 class="font-bold text-lg text-red-800 flex items-center gap-2"><i class="ph ph-wrench text-xl"></i> 系統資料強制調整</h3>
                 <button class="modal-close text-red-400 hover:text-red-600"><i class="ph ph-x text-xl"></i></button>
@@ -707,8 +748,8 @@
                 </div>
             </div>
             <div class="p-5 border-t border-stone-100 bg-stone-50 flex gap-3 justify-end">
-                <button class="modal-close px-5 py-2.5 text-stone-500 font-medium hover:bg-stone-200 rounded-xl transition">取消</button>
-                <button id="btnSubmitAdjust" class="px-5 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 shadow-sm flex items-center justify-center gap-2 transition">
+                <button class="modal-close px-5 py-2.5 text-stone-500 font-medium hover:bg-stone-200 rounded-xl">取消</button>
+                <button id="btnSubmitAdjust" class="px-5 py-2.5 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 shadow-sm flex items-center justify-center gap-2">
                     確認強制調整
                 </button>
             </div>
@@ -716,8 +757,8 @@
     </div>
 
     <!-- 5. Convert Points Modal -->
-    <div id="modalConvert" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex-col items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
-        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalConvertInner">
+    <div id="modalConvert" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <i class="ph ph-gift text-5xl text-amber-500 mx-auto mb-4 block"></i>
             <h3 class="font-bold text-xl text-stone-800 mb-2">滿額點數兌換</h3>
             <p class="text-stone-500 text-sm mb-6">
@@ -739,8 +780,8 @@
             <div id="errConvert" class="hidden text-red-600 text-sm mb-4"></div>
             
             <div class="flex gap-3">
-                <button class="modal-close flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200 transition">取消</button>
-                <button id="btnSubmitConvert" class="flex-1 py-3 bg-amber-500 text-white font-medium rounded-xl hover:bg-amber-600 shadow-sm flex justify-center items-center gap-2 transition">
+                <button class="modal-close flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200">取消</button>
+                <button id="btnSubmitConvert" class="flex-1 py-3 bg-amber-500 text-white font-medium rounded-xl hover:bg-amber-600 shadow-sm flex justify-center items-center gap-2">
                     <i class="ph ph-check-circle text-lg"></i> 確認兌換
                 </button>
             </div>
@@ -748,13 +789,13 @@
     </div>
 
     <!-- 6. Consult Success Modal -->
-    <div id="modalConsultSuccess" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden flex-col items-center justify-center p-4 z-50 transition-opacity duration-200 opacity-0">
-        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalConsultSuccessInner">
+    <div id="modalConsultSuccess" class="fixed inset-0 bg-black/40 hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
             <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <i class="ph ph-cloud-check text-4xl"></i>
             </div>
             <h3 class="font-bold text-xl text-stone-800 mb-2">已儲存至雲端</h3>
-            <p class="text-stone-500 text-sm mb-6">顧客諮詢登記表已成功送出並為顧客建檔。</p>
+            <p class="text-stone-500 text-sm mb-6">顧客諮詢登記表已成功送出並建檔。</p>
             <button id="btnConfirmConsultSuccess" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl shadow-sm transition flex items-center justify-center gap-2">
                 <i class="ph ph-check-circle text-lg"></i> 確認
             </button>
@@ -767,7 +808,6 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // 用戶提供的專屬 Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyCe0KE7va2H4-A6XECdzhTUCjhTeT6FOJM",
             authDomain: "check-balance-13da9.firebaseapp.com",
@@ -789,19 +829,13 @@
         let transactions = [];
         let consultations = [];
         let selectedMember = null;
+        let currentEditTx = null; // 紀錄目前正在修改的歷史交易
         let isProcessing = false;
         
-        // RBAC State
-        let loggedInBeautician = null; // null = 未登入, 'LARMO', '小Q' 或 'Jerry'
+        let loggedInBeautician = null; 
         let currentActiveViewId = 'consultation'; 
         let clockInterval = null;
 
-        // Modal Timeout tracking for safe opening/closing
-        const modalTimeouts = {};
-
-        // ==========================================
-        // UI Helpers & Modal Logic
-        // ==========================================
         const DOM = {
             viewList: document.getElementById('viewList'),
             viewDetail: document.getElementById('viewDetail'),
@@ -838,57 +872,42 @@
             const d = new Date(ts);
             return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
         }
+        
+        // 本地安全時間格式化 (解決 ISO String 時區偏差問題)
+        function getLocalYMD(d) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
 
-        // 嚴謹且安全的 Modal 開關機制
+        // ==========================================
+        // Modal Instant Toggles (No Transition/Stuck masks)
+        // ==========================================
         function openModal(id) {
             const modal = document.getElementById(id);
-            const inner = document.getElementById(id + 'Inner');
             if(!modal) return;
-            
-            // 安全鎖：清除正在進行的關閉倒數
-            if (modalTimeouts[id]) {
-                clearTimeout(modalTimeouts[id]);
-                modalTimeouts[id] = null;
-            }
-            
-            modal.style.display = ''; // 防止過去錯誤的 inline style 殘留
+            document.querySelectorAll('[id^="err"]').forEach(hideElement);
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            
-            document.querySelectorAll('[id^="err"]').forEach(hideElement);
-            void modal.offsetWidth; // 強制重繪
-            
-            modal.classList.remove('opacity-0');
-            modal.classList.add('opacity-100');
-            if(inner) {
-                inner.classList.remove('scale-95');
-                inner.classList.add('scale-100');
-            }
         }
 
         function closeModal(id) {
             const modal = document.getElementById(id);
-            const inner = document.getElementById(id + 'Inner');
             if(!modal) return;
-            
-            modal.classList.remove('opacity-100');
-            modal.classList.add('opacity-0');
-            if(inner) {
-                inner.classList.remove('scale-100');
-                inner.classList.add('scale-95');
-            }
-            
-            modalTimeouts[id] = setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-                isProcessing = false;
-            }, 200); 
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            isProcessing = false;
         }
 
         document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const modalId = e.target.closest('[id^="modal"]').id;
                 closeModal(modalId);
+                // 若是在新增會員按取消，強制導回查詢畫面
+                if (modalId === 'modalAddMember') {
+                    switchView('list');
+                }
             });
         });
 
@@ -942,7 +961,6 @@
                 hideElement(DOM.noticeNotLoggedIn);
                 authRequiredElements.forEach(el => showElement(el));
 
-                // 開放業績結算給予特定美容師與 Jerry
                 if (loggedInBeautician === 'Jerry' || loggedInBeautician === 'LARMO' || loggedInBeautician === '小Q') {
                     showElement(DOM.btnOpenReport);
                 } else {
@@ -984,12 +1002,9 @@
             }
         });
 
-        // 取消登入時回溯動作 (獨立監聽，不與 modal-close 衝突)
         document.getElementById('btnCancelLogin').addEventListener('click', () => {
             closeModal('modalLogin');
-            if(!loggedInBeautician) {
-                switchView('consultation');
-            }
+            if(!loggedInBeautician) switchView('consultation');
         });
 
         // ==========================================
@@ -998,11 +1013,8 @@
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    try {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } catch (customError) {
-                        await signInAnonymously(auth);
-                    }
+                    try { await signInWithCustomToken(auth, __initial_auth_token); } 
+                    catch (customError) { await signInAnonymously(auth); }
                 } else {
                     await signInAnonymously(auth);
                 }
@@ -1011,16 +1023,10 @@
                 document.getElementById('loadingContent').innerHTML = `
                     <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm mx-4 text-left border border-red-100">
                         <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
-                                <i class="ph ph-warning-circle text-2xl"></i>
-                            </div>
+                            <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center"><i class="ph ph-warning-circle text-2xl"></i></div>
                             <h3 class="text-lg font-bold text-stone-800">系統連線異常</h3>
                         </div>
-                        <p class="text-stone-600 text-sm leading-relaxed mb-4">
-                            無法順利連線至雲端資料庫。<br/><br/>
-                            請確認您的網路狀態，或前往 Firebase 控制台確認已啟用「匿名登入 (Anonymous)」功能。<br/><br/>
-                            <span class="text-xs text-red-500 break-words">${error.message}</span>
-                        </p>
+                        <p class="text-stone-600 text-sm leading-relaxed mb-4">無法順利連線至雲端資料庫。<br/><br/><span class="text-xs text-red-500 break-words">${error.message}</span></p>
                     </div>
                 `;
             }
@@ -1105,25 +1111,19 @@
         }
 
         async function robustAddDoc(collName, data) {
-            try {
-                return await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', collName), data);
-            } catch (err) {
-                if (err.code === 'permission-denied') {
-                    return await addDoc(collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, collName), data);
-                }
+            try { return await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', collName), data); } 
+            catch (err) {
+                if (err.code === 'permission-denied') return await addDoc(collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, collName), data);
                 throw err;
             }
         }
 
         async function robustUpdateMember(memberId, data) {
-            try {
-                await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', memberId), data);
-            } catch (err) {
+            try { await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', memberId), data); } 
+            catch (err) {
                 if (err.code === 'permission-denied' || err.code === 'not-found') {
                     await updateDoc(doc(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_members', memberId), data);
-                } else {
-                    throw err;
-                }
+                } else { throw err; }
             }
         }
 
@@ -1133,10 +1133,7 @@
         function switchView(view) {
             currentActiveViewId = view;
             
-            if (clockInterval) {
-                clearInterval(clockInterval);
-                clockInterval = null;
-            }
+            if (clockInterval) { clearInterval(clockInterval); clockInterval = null; }
 
             hideElement(DOM.viewList);
             hideElement(DOM.viewDetail);
@@ -1149,7 +1146,6 @@
                 if(loggedInBeautician) showElement(DOM.btnAddMemberView);
                 showElement(DOM.btnOpenConsultationView);
                 
-                // Show report button if eligible
                 if(loggedInBeautician === 'Jerry' || loggedInBeautician === 'LARMO' || loggedInBeautician === '小Q') {
                     showElement(DOM.btnOpenReport);
                 }
@@ -1197,8 +1193,8 @@
                 const today = new Date();
                 const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
                 const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-                document.getElementById('reportStartDate').value = firstDay.toISOString().split('T')[0];
-                document.getElementById('reportEndDate').value = lastDay.toISOString().split('T')[0];
+                document.getElementById('reportStartDate').value = getLocalYMD(firstDay);
+                document.getElementById('reportEndDate').value = getLocalYMD(lastDay);
                 hideElement(document.getElementById('reportResults'));
             }
         }
@@ -1207,7 +1203,6 @@
             const rawTerm = DOM.searchInput.value.trim().toLowerCase();
             DOM.memberList.innerHTML = '';
             
-            // Jerry 全開，其他美容師需搜尋才能看見資料 (防窺機制)
             if (loggedInBeautician !== 'Jerry' && rawTerm === '') {
                 DOM.emptyListState.innerHTML = `
                     <div class="bg-pink-50 text-pink-700 p-6 rounded-2xl w-full max-w-sm mx-auto shadow-sm border border-pink-100">
@@ -1308,7 +1303,6 @@
                 btnConvert.classList.add('hidden');
             }
 
-            // 渲染諮詢表紀錄
             const consultListEl = document.getElementById('memberConsultationList');
             const memberConsults = consultations.filter(c => c.phone === selectedMember.phone).sort((a,b) => b.timestamp - a.timestamp);
             
@@ -1330,7 +1324,6 @@
                  `).join('');
             }
 
-            // 渲染歷史交易紀錄
             const txListEl = document.getElementById('transactionList');
             txListEl.innerHTML = '';
             
@@ -1346,10 +1339,15 @@
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-stone-50/50 transition";
                     
-                    let consumeAmt = tx.consumeAmount || 0;
-                    let depositAmt = tx.depositAmount || 0;
+                    let consumeAmt = parseFloat(tx.consumeAmount) || 0;
+                    let depositAmt = parseFloat(tx.depositAmount) || 0;
+                    // Fallback for older transactions
                     if (!tx.consumeAmount && tx.amountChange < 0) consumeAmt = Math.abs(tx.amountChange);
                     if (!tx.depositAmount && tx.amountChange > 0) depositAmt = tx.amountChange;
+
+                    // Jerry Edit Button
+                    const isJerry = loggedInBeautician === 'Jerry';
+                    const editBtnHtml = isJerry ? `<button class="btn-edit-tx text-xs bg-stone-200 hover:bg-stone-300 text-stone-700 px-2 py-1 rounded ml-2 shadow-sm font-medium" data-id="${tx.id}">修改</button>` : '';
 
                     tr.innerHTML = `
                         <td class="p-4 text-stone-500 whitespace-nowrap">${formatDate(tx.timestamp)}</td>
@@ -1359,10 +1357,11 @@
                         <td class="p-4 font-bold text-emerald-600">${tx.bonusChange > 0 ? '$' + formatNumber(tx.bonusChange) : '-'}</td>
                         <td class="p-4 text-right font-bold text-stone-800 bg-stone-50">$${formatNumber(tx.newBalance)}</td>
                         <td class="p-4 max-w-[200px]">
-                            ${tx.signature 
-                                ? `<div class="flex items-center gap-2"><img src="${tx.signature}" class="h-8 rounded bg-white border border-stone-200" /><span class="text-xs text-stone-400 truncate">${tx.remark || ''}</span></div>`
-                                : `<span class="text-xs text-stone-500">${tx.remark || '無備註'}</span>`
-                            }
+                            <div class="flex items-center gap-2">
+                                ${tx.signature ? `<img src="${tx.signature}" class="h-8 rounded bg-white border border-stone-200" />` : ''}
+                                <span class="text-xs text-stone-400 truncate">${tx.remark || '無備註'}</span>
+                                ${editBtnHtml}
+                            </div>
                         </td>
                     `;
                     txListEl.appendChild(tr);
@@ -1377,7 +1376,12 @@
         DOM.btnBack.addEventListener('click', () => switchView('list'));
         DOM.btnOpenConsultationView.addEventListener('click', () => switchView('consultation'));
         DOM.btnOpenReport.addEventListener('click', () => switchView('report'));
-        DOM.btnAddMemberView.addEventListener('click', () => openModal('modalAddMember'));
+        DOM.btnAddMemberView.addEventListener('click', () => {
+            document.getElementById('newMemName').value = '';
+            document.getElementById('newMemPhone').value = '';
+            document.getElementById('newMemBirthday').value = '';
+            openModal('modalAddMember');
+        });
         
         document.getElementById('btnOpenTransaction').addEventListener('click', () => {
             document.getElementById('txConsumeTotal').value = '';
@@ -1399,7 +1403,6 @@
         });
         document.getElementById('btnConvertPoints').addEventListener('click', () => openModal('modalConvert'));
 
-        // Preview Calculation logic for unified form
         function calcUnifiedPreview() {
             if (!selectedMember) return;
             const consumeTotal = parseFloat(document.getElementById('txConsumeTotal').value) || 0;
@@ -1456,7 +1459,7 @@
         document.getElementById('chkNoConsumeOnlyDeposit').addEventListener('change', updateSignatureVisibility);
 
         // ==========================================
-        // Signature Pad System Factory
+        // Signature Pad System
         // ==========================================
         function setupSignaturePad(canvasId) {
             const canvas = document.getElementById(canvasId);
@@ -1576,7 +1579,6 @@
             await robustUpdateMember(selectedMember.id, { balance: newBalance, bonusBalance: newBonus, points: newPoints });
         }
 
-        // Unified Transaction Submission
         document.getElementById('btnSubmitTx').addEventListener('click', async () => {
             if (isProcessing || !loggedInBeautician) return;
             
@@ -1641,6 +1643,70 @@
         });
 
         // ==========================================
+        // Jerry Edit Specific Transaction
+        // ==========================================
+        document.getElementById('transactionList').addEventListener('click', (e) => {
+            const btn = e.target.closest('.btn-edit-tx');
+            if (btn) {
+                const txId = btn.getAttribute('data-id');
+                currentEditTx = transactions.find(t => t.id === txId);
+                if (!currentEditTx) return;
+
+                document.getElementById('editTxOperator').value = currentEditTx.operator || '';
+                document.getElementById('editTxConsume').value = currentEditTx.consumeAmount || 0;
+                document.getElementById('editTxDeposit').value = currentEditTx.depositAmount || 0;
+                document.getElementById('editTxAmountChange').value = currentEditTx.amountChange || 0;
+                document.getElementById('editTxBonusChange').value = currentEditTx.bonusChange || 0;
+                document.getElementById('editTxRemark').value = currentEditTx.remark || '';
+
+                openModal('modalEditTx');
+            }
+        });
+
+        document.getElementById('btnSubmitEditTx').addEventListener('click', async () => {
+            if (isProcessing || !currentEditTx) return;
+            
+            const nConsume = parseFloat(document.getElementById('editTxConsume').value) || 0;
+            const nDeposit = parseFloat(document.getElementById('editTxDeposit').value) || 0;
+            const nAmtChange = parseFloat(document.getElementById('editTxAmountChange').value) || 0;
+            const nBnsChange = parseFloat(document.getElementById('editTxBonusChange').value) || 0;
+            const nOper = document.getElementById('editTxOperator').value.trim();
+            const nRem = document.getElementById('editTxRemark').value.trim();
+
+            const diffAmt = nAmtChange - (currentEditTx.amountChange || 0);
+            const diffBns = nBnsChange - (currentEditTx.bonusChange || 0);
+
+            const newBal = (selectedMember.balance || 0) + diffAmt;
+            const newBns = (selectedMember.bonusBalance || 0) + diffBns;
+
+            setProcessing('btnSubmitEditTx', '強制修改中...');
+            try {
+                // 更新歷史紀錄本身
+                const txRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', currentEditTx.id);
+                await updateDoc(txRef, {
+                    consumeAmount: nConsume,
+                    depositAmount: nDeposit,
+                    amountChange: nAmtChange,
+                    bonusChange: nBnsChange,
+                    operator: nOper,
+                    remark: nRem,
+                    newBalance: (currentEditTx.newBalance || 0) + diffAmt
+                });
+
+                // 回補或扣除會員當前的真實總額
+                await robustUpdateMember(selectedMember.id, {
+                    balance: newBal,
+                    bonusBalance: newBns
+                });
+
+                closeModal('modalEditTx');
+            } catch(e) {
+                showError('errEditTx', '修改失敗: ' + e.message);
+            }
+            clearProcessing('btnSubmitEditTx');
+        });
+
+        // ==========================================
         // Report Generation
         // ==========================================
         function calculateDepositBonus(count) {
@@ -1654,18 +1720,22 @@
         }
 
         const setReportDates = (start, end) => {
-            document.getElementById('reportStartDate').value = start.toISOString().split('T')[0];
-            document.getElementById('reportEndDate').value = end.toISOString().split('T')[0];
+            document.getElementById('reportStartDate').value = getLocalYMD(start);
+            document.getElementById('reportEndDate').value = getLocalYMD(end);
         };
 
         document.getElementById('btnThisMonth').addEventListener('click', () => {
             const today = new Date();
-            setReportDates(new Date(today.getFullYear(), today.getMonth(), 1), new Date(today.getFullYear(), today.getMonth() + 1, 0));
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            setReportDates(firstDay, lastDay);
         });
 
         document.getElementById('btnLastMonth').addEventListener('click', () => {
             const today = new Date();
-            setReportDates(new Date(today.getFullYear(), today.getMonth() - 1, 1), new Date(today.getFullYear(), today.getMonth(), 0));
+            const firstDay = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            const lastDay = new Date(today.getFullYear(), today.getMonth(), 0);
+            setReportDates(firstDay, lastDay);
         });
 
         document.getElementById('btnGenerateReport').addEventListener('click', () => {
@@ -1687,8 +1757,11 @@
 
             periodTx.forEach(tx => {
                 const operator = tx.operator || '';
-                let cAmt = tx.consumeAmount || 0;
-                let dAmt = tx.depositAmount || 0;
+                // 嚴格抓取被寫入的 consumeAmount 欄位
+                let cAmt = parseFloat(tx.consumeAmount) || 0;
+                let dAmt = parseFloat(tx.depositAmount) || 0;
+                
+                // 針對舊資料的相容
                 if (!tx.consumeAmount && tx.amountChange < 0) cAmt = Math.abs(tx.amountChange);
                 if (!tx.depositAmount && tx.amountChange > 0) dAmt = tx.amountChange;
 
@@ -1721,7 +1794,6 @@
 
             showElement(document.getElementById('reportResults'));
 
-            // 權限區塊顯示控制
             const larmoBlock = document.getElementById('blockReportLarmo');
             const qBlock = document.getElementById('blockReportQ');
             
@@ -1809,6 +1881,7 @@
             const bMonth = document.getElementById('consultMonth').value;
             const bDay = document.getElementById('consultDay').value;
             const birthday = (bYear && bMonth && bDay) ? `${bYear}-${String(bMonth).padStart(2,'0')}-${String(bDay).padStart(2,'0')}` : '';
+
             const areas = Array.from(document.querySelectorAll('input[name="consultArea"]:checked')).map(cb => cb.value);
             const isConsentChecked = document.getElementById('consultConsent').checked;
             const allPrecautionsChecked = Array.from(document.querySelectorAll('input[name="consultPrecautions"]')).every(cb => cb.checked);
@@ -1881,12 +1954,8 @@
 
         document.addEventListener('keydown', (e) => {
             const openModalEl = Array.from(document.querySelectorAll('[id^="modal"]')).find(el => !el.classList.contains('hidden'));
-            
             if (e.key === 'Escape') {
-                if (openModalEl) {
-                    if (openModalEl.id === 'modalLogin') document.getElementById('btnCancelLogin').click();
-                    else closeModal(openModalEl.id);
-                }
+                if (openModalEl) closeModal(openModalEl.id);
             } else if (e.key === 'Enter') {
                 if (openModalEl) {
                     if (document.activeElement.tagName.toLowerCase() === 'textarea') return;
@@ -1897,6 +1966,7 @@
                     else if (openModalEl.id === 'modalAdjustForm') document.getElementById('btnSubmitAdjust').click();
                     else if (openModalEl.id === 'modalConvert') document.getElementById('btnSubmitConvert').click();
                     else if (openModalEl.id === 'modalTransaction') document.getElementById('btnSubmitTx').click();
+                    else if (openModalEl.id === 'modalEditTx') document.getElementById('btnSubmitEditTx').click();
                     else if (openModalEl.id === 'modalConsultSuccess') document.getElementById('btnConfirmConsultSuccess').click();
                 }
             }
