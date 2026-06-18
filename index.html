@@ -933,7 +933,6 @@
         const db = getFirestore(app);
         const APP_ID = "check-balance-13da9"; 
 
-        // State Variables
         let currentUser = null;
         let members = [];
         let transactions = [];
@@ -1030,6 +1029,15 @@
             return `${y}-${m}-${day}`;
         }
 
+        const showError = (id, msg) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.innerHTML = `<i class="ph ph-warning-circle"></i> ${msg}`;
+                showElement(el);
+            }
+            isProcessing = false;
+        };
+
         // ==========================================
         // Role Based Access Control (RBAC) UI Update
         // ==========================================
@@ -1121,7 +1129,7 @@
             const user = document.getElementById('loginUser').value.trim();
             const pwd = document.getElementById('loginPwd').value;
             
-            const matchedOp = operators.find(o => o.username.toLowerCase() === user.toLowerCase());
+            const matchedOp = operators.find(o => o.username && o.username.toLowerCase() === user.toLowerCase());
             
             if (matchedOp) {
                 if (matchedOp.status === 'disabled') {
@@ -1172,45 +1180,56 @@
         function fetchData() {
             if (!currentUser) return;
             
-            onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members'), (snapshot) => {
-                members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                mergeData();
-            }, (err) => console.error("Members snapshot error: ", err));
+            try {
+                onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members'), (snapshot) => {
+                    members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    mergeData();
+                }, (err) => {
+                    console.error("Members snapshot error: ", err);
+                    // 萬一權限阻擋，強制降級隱藏載入框，防止永久卡圈圈
+                    hideElement(document.getElementById('loadingScreen'));
+                    showElement(document.getElementById('appContent'));
+                });
 
-            onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions'), (snapshot) => {
-                transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                mergeData();
-            }, (err) => console.error("Transactions snapshot error: ", err));
+                onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions'), (snapshot) => {
+                    transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    mergeData();
+                }, (err) => console.error("Transactions snapshot error: ", err));
 
-            onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_consultations'), (snapshot) => {
-                consultations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                mergeData();
-            }, (err) => console.error("Consultations snapshot error: ", err));
+                onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_consultations'), (snapshot) => {
+                    consultations = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    mergeData();
+                }, (err) => console.error("Consultations snapshot error: ", err));
 
-            onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_expenses'), (snapshot) => {
-                expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                if (currentActiveViewId === 'report' && currentReportTab === 'expenses') {
-                    renderExpensesList();
-                }
-            }, (err) => console.error("Expenses snapshot error: ", err));
+                onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_expenses'), (snapshot) => {
+                    expenses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    if (currentActiveViewId === 'report' && currentReportTab === 'expenses') {
+                        renderExpensesList();
+                    }
+                }, (err) => console.error("Expenses snapshot error: ", err));
 
-            onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators'), (snapshot) => {
-                operators = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
-                if (snapshot.empty) {
-                    const defaults = [
-                        { username: "Jerry", password: "7310168888", role: "admin", commission: 100, status: "active" },
-                        { username: "LARMO", password: "8888", role: "beautician", commission: 100, status: "active" },
-                        { username: "小Q", password: "9999", role: "beautician", commission: 40, status: "active" },
-                        { username: "Boss", password: "1234", role: "owner", commission: 0, status: "active" }
-                    ];
-                    defaults.forEach(async (op) => {
-                        await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators'), op);
-                    });
-                }
-                
-                renderOperatorsList();
-            }, (err) => console.error("Operators snapshot error: ", err));
+                onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators'), (snapshot) => {
+                    operators = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    if (snapshot.empty) {
+                        const defaults = [
+                            { username: "Jerry", password: "7310168888", role: "admin", commission: 100, status: "active" },
+                            { username: "LARMO", password: "8888", role: "beautician", commission: 100, status: "active" },
+                            { username: "小Q", password: "9999", role: "beautician", commission: 40, status: "active" },
+                            { username: "Boss", password: "1234", role: "owner", commission: 0, status: "active" }
+                        ];
+                        defaults.forEach(async (op) => {
+                            await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators'), op);
+                        });
+                    }
+                    
+                    renderOperatorsList();
+                }, (err) => console.error("Operators snapshot error: ", err));
+            } catch(e) {
+                console.error("Error setting up Firestore listeners: ", e);
+                hideElement(document.getElementById('loadingScreen'));
+                showElement(document.getElementById('appContent'));
+            }
         }
 
         function mergeData() {
@@ -1264,7 +1283,6 @@
                 showElement(DOM.btnBack);
                 hideElement(DOM.btnAddMemberView);
                 hideElement(DOM.btnOpenConsultationView);
-                hideElement(DOM.btnOpenReport);
                 setTimeout(initConsultationPad, 100);
                 
                 const updateClock = () => {
@@ -1395,9 +1413,9 @@
         function renderMemberDetail() {
             if (!selectedMember) return;
             
-            document.getElementById('detailAvatar').textContent = selectedMember.name.charAt(0);
-            document.getElementById('detailName').textContent = selectedMember.name;
-            document.getElementById('detailPhone').textContent = selectedMember.phone;
+            document.getElementById('detailAvatar').textContent = selectedMember.name ? selectedMember.name.charAt(0) : '-';
+            document.getElementById('detailName').textContent = selectedMember.name || '';
+            document.getElementById('detailPhone').textContent = selectedMember.phone || '';
             document.getElementById('detailBirthday').innerHTML = `<i class="ph ph-cake"></i> ${selectedMember.birthday || '未填寫'}`;
             document.getElementById('detailArea').innerHTML = `<i class="ph ph-map-pin"></i> ${selectedMember.area || '未填寫'}`;
             
@@ -1809,9 +1827,10 @@
             document.getElementById('editTxRemark').value = tx.remark || '';
 
             const opSelect = document.getElementById('editTxOperator');
-            opSelect.innerHTML = operators.map(o => `
-                <option value="${o.username}" ${tx.operator === o.username ? 'selected' : ''}>${o.username}</option>
-            `).join('');
+            opSelect.innerHTML = operators.map(o => {
+                const opName = o.username || '';
+                return `<option value="${opName}" ${tx.operator === opName ? 'selected' : ''}>${opName}</option>`;
+            }).join('');
             if (!operators.find(o => o.username === tx.operator)) {
                 opSelect.innerHTML += `<option value="${tx.operator || '系統'}" selected>${tx.operator || '系統'}</option>`;
             }
@@ -1906,8 +1925,11 @@
                 return;
             }
 
-            const startTs = new Date(startDateStr + 'T00:00:00').getTime();
-            const endTs = new Date(endDateStr + 'T23:59:59').getTime();
+            // 採用純數值陣列拆解，完全避開行動裝置 iOS/Safari 特殊時區與 NaN 的 Date 解析問題
+            const startParts = startDateStr.split('-');
+            const endParts = endDateStr.split('-');
+            const startTs = new Date(startParts[0], startParts[1] - 1, startParts[2], 0, 0, 0).getTime();
+            const endTs = new Date(endParts[0], endParts[1] - 1, endParts[2], 23, 59, 59).getTime();
 
             const periodTx = transactions.filter(tx => tx.timestamp >= startTs && tx.timestamp <= endTs);
 
@@ -1946,7 +1968,7 @@
                 const stats = operatorStats[op];
                 totalServiceSales += stats.consume;
 
-                const opRecord = operators.find(o => o.username.toLowerCase() === op.toLowerCase());
+                const opRecord = operators.find(o => o.username && o.username.toLowerCase() === op.toLowerCase());
                 let commPercent = 100; 
                 if (opRecord) {
                     commPercent = parseFloat(opRecord.commission) !== undefined ? parseFloat(opRecord.commission) : 100;
@@ -2065,8 +2087,10 @@
             const endDateStr = document.getElementById('reportEndDate').value;
             if (!startDateStr || !endDateStr) return;
 
-            const startTs = new Date(startDateStr + 'T00:00:00').getTime();
-            const endTs = new Date(endDateStr + 'T23:59:59').getTime();
+            const startParts = startDateStr.split('-');
+            const endParts = endDateStr.split('-');
+            const startTs = new Date(startParts[0], startParts[1] - 1, startParts[2], 0, 0, 0).getTime();
+            const endTs = new Date(endParts[0], endParts[1] - 1, endParts[2], 23, 59, 59).getTime();
 
             const periodExpenses = expenses
                 .filter(e => e.timestamp >= startTs && e.timestamp <= endTs)
@@ -2111,4 +2135,357 @@
                     }
                 });
 
-                table
+                table.appendChild(tr);
+            });
+        }
+
+        // ==========================================
+        // Submit Consultation Form
+        // ==========================================
+        document.getElementById('btnSubmitConsultation').addEventListener('click', async () => {
+            if (isProcessing) return;
+            
+            hideElement(document.getElementById('errConsult'));
+            hideElement(document.getElementById('successConsult'));
+
+            const name = document.getElementById('consultName').value.trim();
+            const phone = document.getElementById('consultPhone').value.trim();
+            const gender = document.querySelector('input[name="consultGender"]:checked')?.value;
+            const bYear = document.getElementById('consultYear').value;
+            const bMonth = document.getElementById('consultMonth').value;
+            const bDay = document.getElementById('consultDay').value;
+            const birthday = (bYear && bMonth && bDay) ? `${bYear}-${String(bMonth).padStart(2,'0')}-${String(bDay).padStart(2,'0')}` : '';
+
+            const areas = Array.from(document.querySelectorAll('input[name="consultArea"]:checked')).map(cb => cb.value);
+            const isConsentChecked = document.getElementById('consultConsent').checked;
+            const allPrecautionsChecked = Array.from(document.querySelectorAll('input[name="consultPrecautions"]')).every(cb => cb.checked);
+
+            let errorMsg = '';
+            let targetEl = null;
+
+            if (!name) { errorMsg = '請填寫真實姓名'; targetEl = document.getElementById('consultName'); }
+            else if (!phone.startsWith('09') || phone.length !== 10) { errorMsg = '手機號碼格式錯誤'; targetEl = document.getElementById('consultPhone'); }
+            else if (!bYear || !bMonth || !bDay) { errorMsg = '請選擇生日'; targetEl = document.getElementById('consultYear').parentElement; }
+            else if (areas.length === 0) { errorMsg = '請勾選服務部位'; targetEl = document.getElementById('sectionAreas'); }
+            else if (!allPrecautionsChecked) { errorMsg = '請勾選所有注意事項'; targetEl = document.getElementById('sectionPrecautions'); }
+            else if (!isConsentChecked) { errorMsg = '請同意聲明'; targetEl = document.getElementById('sectionConsent'); }
+            else if (consultPad.isEmpty()) { errorMsg = '請完成簽名'; targetEl = document.getElementById('sectionSignature'); }
+
+            if (errorMsg) {
+                showError('errConsult', errorMsg);
+                if (targetEl) {
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetEl.classList.add('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50', 'transition', 'duration-300');
+                    setTimeout(() => targetEl.classList.remove('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50'), 2500);
+                }
+                return;
+            }
+
+            setProcessing('btnSubmitConsultation', '傳送中...');
+            try {
+                const signatureBase64 = consultPad.getData();
+                
+                await robustAddDoc('beauty_consultations', {
+                    name, phone, gender, birthday, areas,
+                    precautionsAgreed: allPrecautionsChecked,
+                    consentStatus: isConsentChecked,
+                    signature: signatureBase64,
+                    timestamp: new Date().getTime(),
+                    createdAt: new Date().toISOString()
+                });
+
+                const existingMember = members.find(m => m.phone === phone);
+                if (!existingMember) {
+                    await robustAddDoc('beauty_members', {
+                        name, phone, birthday, gender,
+                        balance: 0, bonusBalance: 0, points: 0,
+                        createdAt: new Date().getTime(),
+                        createdBy: 'System_Auto'
+                    });
+                }
+
+                openModal('modalConsultSuccess');
+                
+                document.getElementById('consultName').value = '';
+                document.getElementById('consultPhone').value = '';
+                document.getElementById('consultYear').value = '';
+                document.getElementById('consultMonth').value = '';
+                document.getElementById('consultDay').value = '';
+                document.getElementById('consultConsent').checked = false;
+                document.querySelectorAll('input[name="consultArea"]:checked').forEach(cb => cb.checked = false);
+                document.querySelectorAll('input[name="consultPrecautions"]').forEach(cb => cb.checked = false);
+                consultPad.clear();
+
+            } catch (err) {
+                showError('errConsult', '儲存失敗: ' + err.message);
+            }
+            clearProcessing('btnSubmitConsultation');
+        });
+
+        document.getElementById('btnConfirmConsultSuccess').addEventListener('click', () => {
+            closeModal('modalConsultSuccess');
+            switchView('consultation');
+        });
+
+        // ==========================================
+        // Operator Manager Modal Logic (V1.5)
+        // ==========================================
+        document.getElementById('btnOpenOperatorsView').addEventListener('click', () => {
+            resetOperatorForm();
+            openModal('modalOperators');
+        });
+
+        function resetOperatorForm() {
+            document.getElementById('opEditId').value = '';
+            document.getElementById('opUsername').value = '';
+            document.getElementById('opUsername').disabled = false;
+            document.getElementById('opPassword').value = '';
+            document.getElementById('opRole').value = 'beautician';
+            document.getElementById('opRole').disabled = false;
+            document.getElementById('opCommission').value = '';
+            document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-user-plus text-emerald-600"></i> 新增/修改帳號`;
+            hideElement(document.getElementById('errOperator'));
+        }
+
+        document.getElementById('btnResetOpForm').addEventListener('click', (e) => {
+            e.preventDefault();
+            resetOperatorForm();
+        });
+
+        document.getElementById('btnSaveOperator').addEventListener('click', async () => {
+            const editId = document.getElementById('opEditId').value;
+            const username = document.getElementById('opUsername').value.trim();
+            const password = document.getElementById('opPassword').value.trim();
+            const role = document.getElementById('opRole').value;
+            const commission = parseFloat(document.getElementById('opCommission').value);
+            
+            hideElement(document.getElementById('errOperator'));
+            
+            if (!username || !password || isNaN(commission)) {
+                showError('errOperator', '所有欄位皆為必填，且抽成比例須為有效數字');
+                return;
+            }
+            if (commission < 0 || commission > 100) {
+                showError('errOperator', '抽成比例須介於 0 至 100 之間');
+                return;
+            }
+            
+            try {
+                if (editId) {
+                    const opRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators', editId);
+                    const updateData = { password: password, commission: commission };
+                    
+                    if (username.toLowerCase() !== 'jerry') {
+                        updateData.username = username;
+                        updateData.role = role;
+                    }
+                    await updateDoc(opRef, updateData);
+                } else {
+                    const exist = operators.find(o => o.username && o.username.toLowerCase() === username.toLowerCase());
+                    if (exist) {
+                        showError('errOperator', '此帳號名稱已存在');
+                        return;
+                    }
+                    
+                    const opRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators');
+                    await addDoc(opRef, {
+                        username: username,
+                        password: password,
+                        role: role,
+                        commission: commission,
+                        status: 'active'
+                    });
+                }
+                resetOperatorForm();
+            } catch (err) {
+                showError('errOperator', '儲存失敗: ' + err.message);
+            }
+        });
+
+        function renderOperatorsList() {
+            const tbody = document.getElementById('operatorsTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            operators.forEach(op => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-stone-50 transition border-b border-stone-100";
+                
+                const roleMap = {
+                    admin: "最高管理者",
+                    owner: "老闆",
+                    beautician: "美容師"
+                };
+                const opRole = op.role || 'beautician';
+                const roleName = roleMap[opRole] || opRole;
+                const statusColor = op.status === 'active' ? 'text-emerald-600 bg-emerald-50' : 'text-stone-400 bg-stone-100';
+                const statusText = op.status === 'active' ? '啟用中' : '已停用';
+                
+                const opUser = op.username || '';
+                const isJerry = opUser.toLowerCase() === 'jerry';
+                
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-stone-800">${opUser}</td>
+                    <td class="p-3 font-mono text-stone-500">${op.password || ''}</td>
+                    <td class="p-3"><span class="bg-gray-100 text-stone-700 px-2 py-0.5 rounded text-xs font-semibold">${roleName}</span></td>
+                    <td class="p-3 text-center font-bold text-stone-700">${op.commission !== undefined ? op.commission : 100}%</td>
+                    <td class="p-3 text-center">
+                        <span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">${statusText}</span>
+                    </td>
+                    <td class="p-3 text-center space-x-1 whitespace-nowrap">
+                        <button class="btn-edit-op px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded text-xs font-semibold text-stone-700" data-id="${op.id}">修改</button>
+                        ${isJerry ? '' : `
+                            <button class="btn-toggle-op px-2 py-1 ${op.status === 'active' ? 'bg-red-50 hover:bg-red-100 text-red-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600'} rounded text-xs font-semibold" data-id="${op.id}" data-status="${op.status}">
+                                ${op.status === 'active' ? '停用' : '啟用'}
+                            </button>
+                        `}
+                    </td>
+                `;
+                
+                tr.querySelector('.btn-edit-op').addEventListener('click', () => {
+                    document.getElementById('opEditId').value = op.id;
+                    document.getElementById('opUsername').value = opUser;
+                    
+                    if (isJerry) {
+                        document.getElementById('opUsername').disabled = true;
+                        document.getElementById('opRole').disabled = true;
+                    } else {
+                        document.getElementById('opUsername').disabled = false;
+                        document.getElementById('opRole').disabled = false;
+                    }
+                    
+                    document.getElementById('opPassword').value = op.password || '';
+                    document.getElementById('opRole').value = opRole;
+                    document.getElementById('opCommission').value = op.commission !== undefined ? op.commission : '';
+                    document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-pencil-simple text-amber-600"></i> 修改帳號: ${opUser}`;
+                });
+                
+                if (!isJerry) {
+                    tr.querySelector('.btn-toggle-op').addEventListener('click', async (e) => {
+                        const id = e.currentTarget.getAttribute('data-id');
+                        const currentStatus = e.currentTarget.getAttribute('data-status');
+                        const nextStatus = currentStatus === 'active' ? 'disabled' : 'active';
+                        
+                        try {
+                            const opRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators', id);
+                            await updateDoc(opRef, { status: nextStatus });
+                        } catch (err) {
+                            alert("更新失敗: " + err.message);
+                        }
+                    });
+                }
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ==========================================
+        // Initialization & Auth Setup (MANDATORY RULE 3)
+        // ==========================================
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (customError) {
+                        console.warn("自訂 Token 驗證失敗，切換為匿名登入:", customError);
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+                document.getElementById('loadingContent').innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm mx-4 text-left border border-red-100 animate-in fade-in">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+                                <i class="ph ph-warning-circle text-2xl"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-stone-800">資料庫連線錯誤</h3>
+                        </div>
+                        <p class="text-stone-600 text-sm leading-relaxed mb-4">
+                            請確認專案已啟用匿名登入。<br/>${error.message}
+                        </p>
+                    </div>
+                `;
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                fetchData();
+                updateRBACUI(); 
+                hideElement(document.getElementById('loadingScreen'));
+                showElement(document.getElementById('appContent'));
+                switchView('consultation'); 
+            }
+        });
+
+        initAuth();
+
+        // ==========================================
+        // General UI Click Bindings & Keydowns
+        // ==========================================
+        DOM.btnBack.addEventListener('click', () => switchView('list'));
+        DOM.btnOpenConsultationView.addEventListener('click', () => switchView('consultation'));
+        DOM.btnOpenReport.addEventListener('click', () => switchView('report'));
+        DOM.btnAddMemberView.addEventListener('click', () => {
+            document.getElementById('newMemName').value = '';
+            document.getElementById('newMemPhone').value = '';
+            document.getElementById('newMemBirthday').value = '';
+            document.getElementById('newMemArea').value = '';
+            openModal('modalAddMember');
+        });
+
+        // 結帳與儲值作業按鈕，開啟並進行初始化試算 (修復舊 V1.5 updateTxUI 錯誤)
+        document.getElementById('btnOpenTransaction').addEventListener('click', () => {
+            document.getElementById('txConsumeTotal').value = '';
+            document.getElementById('txAmount').value = '';
+            document.getElementById('txBonus').value = '';
+            document.getElementById('txPoints').value = '';
+            document.getElementById('txShortfallPaid').value = '';
+            document.getElementById('chkNoConsumeOnlyDeposit').checked = false;
+            
+            calcUnifiedPreview();
+            updateSignatureVisibility();
+            
+            openModal('modalTransaction');
+            setTimeout(initSignaturePad, 50);
+        });
+
+        document.getElementById('btnOpenAdjust').addEventListener('click', () => {
+            document.getElementById('adminPin').value = '';
+            openModal('modalAdjustAuth');
+        });
+
+        document.getElementById('btnConvertPoints').addEventListener('click', () => openModal('modalConvert'));
+
+        document.getElementById('btnTabCommission').addEventListener('click', () => switchReportTab('commission'));
+        document.getElementById('btnTabExpenses').addEventListener('click', () => switchReportTab('expenses'));
+
+        // ESC & ENTER 快捷鍵處理
+        document.addEventListener('keydown', (e) => {
+            const openModalEl = Array.from(document.querySelectorAll('[id^="modal"]')).find(el => !el.classList.contains('hidden'));
+            if (e.key === 'Escape') {
+                if (openModalEl) closeModal(openModalEl.id);
+            } else if (e.key === 'Enter') {
+                if (openModalEl) {
+                    if (document.activeElement.tagName.toLowerCase() === 'textarea') return;
+                    e.preventDefault(); 
+                    if (openModalEl.id === 'modalLogin') document.getElementById('btnSubmitLogin').click();
+                    else if (openModalEl.id === 'modalAddMember') document.getElementById('btnSubmitAddMember').click();
+                    else if (openModalEl.id === 'modalAdjustAuth') document.getElementById('btnVerifyPin').click();
+                    else if (openModalEl.id === 'modalAdjustForm') document.getElementById('btnSubmitAdjust').click();
+                    else if (openModalEl.id === 'modalConvert') document.getElementById('btnSubmitConvert').click();
+                    else if (openModalEl.id === 'modalTransaction') document.getElementById('btnSubmitTx').click();
+                    else if (openModalEl.id === 'modalConsultSuccess') document.getElementById('btnConfirmConsultSuccess').click();
+                    else if (openModalEl.id === 'modalEditTx') document.getElementById('btnSaveEditTx').click();
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
