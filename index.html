@@ -62,10 +62,7 @@
                     
                     <!-- 登入狀態區塊 -->
                     <div id="authStatusArea" class="flex items-center gap-2">
-                        <button id="btnOpenBeauticianLogin" class="flex items-center gap-1 bg-stone-100 text-stone-600 hover:bg-stone-200 px-3 py-2 rounded-lg text-sm font-medium transition">
-                            <i class="ph ph-user text-lg"></i>
-                            <span class="hidden sm:inline">美容師登入</span>
-                        </button>
+                        <!-- 按鈕由 JS 動態生成 -->
                     </div>
                     
                     <button id="btnAddMemberView" class="hidden items-center gap-1 bg-pink-600 hover:bg-pink-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm">
@@ -289,18 +286,30 @@
 
                         <!-- 3. 服務聲明與注意事項 -->
                         <section>
-                            <h3 class="text-lg font-bold text-pink-700 mb-4 flex items-center gap-2"><i class="ph ph-warning-circle"></i> 3. 服務聲明與注意事項</h3>
-                            <div class="bg-amber-50/50 p-4 sm:p-5 rounded-xl border border-amber-100 text-stone-700 text-sm leading-relaxed space-y-2">
-                                <p class="flex items-start gap-2"><i class="ph ph-check text-amber-500 mt-0.5 text-lg"></i> 除毛前請先刮除毛髮。</p>
-                                <p class="flex items-start gap-2"><i class="ph ph-check text-amber-500 mt-0.5 text-lg"></i> 避免使用刺激方式(熱蠟/除毛膏)除毛。</p>
-                                <p class="flex items-start gap-2"><i class="ph ph-check text-amber-500 mt-0.5 text-lg"></i> 除毛後一週避免游泳、泡湯、日光浴、酸類產品。</p>
-                                <p class="flex items-start gap-2"><i class="ph ph-check text-amber-500 mt-0.5 text-lg"></i> 確實加強保濕與防曬。</p>
+                            <h3 class="text-lg font-bold text-pink-700 mb-4 flex items-center gap-2"><i class="ph ph-warning-circle"></i> 3. 服務聲明與注意事項 <span class="text-red-500">*</span></h3>
+                            <div class="bg-amber-50/50 p-4 sm:p-5 rounded-xl border border-amber-100 space-y-3">
+                                <label class="flex items-start gap-3 cursor-pointer group">
+                                    <input type="checkbox" name="consultPrecautions" value="刮除毛髮" class="w-5 h-5 text-amber-600 rounded mt-0.5 focus:ring-amber-500">
+                                    <span class="text-sm text-amber-800 group-hover:text-amber-900 transition leading-relaxed">除毛前請先刮除毛髮。</span>
+                                </label>
+                                <label class="flex items-start gap-3 cursor-pointer group">
+                                    <input type="checkbox" name="consultPrecautions" value="避免刺激" class="w-5 h-5 text-amber-600 rounded mt-0.5 focus:ring-amber-500">
+                                    <span class="text-sm text-amber-800 group-hover:text-amber-900 transition leading-relaxed">避免使用刺激方式(熱蠟/除毛膏)除毛。</span>
+                                </label>
+                                <label class="flex items-start gap-3 cursor-pointer group">
+                                    <input type="checkbox" name="consultPrecautions" value="避免活動" class="w-5 h-5 text-amber-600 rounded mt-0.5 focus:ring-amber-500">
+                                    <span class="text-sm text-amber-800 group-hover:text-amber-900 transition leading-relaxed">除毛後一週避免游泳、泡湯、日光浴、酸類產品。</span>
+                                </label>
+                                <label class="flex items-start gap-3 cursor-pointer group">
+                                    <input type="checkbox" name="consultPrecautions" value="加強保濕" class="w-5 h-5 text-amber-600 rounded mt-0.5 focus:ring-amber-500">
+                                    <span class="text-sm text-amber-800 group-hover:text-amber-900 transition leading-relaxed">確實加強保濕與防曬。</span>
+                                </label>
                             </div>
                         </section>
 
                         <!-- 4. 本人同意聲明 -->
                         <section>
-                            <h3 class="text-lg font-bold text-pink-700 mb-4 flex items-center gap-2"><i class="ph ph-file-text"></i> 4. 本人同意聲明</h3>
+                            <h3 class="text-lg font-bold text-pink-700 mb-4 flex items-center gap-2"><i class="ph ph-file-text"></i> 4. 本人同意聲明 <span class="text-red-500">*</span></h3>
                             <div class="bg-stone-50 p-4 sm:p-5 rounded-xl border border-stone-200">
                                 <label class="flex items-start gap-3 cursor-pointer group">
                                     <div class="mt-0.5">
@@ -359,7 +368,7 @@
          ========================================== -->
     
     <!-- 0. Beautician Login Modal -->
-    <div id="modalLogin" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalLogin" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalLoginInner">
             <div class="w-16 h-16 bg-pink-100 text-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
                 <i class="ph ph-user-circle text-4xl"></i>
@@ -371,28 +380,25 @@
             
             <div class="space-y-4 mb-6 text-left">
                 <div>
-                    <label class="block text-sm font-medium text-stone-700 mb-1">選擇帳號</label>
+                    <label class="block text-sm font-medium text-stone-700 mb-1">輸入帳號</label>
                     <div class="relative">
                         <i class="ph ph-user absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></i>
-                        <select id="loginUser" class="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none appearance-none bg-white">
-                            <option value="LARMO">LARMO</option>
-                            <option value="小Q">小Q</option>
-                        </select>
-                        <i class="ph ph-caret-down absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none"></i>
+                        <input type="text" id="loginUser" class="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none" placeholder="請輸入您的帳號" />
                     </div>
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-stone-700 mb-1">密碼</label>
                     <div class="relative">
                         <i class="ph ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></i>
+                        <!-- 移除預設的提示點點 -->
                         <input type="password" id="loginPwd" class="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none tracking-widest font-mono" />
                     </div>
                 </div>
             </div>
             
             <div class="flex gap-3">
-                <button class="modal-close flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200">取消</button>
-                <button id="btnSubmitLogin" class="flex-1 py-3 bg-stone-800 text-white font-medium rounded-xl hover:bg-stone-900 shadow-sm">登入</button>
+                <button id="btnCancelLogin" class="flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200 transition">取消</button>
+                <button id="btnSubmitLogin" class="flex-1 py-3 bg-stone-800 text-white font-medium rounded-xl hover:bg-stone-900 shadow-sm transition">登入</button>
             </div>
         </div>
     </div>
@@ -709,6 +715,7 @@
                     </button>
                 `;
                 document.getElementById('btnOpenBeauticianLogin').addEventListener('click', () => {
+                    document.getElementById('loginUser').value = '';
                     document.getElementById('loginPwd').value = '';
                     openModal('modalLogin');
                 });
@@ -722,7 +729,7 @@
 
         // Beautician Login Logic
         document.getElementById('btnSubmitLogin').addEventListener('click', () => {
-            const user = document.getElementById('loginUser').value;
+            const user = document.getElementById('loginUser').value.trim();
             const pwd = document.getElementById('loginPwd').value;
             
             // 驗證邏輯: LARMO(8888) 或 小Q(9999)
@@ -732,8 +739,14 @@
                 updateRBACUI();
                 switchView('list'); // 登入成功後跳轉至會員列表
             } else {
-                showError('errLogin', '密碼錯誤，請重新輸入');
+                showError('errLogin', '帳號或密碼錯誤，請重新輸入');
             }
+        });
+
+        // 點擊取消登入時，確保跳回諮詢表
+        document.getElementById('btnCancelLogin').addEventListener('click', () => {
+            closeModal('modalLogin');
+            switchView('consultation');
         });
 
         // ==========================================
@@ -952,7 +965,7 @@
         }
 
         // ==========================================
-        // Event Listeners
+        // Event Listeners (Modals)
         // ==========================================
         DOM.searchInput.addEventListener('input', renderMembers);
         DOM.btnBack.addEventListener('click', () => switchView('list'));
@@ -977,10 +990,10 @@
             const inner = document.getElementById(id + 'Inner');
             showElement(modal);
             document.querySelectorAll('[id^="err"]').forEach(hideElement);
-            setTimeout(() => {
-                modal.classList.add('opacity-100');
-                if(inner) { inner.classList.remove('scale-95'); inner.classList.add('scale-100'); }
-            }, 10);
+            // Request reflow
+            void modal.offsetWidth;
+            modal.classList.add('opacity-100');
+            if(inner) { inner.classList.remove('scale-95'); inner.classList.add('scale-100'); }
         }
 
         function closeModal(id) {
@@ -988,8 +1001,10 @@
             const inner = document.getElementById(id + 'Inner');
             if(inner) { inner.classList.remove('scale-100'); inner.classList.add('scale-95'); }
             modal.classList.remove('opacity-100');
-            setTimeout(() => hideElement(modal), 200);
-            isProcessing = false;
+            setTimeout(() => {
+                hideElement(modal);
+                isProcessing = false;
+            }, 200); // 確保過渡動畫完成後再 hidden
         }
 
         document.querySelectorAll('.modal-close').forEach(btn => {
@@ -1143,6 +1158,7 @@
             if (window.innerHeight > window.innerWidth) {
                 overlay.classList.remove('hidden');
                 overlay.classList.add('flex');
+                // 注意: 此處不再鎖定 body 捲動，讓上方表單依舊能滑動填寫，遮罩僅覆蓋簽名區
             } else {
                 overlay.classList.add('hidden');
                 overlay.classList.remove('flex');
@@ -1366,11 +1382,16 @@
             // 3. 驗證同意聲明
             const isConsentChecked = document.getElementById('consultConsent').checked;
 
+            // 4. 驗證服務聲明與注意事項是否全勾
+            const precautionCheckboxes = document.querySelectorAll('input[name="consultPrecautions"]');
+            const allPrecautionsChecked = Array.from(precautionCheckboxes).every(cb => cb.checked);
+
             // --- 資料驗證 ---
             if (!name) return showError('errConsult', '請填寫姓名');
             if (!phone.startsWith('09') || phone.length !== 10) return showError('errConsult', '手機號碼格式錯誤，需為09開頭且共10碼');
             if (!bYear || !bMonth || !bDay) return showError('errConsult', '請選擇完整的生日資訊');
             if (areas.length === 0) return showError('errConsult', '請至少勾選一項「除毛部位」');
+            if (!allPrecautionsChecked) return showError('errConsult', '請確認並勾選所有「服務聲明與注意事項」');
             if (!isConsentChecked) return showError('errConsult', '請詳閱並勾選「本人同意聲明」');
             if (consultPad.isEmpty()) return showError('errConsult', '請顧客於下方完成電子簽名確認');
 
@@ -1386,6 +1407,7 @@
                     gender: gender,
                     birthday: birthday,
                     areas: areas,
+                    precautionsAgreed: allPrecautionsChecked,
                     consentStatus: isConsentChecked,
                     signature: signatureBase64,
                     timestamp: new Date().getTime(),
@@ -1403,6 +1425,7 @@
                 document.getElementById('consultDay').value = '';
                 document.getElementById('consultConsent').checked = false;
                 document.querySelectorAll('input[name="consultArea"]:checked').forEach(cb => cb.checked = false);
+                document.querySelectorAll('input[name="consultPrecautions"]').forEach(cb => cb.checked = false);
                 consultPad.clear();
                 
                 // 3秒後自動切回列表
@@ -1426,7 +1449,11 @@
             
             if (e.key === 'Escape') {
                 if (openModalEl) {
-                    closeModal(openModalEl.id);
+                    if (openModalEl.id === 'modalLogin') {
+                        document.getElementById('btnCancelLogin').click();
+                    } else {
+                        closeModal(openModalEl.id);
+                    }
                 }
             } else if (e.key === 'Enter') {
                 if (openModalEl) {
