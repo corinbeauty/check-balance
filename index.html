@@ -410,7 +410,7 @@
                     <!-- 分頁內容 1: 業績抽成結算 -->
                     <div id="tabCommissionContent" class="space-y-6">
                         <div id="reportResults" class="hidden space-y-6">
-                            <!-- 業績卡片將由 JS 根據期間交易數據動態渲染（包含 Jerry, LARMO, 小Q 及其他所有操作員） -->
+                            <!-- 業績卡片將由 JS 根據期間交易數據動態渲染 -->
                             <div id="dynamicOperatorCards" class="grid grid-cols-1 gap-6"></div>
                         </div>
                     </div>
@@ -508,7 +508,7 @@
     </div>
 
     <!-- ==========================================
-         MODALS (Instant display:none/flex toggle)
+         MODALS
          ========================================== -->
     
     <!-- 0. Beautician Login Modal -->
@@ -866,6 +866,51 @@
         </div>
     </div>
 
+    <!-- 9. Edit Transaction Modal (Jerry/Admin Only) -->
+    <div id="modalEditTx" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden">
+            <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-amber-50">
+                <h3 class="font-bold text-lg text-amber-800 flex items-center gap-2">
+                    <i class="ph ph-pencil-simple text-xl"></i> 修改交易明細 (最高管理者專用)
+                </h3>
+                <button class="modal-close text-stone-400 hover:text-stone-600"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div id="errEditTx" class="hidden p-2 bg-red-50 text-red-600 text-xs rounded"></div>
+                <input type="hidden" id="editTxId" value="" />
+                
+                <div>
+                    <label class="block text-xs text-stone-500 mb-1">服務消費總額</label>
+                    <input type="number" id="editTxConsume" class="w-full p-3 border border-stone-200 rounded-xl outline-none" placeholder="0" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs text-stone-500 mb-1">儲值本金</label>
+                        <input type="number" id="editTxDeposit" class="w-full p-3 border border-stone-200 rounded-xl outline-none" placeholder="0" />
+                    </div>
+                    <div>
+                        <label class="block text-xs text-stone-500 mb-1">加碼贈送金</label>
+                        <input type="number" id="editTxBonus" class="w-full p-3 border border-stone-200 rounded-xl outline-none" placeholder="0" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs text-stone-500 mb-1">操作美容師</label>
+                    <select id="editTxOperator" class="w-full p-3 border border-stone-200 rounded-xl bg-white outline-none">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs text-stone-500 mb-1">備註說明</label>
+                    <textarea id="editTxRemark" class="w-full p-3 border border-stone-200 rounded-xl outline-none h-20 resize-none" placeholder="修改備註..."></textarea>
+                </div>
+            </div>
+            <div class="p-5 border-t border-stone-100 bg-stone-50 flex justify-end gap-3">
+                <button class="modal-close px-5 py-2.5 text-stone-500 font-medium hover:bg-stone-200 rounded-xl">取消</button>
+                <button id="btnSaveEditTx" class="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-medium shadow-sm">儲存修改</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Firebase SDKs & Application Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -921,19 +966,55 @@
             noticeNotLoggedIn: document.getElementById('noticeNotLoggedIn')
         };
 
+        // ------------------------------------------
+        // Unified Element & Modal Controller (No stuck backdrops)
+        // ------------------------------------------
         const showElement = (el) => { 
             if(el) { 
                 el.classList.remove('hidden');
-                if (el.classList.contains('items-center') || el.classList.contains('flex')) el.style.display = 'flex';
-                else el.style.display = 'block';
+                if (el.style.display === 'none') {
+                    el.style.display = '';
+                }
             }
         };
+        
         const hideElement = (el) => { 
             if(el) { 
                 el.classList.add('hidden'); 
-                el.style.display = '';
+                el.style.display = 'none';
             }
         };
+
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            if(!modal) return;
+            // 隱藏該 Modal 裡面的所有錯誤提示訊息
+            modal.querySelectorAll('[id^="err"]').forEach(hideElement);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            modal.style.setProperty('display', 'flex', 'important');
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            if(!modal) return;
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            modal.style.setProperty('display', 'none', 'important');
+            isProcessing = false;
+        }
+
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const modalEl = e.target.closest('[id^="modal"]');
+                if (modalEl) {
+                    closeModal(modalEl.id);
+                    if (modalEl.id === 'modalAddMember') {
+                        switchView('list');
+                    }
+                }
+            });
+        });
         
         function formatNumber(num) { return (num || 0).toLocaleString(); }
         function formatDate(ts) {
@@ -948,57 +1029,6 @@
             const day = String(d.getDate()).padStart(2, '0');
             return `${y}-${m}-${day}`;
         }
-
-        // ==========================================
-        // Modal Toggles (No Transition/Stuck masks)
-        // ==========================================
-        function openModal(id) {
-            const modal = document.getElementById(id);
-            if(!modal) return;
-            document.querySelectorAll('[id^="err"]').forEach(hideElement);
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-        }
-
-        function closeModal(id) {
-            const modal = document.getElementById(id);
-            if(!modal) return;
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-            isProcessing = false;
-        }
-
-        document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const modalId = e.target.closest('[id^="modal"]').id;
-                closeModal(modalId);
-                if (modalId === 'modalAddMember') {
-                    switchView('list');
-                }
-            });
-        });
-
-        const showError = (id, msg) => {
-            const el = document.getElementById(id);
-            el.innerHTML = `<i class="ph ph-warning-circle"></i> ${msg}`;
-            showElement(el);
-            isProcessing = false;
-        };
-        const setProcessing = (btnId, text) => {
-            isProcessing = true;
-            const btn = document.getElementById(btnId);
-            btn.dataset.original = btn.innerHTML;
-            btn.innerHTML = `<i class="ph ph-spinner-gap animate-spin"></i> ${text}`;
-            btn.disabled = true;
-            btn.classList.add('opacity-70');
-        };
-        const clearProcessing = (btnId) => {
-            isProcessing = false;
-            const btn = document.getElementById(btnId);
-            if (btn.dataset.original) btn.innerHTML = btn.dataset.original;
-            btn.disabled = false;
-            btn.classList.remove('opacity-70');
-        };
 
         // ==========================================
         // Role Based Access Control (RBAC) UI Update
@@ -1025,7 +1055,7 @@
                     switchView('consultation');
                 });
                 
-                // 1. 新增會員權限 (管理者與美容師可做，老闆一般不做，但全面開放亦可)
+                // 1. 新增會員權限
                 if (loggedInRole === 'admin' || loggedInRole === 'beautician') {
                     showElement(DOM.btnAddMemberView);
                 } else {
@@ -1042,14 +1072,13 @@
                     hideElement(DOM.btnOpenOperatorsView);
                 }
 
-                // 3. 業績與店務按鈕 (所有登入帳號皆可讀取，但視角不同)
+                // 3. 業績與店務按鈕 (所有登入帳號皆可讀取)
                 showElement(DOM.btnOpenReport);
                 
                 // 4. 店務收支分頁顯示控制 (老闆與最高管理者Jerry可見，美容師隱藏)
                 const btnTabExpenses = document.getElementById('btnTabExpenses');
                 if (loggedInRole === 'beautician') {
                     hideElement(btnTabExpenses);
-                    // 萬一當前在收支分頁，切回業績分頁
                     if (currentReportTab === 'expenses') {
                         switchReportTab('commission');
                     }
@@ -1086,13 +1115,12 @@
         }
 
         // ==========================================
-        // Account Management & Login logic (V1.5)
+        // Account Management & Login logic
         // ==========================================
         document.getElementById('btnSubmitLogin').addEventListener('click', () => {
             const user = document.getElementById('loginUser').value.trim();
             const pwd = document.getElementById('loginPwd').value;
             
-            // 優先驗證雲端讀取的 operators 集合
             const matchedOp = operators.find(o => o.username.toLowerCase() === user.toLowerCase());
             
             if (matchedOp) {
@@ -1110,7 +1138,6 @@
                 }
             }
             
-            // 應急安全機制: Jerry 預設最高授權密碼
             if (user === 'Jerry' && pwd === '7310168888') {
                 loggedInBeautician = 'Jerry';
                 loggedInRole = 'admin';
@@ -1123,7 +1150,6 @@
             showError('errLogin', '帳號密碼不正確，或該帳號已被停用');
         });
 
-        // 點擊取消登入回到諮詢表
         document.getElementById('btnCancelLogin').addEventListener('click', () => {
             closeModal('modalLogin');
             switchView('consultation');
@@ -1168,11 +1194,9 @@
                 }
             }, (err) => console.error("Expenses snapshot error: ", err));
 
-            // 監聽並讀取 帳號管理 集合
             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators'), (snapshot) => {
                 operators = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                // 首次開啟，如果集合為空，自動載入預設帳號防呆
                 if (snapshot.empty) {
                     const defaults = [
                         { username: "Jerry", password: "7310168888", role: "admin", commission: 100, status: "active" },
@@ -1302,7 +1326,6 @@
             const rawTerm = DOM.searchInput.value.trim().toLowerCase();
             DOM.memberList.innerHTML = '';
             
-            // Jerry 與老闆登入直接顯示所有會員，其餘角色必須搜尋方能顯示以防客資外洩
             if (loggedInRole !== 'admin' && loggedInRole !== 'owner' && rawTerm === '') {
                 DOM.emptyListState.innerHTML = `
                     <div class="bg-pink-50 text-pink-700 p-6 rounded-2xl w-full max-w-sm mx-auto shadow-sm border border-pink-100">
@@ -1351,7 +1374,7 @@
                                 <div class="text-xs sm:text-sm text-stone-500 flex flex-wrap gap-x-2 gap-y-1 mt-0.5">
                                     <span class="font-mono">${m.phone}</span>
                                     ${m.birthday ? `<span class="bg-stone-100 px-1.5 py-0.5 rounded text-stone-600 flex items-center gap-1"><i class="ph ph-cake"></i>${m.birthday}</span>` : ''}
-                                    ${m.area ? `<span class="bg-stone-100 px-1.5 py-0.5 rounded text-stone-600 flex items-center gap-1"><i class="ph ph-map-pin"></i>${m.area}</span>` : ''}
+                                    ${m.area ? `<span class="bg-stone-100 px-1.5 py-0.5 rounded text-stone-600 flex items-center gap-1 truncate max-w-[100px] sm:max-w-[150px]"><i class="ph ph-map-pin"></i>${m.area}</span>` : ''}
                                 </div>
                             </div>
                         </div>
@@ -1433,6 +1456,9 @@
                     if (tx.consumeAmount === undefined && tx.amountChange < 0) consumeAmt = Math.abs(tx.amountChange);
                     if (tx.depositAmount === undefined && tx.amountChange > 0) depositAmt = tx.amountChange;
 
+                    const isJerry = loggedInRole === 'admin';
+                    const editBtnHtml = isJerry ? `<button class="btn-edit-tx ml-2 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded font-bold" data-id="${tx.id}">修改</button>` : '';
+
                     tr.innerHTML = `
                         <td class="p-4 text-stone-500 whitespace-nowrap">${formatDate(tx.timestamp)}</td>
                         <td class="p-4"><span class="font-medium text-stone-700">${tx.operator || '系統'}</span></td>
@@ -1441,12 +1467,23 @@
                         <td class="p-4 font-bold text-emerald-600">${tx.bonusChange > 0 ? '$' + formatNumber(tx.bonusChange) : '-'}</td>
                         <td class="p-4 text-right font-bold text-stone-800 bg-stone-50">$${formatNumber(tx.newBalance)}</td>
                         <td class="p-4 max-w-[200px]">
-                            <div class="flex items-center gap-2">
-                                ${tx.signature ? `<img src="${tx.signature}" class="h-8 rounded bg-white border border-stone-200" />` : ''}
-                                <span class="text-xs text-stone-400 truncate">${tx.remark || '無備註'}</span>
+                            <div class="flex items-center justify-between gap-2">
+                                <div class="flex items-center gap-2 truncate">
+                                    ${tx.signature ? `<img src="${tx.signature}" class="h-8 rounded bg-white border border-stone-200" />` : ''}
+                                    <span class="text-xs text-stone-400 truncate" title="${tx.remark || ''}">${tx.remark || '無備註'}</span>
+                                </div>
+                                ${editBtnHtml}
                             </div>
                         </td>
                     `;
+                    
+                    if (isJerry) {
+                        tr.querySelector('.btn-edit-tx').addEventListener('click', (e) => {
+                            const txId = e.currentTarget.getAttribute('data-id');
+                            openEditTxModal(txId);
+                        });
+                    }
+
                     txListEl.appendChild(tr);
                 });
             }
@@ -1753,7 +1790,90 @@
         });
 
         // ==========================================
-        // dynamic Operator Statistics and Commission Calculations (V1.5)
+        // Jerry/Admin Edit Transaction details (V1.5)
+        // ==========================================
+        function openEditTxModal(txId) {
+            const tx = transactions.find(t => t.id === txId);
+            if (!tx) return;
+
+            document.getElementById('editTxId').value = txId;
+            
+            let consumeAmt = parseFloat(tx.consumeAmount || 0);
+            let depositAmt = parseFloat(tx.depositAmount || 0);
+            if (tx.consumeAmount === undefined && tx.amountChange < 0) consumeAmt = Math.abs(tx.amountChange);
+            if (tx.depositAmount === undefined && tx.amountChange > 0) depositAmt = tx.amountChange;
+
+            document.getElementById('editTxConsume').value = consumeAmt;
+            document.getElementById('editTxDeposit').value = depositAmt;
+            document.getElementById('editTxBonus').value = parseFloat(tx.bonusChange || 0);
+            document.getElementById('editTxRemark').value = tx.remark || '';
+
+            const opSelect = document.getElementById('editTxOperator');
+            opSelect.innerHTML = operators.map(o => `
+                <option value="${o.username}" ${tx.operator === o.username ? 'selected' : ''}>${o.username}</option>
+            `).join('');
+            if (!operators.find(o => o.username === tx.operator)) {
+                opSelect.innerHTML += `<option value="${tx.operator || '系統'}" selected>${tx.operator || '系統'}</option>`;
+            }
+
+            openModal('modalEditTx');
+        }
+
+        document.getElementById('btnSaveEditTx').addEventListener('click', async () => {
+            const txId = document.getElementById('editTxId').value;
+            const tx = transactions.find(t => t.id === txId);
+            if (!tx || !selectedMember) return;
+
+            const newConsume = parseFloat(document.getElementById('editTxConsume').value) || 0;
+            const newDeposit = parseFloat(document.getElementById('editTxDeposit').value) || 0;
+            const newBonus = parseFloat(document.getElementById('editTxBonus').value) || 0;
+            const newOperator = document.getElementById('editTxOperator').value;
+            const newRemark = document.getElementById('editTxRemark').value.trim();
+
+            let oldConsume = parseFloat(tx.consumeAmount || 0);
+            let oldDeposit = parseFloat(tx.depositAmount || 0);
+            if (tx.consumeAmount === undefined && tx.amountChange < 0) oldConsume = Math.abs(tx.amountChange);
+            if (tx.depositAmount === undefined && tx.amountChange > 0) oldDeposit = tx.amountChange;
+            const oldBonus = parseFloat(tx.bonusChange || 0);
+
+            const consumeDiff = newConsume - oldConsume;
+            const depositDiff = newDeposit - oldDeposit;
+            const bonusDiff = newBonus - oldBonus;
+
+            const netAmountDiff = depositDiff - consumeDiff;
+
+            const updatedBalance = (selectedMember.balance || 0) + netAmountDiff;
+            const updatedBonus = (selectedMember.bonusBalance || 0) + bonusDiff;
+
+            setProcessing('btnSaveEditTx', '儲存中...');
+            try {
+                const txRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId);
+                await updateDoc(txRef, {
+                    consumeAmount: newConsume,
+                    depositAmount: newDeposit,
+                    amountChange: netAmountDiff,
+                    bonusChange: newBonus,
+                    operator: newOperator,
+                    remark: newRemark,
+                    newBalance: tx.previousBalance + netAmountDiff,
+                    newBonus: tx.previousBonus + newBonus
+                });
+
+                const memberRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', selectedMember.id);
+                await updateDoc(memberRef, {
+                    balance: updatedBalance,
+                    bonusBalance: updatedBonus
+                });
+
+                closeModal('modalEditTx');
+            } catch (err) {
+                showError('errEditTx', '更新失敗: ' + err.message);
+            }
+            clearProcessing('btnSaveEditTx');
+        });
+
+        // ==========================================
+        // dynamic Operator Statistics and Commission Calculations
         // ==========================================
         const setReportDates = (start, end) => {
             document.getElementById('reportStartDate').value = getLocalYMD(start);
@@ -1789,15 +1909,13 @@
             const startTs = new Date(startDateStr + 'T00:00:00').getTime();
             const endTs = new Date(endDateStr + 'T23:59:59').getTime();
 
-            // 篩選日期區間內的交易
             const periodTx = transactions.filter(tx => tx.timestamp >= startTs && tx.timestamp <= endTs);
 
-            // 1. 動態建立所有操作人員的業績結構
             let operatorStats = {};
 
             periodTx.forEach(tx => {
                 const rawOp = tx.operator || '系統';
-                let op = rawOp; // 使用完整名稱比對
+                let op = rawOp; 
 
                 if (!operatorStats[op]) {
                     operatorStats[op] = { consume: 0, depositCount: 0 };
@@ -1815,14 +1933,12 @@
                 }
             });
 
-            // 2. 繪製動態卡片 (加入美容師隔離限制)
             const container = document.getElementById('dynamicOperatorCards');
             container.innerHTML = '';
 
-            let totalServiceSales = 0; // 全店總服務業績 (供 P&L 計算使用)
+            let totalServiceSales = 0; 
 
             Object.keys(operatorStats).forEach(op => {
-                // 如果目前登入者是 beautician，則只能看到自己的卡片
                 if (loggedInRole === 'beautician' && loggedInBeautician !== op) {
                     return;
                 }
@@ -1830,13 +1946,11 @@
                 const stats = operatorStats[op];
                 totalServiceSales += stats.consume;
 
-                // 3. 獲取該帳號在 Firebase 中設定的抽成 % (Jerry 在後台設定)
                 const opRecord = operators.find(o => o.username.toLowerCase() === op.toLowerCase());
-                let commPercent = 100; // 預設 100%
+                let commPercent = 100; 
                 if (opRecord) {
                     commPercent = parseFloat(opRecord.commission) !== undefined ? parseFloat(opRecord.commission) : 100;
                 } else {
-                    // 相容舊資料備份
                     if (op === '小Q') commPercent = 40;
                 }
 
@@ -1876,7 +1990,6 @@
                 container.appendChild(card);
             });
 
-            // 3. P&L 損益統計 (只有管理員與老闆可見，美容師隔離)
             if (loggedInRole !== 'beautician') {
                 const periodExpenses = expenses.filter(e => e.timestamp >= startTs && e.timestamp <= endTs);
                 let totalExp = 0; 
@@ -1906,7 +2019,7 @@
         // Miscellaneous Expenses Business Logic
         // ==========================================
         document.getElementById('btnSubmitExpense').addEventListener('click', async () => {
-            if (isProcessing || loggedInRole === 'beautician') return; // 美容師唯讀限制
+            if (isProcessing || loggedInRole === 'beautician') return; 
 
             hideElement(document.getElementById('errExpense'));
 
@@ -1986,7 +2099,6 @@
                     </td>
                 `;
 
-                // 綁定刪除事件
                 tr.querySelector('.btn-delete-expense').addEventListener('click', async (e) => {
                     const docId = e.currentTarget.getAttribute('data-id');
                     if (confirm(`確認要刪除此筆 [${exp.category}] 金額 $${formatNumber(exp.amount)} 的紀錄嗎？`)) {
@@ -1999,339 +2111,4 @@
                     }
                 });
 
-                table.appendChild(tr);
-            });
-        }
-
-        // ==========================================
-        // Submit Consultation Form
-        // ==========================================
-        document.getElementById('btnSubmitConsultation').addEventListener('click', async () => {
-            if (isProcessing) return;
-            
-            hideElement(document.getElementById('errConsult'));
-            hideElement(document.getElementById('successConsult'));
-
-            const name = document.getElementById('consultName').value.trim();
-            const phone = document.getElementById('consultPhone').value.trim();
-            const gender = document.querySelector('input[name="consultGender"]:checked')?.value;
-            const bYear = document.getElementById('consultYear').value;
-            const bMonth = document.getElementById('consultMonth').value;
-            const bDay = document.getElementById('consultDay').value;
-            const birthday = (bYear && bMonth && bDay) ? `${bYear}-${String(bMonth).padStart(2,'0')}-${String(bDay).padStart(2,'0')}` : '';
-
-            const areas = Array.from(document.querySelectorAll('input[name="consultArea"]:checked')).map(cb => cb.value);
-            const isConsentChecked = document.getElementById('consultConsent').checked;
-            const allPrecautionsChecked = Array.from(document.querySelectorAll('input[name="consultPrecautions"]')).every(cb => cb.checked);
-
-            let errorMsg = '';
-            let targetEl = null;
-
-            if (!name) { errorMsg = '請填寫真實姓名'; targetEl = document.getElementById('consultName'); }
-            else if (!phone.startsWith('09') || phone.length !== 10) { errorMsg = '手機號碼格式錯誤'; targetEl = document.getElementById('consultPhone'); }
-            else if (!bYear || !bMonth || !bDay) { errorMsg = '請選擇生日'; targetEl = document.getElementById('consultYear').parentElement; }
-            else if (areas.length === 0) { errorMsg = '請勾選服務部位'; targetEl = document.getElementById('sectionAreas'); }
-            else if (!allPrecautionsChecked) { errorMsg = '請勾選所有注意事項'; targetEl = document.getElementById('sectionPrecautions'); }
-            else if (!isConsentChecked) { errorMsg = '請同意聲明'; targetEl = document.getElementById('sectionConsent'); }
-            else if (consultPad.isEmpty()) { errorMsg = '請完成簽名'; targetEl = document.getElementById('sectionSignature'); }
-
-            if (errorMsg) {
-                showError('errConsult', errorMsg);
-                if (targetEl) {
-                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    targetEl.classList.add('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50', 'transition', 'duration-300');
-                    setTimeout(() => targetEl.classList.remove('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50'), 2500);
-                }
-                return;
-            }
-
-            setProcessing('btnSubmitConsultation', '傳送中...');
-            try {
-                const signatureBase64 = consultPad.getData();
-                
-                await robustAddDoc('beauty_consultations', {
-                    name, phone, gender, birthday, areas,
-                    precautionsAgreed: allPrecautionsChecked,
-                    consentStatus: isConsentChecked,
-                    signature: signatureBase64,
-                    timestamp: new Date().getTime(),
-                    createdAt: new Date().toISOString()
-                });
-
-                // 自動幫他建立一個儲值金會員帳戶 (如果還不存在)
-                const existingMember = members.find(m => m.phone === phone);
-                if (!existingMember) {
-                    await robustAddDoc('beauty_members', {
-                        name, phone, birthday, gender,
-                        balance: 0, bonusBalance: 0, points: 0,
-                        createdAt: new Date().getTime(),
-                        createdBy: 'System_Auto'
-                    });
-                }
-
-                openModal('modalConsultSuccess');
-                
-                document.getElementById('consultName').value = '';
-                document.getElementById('consultPhone').value = '';
-                document.getElementById('consultYear').value = '';
-                document.getElementById('consultMonth').value = '';
-                document.getElementById('consultDay').value = '';
-                document.getElementById('consultConsent').checked = false;
-                document.querySelectorAll('input[name="consultArea"]:checked').forEach(cb => cb.checked = false);
-                document.querySelectorAll('input[name="consultPrecautions"]').forEach(cb => cb.checked = false);
-                consultPad.clear();
-
-            } catch (err) {
-                showError('errConsult', '儲存失敗: ' + err.message);
-            }
-            clearProcessing('btnSubmitConsultation');
-        });
-
-        document.getElementById('btnConfirmConsultSuccess').addEventListener('click', () => {
-            closeModal('modalConsultSuccess');
-            switchView('consultation');
-        });
-
-        // ==========================================
-        // Operator Manager Modal Logic (V1.5)
-        // ==========================================
-        document.getElementById('btnOpenOperatorsView').addEventListener('click', () => {
-            resetOperatorForm();
-            openModal('modalOperators');
-        });
-
-        function resetOperatorForm() {
-            document.getElementById('opEditId').value = '';
-            document.getElementById('opUsername').value = '';
-            document.getElementById('opUsername').disabled = false;
-            document.getElementById('opPassword').value = '';
-            document.getElementById('opRole').value = 'beautician';
-            document.getElementById('opRole').disabled = false;
-            document.getElementById('opCommission').value = '';
-            document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-user-plus text-emerald-600"></i> 新增/修改帳號`;
-            hideElement(document.getElementById('errOperator'));
-        }
-
-        document.getElementById('btnResetOpForm').addEventListener('click', (e) => {
-            e.preventDefault();
-            resetOperatorForm();
-        });
-
-        // 儲存/修改帳號
-        document.getElementById('btnSaveOperator').addEventListener('click', async () => {
-            const editId = document.getElementById('opEditId').value;
-            const username = document.getElementById('opUsername').value.trim();
-            const password = document.getElementById('opPassword').value.trim();
-            const role = document.getElementById('opRole').value;
-            const commission = parseFloat(document.getElementById('opCommission').value);
-            
-            hideElement(document.getElementById('errOperator'));
-            
-            if (!username || !password || isNaN(commission)) {
-                showError('errOperator', '所有欄位皆為必填，且抽成比例須為有效數字');
-                return;
-            }
-            if (commission < 0 || commission > 100) {
-                showError('errOperator', '抽成比例須介於 0 至 100 之間');
-                return;
-            }
-            
-            try {
-                if (editId) {
-                    const opRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators', editId);
-                    const updateData = { password: password, commission: commission };
-                    
-                    // Jerry 不可更改自己名稱或降低權限，防止鎖死
-                    if (username.toLowerCase() !== 'jerry') {
-                        updateData.username = username;
-                        updateData.role = role;
-                    }
-                    await updateDoc(opRef, updateData);
-                } else {
-                    // 防重複帳號
-                    const exist = operators.find(o => o.username.toLowerCase() === username.toLowerCase());
-                    if (exist) {
-                        showError('errOperator', '此帳號名稱已存在');
-                        return;
-                    }
-                    
-                    const opRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators');
-                    await addDoc(opRef, {
-                        username: username,
-                        password: password,
-                        role: role,
-                        commission: commission,
-                        status: 'active'
-                    });
-                }
-                resetOperatorForm();
-            } catch (err) {
-                showError('errOperator', '儲存失敗: ' + err.message);
-            }
-        });
-
-        // 渲染員工列表
-        function renderOperatorsList() {
-            const tbody = document.getElementById('operatorsTableBody');
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            
-            operators.forEach(op => {
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-stone-50 transition border-b border-stone-100";
-                
-                const roleMap = {
-                    admin: "最高管理者",
-                    owner: "老闆",
-                    beautician: "美容師"
-                };
-                const roleName = roleMap[op.role] || op.role;
-                const statusColor = op.status === 'active' ? 'text-emerald-600 bg-emerald-50' : 'text-stone-400 bg-stone-100';
-                const statusText = op.status === 'active' ? '啟用中' : '已停用';
-                
-                const isJerry = op.username.toLowerCase() === 'jerry';
-                
-                tr.innerHTML = `
-                    <td class="p-3 font-semibold text-stone-800">${op.username}</td>
-                    <td class="p-3 font-mono text-stone-500">${op.password}</td>
-                    <td class="p-3"><span class="bg-gray-100 text-stone-700 px-2 py-0.5 rounded text-xs font-semibold">${roleName}</span></td>
-                    <td class="p-3 text-center font-bold text-stone-700">${op.commission}%</td>
-                    <td class="p-3 text-center">
-                        <span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">${statusText}</span>
-                    </td>
-                    <td class="p-3 text-center space-x-1 whitespace-nowrap">
-                        <button class="btn-edit-op px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded text-xs font-semibold text-stone-700" data-id="${op.id}">修改</button>
-                        ${isJerry ? '' : `
-                            <button class="btn-toggle-op px-2 py-1 ${op.status === 'active' ? 'bg-red-50 hover:bg-red-100 text-red-600' : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-600'} rounded text-xs font-semibold" data-id="${op.id}" data-status="${op.status}">
-                                ${op.status === 'active' ? '停用' : '啟用'}
-                            </button>
-                        `}
-                    </td>
-                `;
-                
-                // 綁定編輯
-                tr.querySelector('.btn-edit-op').addEventListener('click', () => {
-                    document.getElementById('opEditId').value = op.id;
-                    document.getElementById('opUsername').value = op.username;
-                    
-                    if (isJerry) {
-                        document.getElementById('opUsername').disabled = true;
-                        document.getElementById('opRole').disabled = true;
-                    } else {
-                        document.getElementById('opUsername').disabled = false;
-                        document.getElementById('opRole').disabled = false;
-                    }
-                    
-                    document.getElementById('opPassword').value = op.password;
-                    document.getElementById('opRole').value = op.role;
-                    document.getElementById('opCommission').value = op.commission;
-                    document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-pencil-simple text-amber-600"></i> 修改帳號: ${op.username}`;
-                });
-                
-                // 綁定停用/啟用
-                if (!isJerry) {
-                    tr.querySelector('.btn-toggle-op').addEventListener('click', async (e) => {
-                        const id = e.currentTarget.getAttribute('data-id');
-                        const currentStatus = e.currentTarget.getAttribute('data-status');
-                        const nextStatus = currentStatus === 'active' ? 'disabled' : 'active';
-                        
-                        try {
-                            const opRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators', id);
-                            await updateDoc(opRef, { status: nextStatus });
-                        } catch (err) {
-                            alert("更新失敗: " + err.message);
-                        }
-                    });
-                }
-                
-                tbody.appendChild(tr);
-            });
-        }
-
-        // ==========================================
-        // Initialization & Auth Setup (MANDATORY RULE 3)
-        // ==========================================
-        const initAuth = async () => {
-            try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    try {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } catch (customError) {
-                        console.warn("自訂 Token 驗證失敗，切換為匿名登入:", customError);
-                        await signInAnonymously(auth);
-                    }
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Auth error:", error);
-                document.getElementById('loadingContent').innerHTML = `
-                    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm mx-4 text-left border border-red-100 animate-in fade-in">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
-                                <i class="ph ph-warning-circle text-2xl"></i>
-                            </div>
-                            <h3 class="text-lg font-bold text-stone-800">資料庫連線錯誤</h3>
-                        </div>
-                        <p class="text-stone-600 text-sm leading-relaxed mb-4">
-                            請確認專案已啟用匿名登入。<br/>${error.message}
-                        </p>
-                    </div>
-                `;
-            }
-        };
-
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-                fetchData();
-                updateRBACUI(); // 初始化權限 UI
-                hideElement(document.getElementById('loadingScreen'));
-                showElement(document.getElementById('appContent'));
-                switchView('consultation'); // 確保一開始切換至諮詢表
-            }
-        });
-
-        // 啟動身分驗證
-        initAuth();
-
-        // ==========================================
-        // General UI Click Bindings & Keydowns
-        // ==========================================
-        DOM.btnBack.addEventListener('click', () => switchView('list'));
-        DOM.btnOpenConsultationView.addEventListener('click', () => switchView('consultation'));
-        DOM.btnOpenReport.addEventListener('click', () => switchView('report'));
-        DOM.btnAddMemberView.addEventListener('click', () => {
-            document.getElementById('newMemName').value = '';
-            document.getElementById('newMemPhone').value = '';
-            document.getElementById('newMemBirthday').value = '';
-            document.getElementById('newMemArea').value = '';
-            openModal('modalAddMember');
-        });
-
-        document.getElementById('btnTabCommission').addEventListener('click', () => switchReportTab('commission'));
-        document.getElementById('btnTabExpenses').addEventListener('click', () => switchReportTab('expenses'));
-
-        // ESC & ENTER 快捷鍵處理
-        document.addEventListener('keydown', (e) => {
-            const openModalEl = Array.from(document.querySelectorAll('[id^="modal"]')).find(el => !el.classList.contains('hidden'));
-            if (e.key === 'Escape') {
-                if (openModalEl) closeModal(openModalEl.id);
-            } else if (e.key === 'Enter') {
-                if (openModalEl) {
-                    if (document.activeElement.tagName.toLowerCase() === 'textarea') return;
-                    e.preventDefault(); 
-                    if (openModalEl.id === 'modalLogin') document.getElementById('btnSubmitLogin').click();
-                    else if (openModalEl.id === 'modalAddMember') document.getElementById('btnSubmitAddMember').click();
-                    else if (openModalEl.id === 'modalAdjustAuth') document.getElementById('btnVerifyPin').click();
-                    else if (openModalEl.id === 'modalAdjustForm') document.getElementById('btnSubmitAdjust').click();
-                    else if (openModalEl.id === 'modalConvert') document.getElementById('btnSubmitConvert').click();
-                    else if (openModalEl.id === 'modalTransaction') document.getElementById('btnSubmitTx').click();
-                    else if (openModalEl.id === 'modalConsultSuccess') document.getElementById('btnConfirmConsultSuccess').click();
-                }
-            }
-        });
-
-    </script>
-</body>
-</html>
+                table
