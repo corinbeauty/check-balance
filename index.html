@@ -5,12 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>美業儲值金會員查詢系統 V1.3</title>
     
-    <!-- LINE 等通訊軟體預覽設定 (Open Graph) -->
-    <meta name="description" content="美業會員系統">
-    <meta property="og:title" content="美業儲值金會員查詢系統">
-    <meta property="og:description" content="美業會員系統">
+    <!-- LINE與社群分享預覽設定 (OG Tags) -->
+    <meta property="og:title" content="美業會員系統">
+    <meta property="og:description" content="專業的儲值金與會員管理系統">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="美業會員系統">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -387,7 +385,7 @@
                     <label class="block text-sm font-medium text-stone-700 mb-1">密碼</label>
                     <div class="relative">
                         <i class="ph ph-lock-key absolute left-3 top-1/2 -translate-y-1/2 text-stone-400"></i>
-                        <input type="password" id="loginPwd" class="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none tracking-widest font-mono" placeholder="••••" />
+                        <input type="password" id="loginPwd" class="w-full pl-10 pr-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none tracking-widest font-mono" />
                     </div>
                 </div>
             </div>
@@ -649,8 +647,23 @@
             noticeNotLoggedIn: document.getElementById('noticeNotLoggedIn')
         };
 
-        const showElement = (el) => { if(el) { el.classList.remove('hidden'); el.classList.add('block'); }};
-        const hideElement = (el) => { if(el) { el.classList.add('hidden'); el.classList.remove('block'); }};
+        const showElement = (el) => { 
+            if(el) { 
+                el.classList.remove('hidden');
+                el.classList.remove('block');
+                if (el.classList.contains('items-center')) {
+                    el.style.display = 'flex';
+                } else {
+                    el.style.display = '';
+                }
+            }
+        };
+        const hideElement = (el) => { 
+            if(el) { 
+                el.classList.add('hidden'); 
+                el.style.display = '';
+            }
+        };
         
         function formatNumber(num) { return (num || 0).toLocaleString(); }
         function formatDate(ts) {
@@ -684,13 +697,9 @@
                 });
                 
                 showElement(DOM.btnAddMemberView);
-                DOM.btnAddMemberView.style.display = 'flex'; // override tailwind utility block
                 hideElement(DOM.noticeNotLoggedIn);
                 
-                authRequiredElements.forEach(el => {
-                    el.classList.remove('hidden');
-                    if(el.tagName === 'DIV' && el.classList.contains('flex')) el.style.display = 'flex';
-                });
+                authRequiredElements.forEach(el => showElement(el));
             } else {
                 // 未登入
                 DOM.authStatusArea.innerHTML = `
@@ -707,7 +716,7 @@
                 hideElement(DOM.btnAddMemberView);
                 showElement(DOM.noticeNotLoggedIn);
                 
-                authRequiredElements.forEach(el => el.classList.add('hidden'));
+                authRequiredElements.forEach(el => hideElement(el));
             }
         }
 
@@ -809,9 +818,8 @@
             if (view === 'list') {
                 showElement(DOM.viewList);
                 hideElement(DOM.btnBack);
-                if(loggedInBeautician) DOM.btnAddMemberView.style.display = 'flex';
+                if(loggedInBeautician) showElement(DOM.btnAddMemberView);
                 showElement(DOM.btnOpenConsultationView);
-                DOM.btnOpenConsultationView.style.display = 'flex';
                 selectedMember = null;
                 renderMembers();
             } else if (view === 'detail') {
@@ -1135,11 +1143,9 @@
             if (window.innerHeight > window.innerWidth) {
                 overlay.classList.remove('hidden');
                 overlay.classList.add('flex');
-                document.body.style.overflow = 'hidden'; // 鎖定滾動
             } else {
                 overlay.classList.add('hidden');
                 overlay.classList.remove('flex');
-                document.body.style.overflow = ''; 
                 // 轉向後重設 canvas 大小以確保繪製正確
                 consultPad.init();
             }
