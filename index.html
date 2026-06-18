@@ -1382,6 +1382,52 @@
         }
 
         // ==========================================
+        // API - Delete Transaction (For Admin)
+        // ==========================================
+        window.deleteTransaction = async function(txId) {
+            const tx = transactions.find(t => t.id === txId);
+            if (!tx) return;
+
+            const member = members.find(m => m.id === tx.memberId);
+            if (!member) {
+                if(confirm('找不到關聯的會員資料，無法回推餘額。是否僅強制刪除該交易紀錄？')) {
+                    try {
+                        await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
+                        if (currentActiveViewId === 'report') document.getElementById('btnGenerateReport').click();
+                    } catch(err) {
+                        alert('刪除失敗: ' + err.message);
+                    }
+                }
+                return;
+            }
+
+            if (!confirm('警告：確定要永久刪除此筆交易明細嗎？\n這將同時「回推並扣除」該會員當時產生的本金、贈送金與點數。')) {
+                return;
+            }
+
+            const newBalance = (member.balance || 0) - (tx.amountChange || 0);
+            const newBonus = (member.bonusBalance || 0) - (tx.bonusChange || 0);
+            const newPoints = (member.points || 0) - (tx.pointsChange || 0);
+
+            try {
+                await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', member.id), {
+                    balance: newBalance,
+                    bonusBalance: newBonus,
+                    points: newPoints
+                });
+                
+                await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
+                
+                // If on report page, regenerate report manually since it's not fully reactive inside stats calculation
+                if (currentActiveViewId === 'report') {
+                    document.getElementById('btnGenerateReport').click();
+                }
+            } catch(err) {
+                alert('刪除失敗: ' + err.message);
+            }
+        };
+
+        // ==========================================
         // Member List & Details Renderer
         // ==========================================
         function renderMembers() {
@@ -1533,7 +1579,8 @@
                     if (tx.depositAmount === undefined && tx.amountChange > 0) depositAmt = tx.amountChange;
 
                     const isJerry = loggedInRole === 'admin';
-                    const editBtnHtml = isJerry ? `<button class="btn-edit-tx ml-2 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded font-bold shadow-sm" data-id="${tx.id}">修改</button>` : '';
+                    const editBtnHtml = isJerry ? `<button class="btn-edit-tx ml-1 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded font-bold shadow-sm" data-id="${tx.id}">修改</button>` : '';
+                    const deleteBtnHtml = isJerry ? `<button class="btn-delete-tx ml-1 text-xs bg-rose-100 hover:bg-rose-200 text-rose-800 px-2 py-1 rounded font-bold shadow-sm" data-id="${tx.id}">刪除</button>` : '';
 
                     tr.innerHTML = `
                         <td class="p-4 text-stone-500 whitespace-nowrap">${formatDate(tx.timestamp)}</td>
@@ -1548,7 +1595,10 @@
                                     ${tx.signature ? `<img src="${tx.signature}" class="h-8 rounded bg-white border border-stone-200" />` : ''}
                                     <span class="text-xs text-stone-400 truncate" title="${tx.remark || ''}">${tx.remark || '無備註'}</span>
                                 </div>
-                                ${editBtnHtml}
+                                <div class="flex shrink-0">
+                                    ${editBtnHtml}
+                                    ${deleteBtnHtml}
+                                </div>
                             </div>
                         </td>
                     `;
@@ -1557,6 +1607,10 @@
                         tr.querySelector('.btn-edit-tx').addEventListener('click', (e) => {
                             const txId = e.currentTarget.getAttribute('data-id');
                             openEditTxModal(txId);
+                        });
+                        tr.querySelector('.btn-delete-tx').addEventListener('click', (e) => {
+                            const txId = e.currentTarget.getAttribute('data-id');
+                            window.deleteTransaction(txId);
                         });
                     }
 
@@ -2021,7 +2075,8 @@
             let totalServiceSales = 0; 
 
             Object.keys(operatorStats).forEach(op => {
-                if (loggedInRole === 'beautician' && loggedInBeautician !== op) {
+                // 將判斷改為不區分大小寫，確保資料渲染正確卡控 Larmo 與 小Q 只能看到自己
+                if (loggedInRole === 'beautician' && loggedInBeautician.toLowerCase() !== op.toLowerCase()) {
                     return;
                 }
 
@@ -2050,12 +2105,15 @@
                     const dAmtStr = tx._dAmt > 0 ? `$${formatNumber(tx._dAmt)}` : '-';
                     const remarkStr = tx.remark || '無';
 
-                    let checkboxHtml = '';
+                    let actionHtml = '';
                     if (loggedInRole === 'admin' || loggedInRole === 'owner') {
                         const isAudited = tx.audited ? 'checked' : '';
-                        checkboxHtml = `
+                        actionHtml = `
                             <td class="p-2 text-center border-b border-stone-100">
-                                <input type="checkbox" class="audit-checkbox w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer" data-id="${tx.id}" ${isAudited}>
+                                <div class="flex items-center justify-center gap-2">
+                                    <input type="checkbox" class="audit-checkbox w-4 h-4 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer" data-id="${tx.id}" ${isAudited} title="核對">
+                                    ${loggedInRole === 'admin' ? `<button class="btn-delete-report-tx text-rose-500 hover:text-rose-700 font-bold ml-1" data-id="${tx.id}" title="刪除明細"><i class="ph ph-trash text-lg"></i></button>` : ''}
+                                </div>
                             </td>
                         `;
                     }
@@ -2067,12 +2125,12 @@
                             <td class="p-2 border-b border-stone-100 text-rose-600 text-right font-semibold">${cAmtStr}</td>
                             <td class="p-2 border-b border-stone-100 text-emerald-600 text-right font-semibold">${dAmtStr}</td>
                             <td class="p-2 border-b border-stone-100 text-stone-500 text-xs truncate max-w-[200px]" title="${remarkStr}">${remarkStr}</td>
-                            ${checkboxHtml}
+                            ${actionHtml}
                         </tr>
                     `;
                 });
 
-                let auditHeader = (loggedInRole === 'admin' || loggedInRole === 'owner') ? `<th class="p-2 text-center border-b border-stone-200">核對</th>` : '';
+                let auditHeader = (loggedInRole === 'admin' || loggedInRole === 'owner') ? `<th class="p-2 text-center border-b border-stone-200">操作</th>` : '';
 
                 let detailTableHtml = `
                     <div class="mt-4 mb-6 border border-stone-200 rounded-xl overflow-hidden bg-white">
@@ -2148,6 +2206,14 @@
                         alert('核對狀態更新失敗: ' + err.message);
                         e.target.checked = !isChecked; // revert on fail
                     }
+                });
+            });
+
+            // 綁定動態生成的報表內 Delete按鈕
+            document.querySelectorAll('.btn-delete-report-tx').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const txId = e.currentTarget.getAttribute('data-id');
+                    await window.deleteTransaction(txId);
                 });
             });
 
