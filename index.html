@@ -85,7 +85,7 @@
                     <input 
                         type="text" 
                         id="searchInput"
-                        placeholder="搜尋會員 姓名 或 生日(例:0101)..." 
+                        placeholder="搜尋會員 姓名、電話、生日 或 儲值金額..." 
                         class="w-full pl-10 pr-4 py-3 rounded-xl border border-stone-200 bg-white shadow-sm focus:ring-2 focus:ring-pink-500 focus:border-pink-500 outline-none transition"
                     />
                 </div>
@@ -598,7 +598,7 @@
             <h3 class="font-bold text-xl text-stone-800 mb-2">已儲存至雲端</h3>
             <p class="text-stone-500 text-sm mb-6">顧客諮詢登記表已成功送出並建檔。</p>
             <button id="btnConfirmConsultSuccess" class="w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl shadow-sm transition flex items-center justify-center gap-2">
-                <i class="ph ph-check-circle text-lg"></i> 確認並返回首頁
+                <i class="ph ph-check-circle text-lg"></i> 確認
             </button>
         </div>
     </div>
@@ -759,7 +759,12 @@
         const initAuth = async () => {
             try {
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (customError) {
+                        console.warn("自訂 Token 驗證失敗，切換為匿名登入:", customError);
+                        await signInAnonymously(auth);
+                    }
                 } else {
                     await signInAnonymously(auth);
                 }
@@ -800,7 +805,8 @@
         function fetchData() {
             if (!currentUser) return;
             
-            const membersRef = collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_members');
+            // 變更為共用路徑，讓所有裝置都能讀取相同的會員資料
+            const membersRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members');
             onSnapshot(membersRef, (snapshot) => {
                 members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 if (selectedMember) {
@@ -813,7 +819,8 @@
                 renderMembers();
             });
 
-            const txRef = collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_transactions');
+            // 變更為共用路徑，讓所有裝置都能讀取相同的交易紀錄
+            const txRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions');
             onSnapshot(txRef, (snapshot) => {
                 transactions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 if (selectedMember) renderMemberDetail();
@@ -876,12 +883,12 @@
             DOM.memberList.innerHTML = '';
             
             const filtered = members.filter(m => {
-                const matchName = (m.name || '').toLowerCase().includes(term);
-                const matchPhone = (m.phone || '').includes(term);
+                if (!term) return true;
+                const totalBalance = (m.balance || 0) + (m.bonusBalance || 0);
                 const rawDate = (m.birthday || '').replace(/-/g, '');
-                const matchBirthday = (m.birthday || '').includes(term) || rawDate.includes(term);
-                
-                return matchName || matchPhone || matchBirthday;
+                // 將所有需要被搜尋的欄位組合成一串文字進行比對，達成全方位搜尋
+                const searchStr = `${m.name || ''} ${m.phone || ''} ${m.birthday || ''} ${rawDate} ${totalBalance}`.toLowerCase();
+                return searchStr.includes(term);
             }).sort((a, b) => b.createdAt - a.createdAt);
 
             if (filtered.length === 0) {
@@ -1206,7 +1213,8 @@
             
             setProcessing('btnSubmitAddMember', '處理中...');
             try {
-                const membersRef = collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_members');
+                // 變更為共用路徑寫入會員
+                const membersRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members');
                 await addDoc(membersRef, {
                     name, phone, birthday, area,
                     balance: 0, bonusBalance: 0, points: 0,
@@ -1271,10 +1279,12 @@
                 operator: loggedInBeautician || '系統'
             };
 
-            const txRef = collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_transactions');
+            // 變更為共用路徑寫入交易
+            const txRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions');
             await addDoc(txRef, txDoc);
 
-            const memberDocRef = doc(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_members', selectedMember.id);
+            // 變更為共用路徑更新會員餘額
+            const memberDocRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', selectedMember.id);
             await updateDoc(memberDocRef, { balance: newBalance, bonusBalance: newBonus, points: newPoints });
         }
 
@@ -1385,13 +1395,18 @@
             hideElement(document.getElementById('successConsult'));
 
             // 1. 基本個資擷取
-            const name = document.getElementById('consultName').value.trim();
-            const phone = document.getElementById('consultPhone').value.trim();
+            const nameEl = document.getElementById('consultName');
+            const phoneEl = document.getElementById('consultPhone');
+            const name = nameEl.value.trim();
+            const phone = phoneEl.value.trim();
             const gender = document.querySelector('input[name="consultGender"]:checked')?.value;
             
-            const bYear = document.getElementById('consultYear').value;
-            const bMonth = document.getElementById('consultMonth').value;
-            const bDay = document.getElementById('consultDay').value;
+            const yearEl = document.getElementById('consultYear');
+            const monthEl = document.getElementById('consultMonth');
+            const dayEl = document.getElementById('consultDay');
+            const bYear = yearEl.value;
+            const bMonth = monthEl.value;
+            const bDay = dayEl.value;
             const birthday = (bYear && bMonth && bDay) ? `${bYear}-${String(bMonth).padStart(2,'0')}-${String(bDay).padStart(2,'0')}` : '';
 
             // 2. 除毛部位擷取 (陣列)
@@ -1399,27 +1414,53 @@
             const areas = Array.from(areaCheckboxes).map(cb => cb.value);
 
             // 3. 驗證同意聲明
-            const isConsentChecked = document.getElementById('consultConsent').checked;
+            const consentEl = document.getElementById('consultConsent');
+            const isConsentChecked = consentEl.checked;
 
             // 4. 驗證服務聲明與注意事項是否全勾
             const precautionCheckboxes = document.querySelectorAll('input[name="consultPrecautions"]');
             const allPrecautionsChecked = Array.from(precautionCheckboxes).every(cb => cb.checked);
 
-            // --- 資料驗證 ---
-            if (!name) return showError('errConsult', '請填寫姓名');
-            if (!phone.startsWith('09') || phone.length !== 10) return showError('errConsult', '手機號碼格式錯誤，需為09開頭且共10碼');
-            if (!bYear || !bMonth || !bDay) return showError('errConsult', '請選擇完整的生日資訊');
-            if (areas.length === 0) return showError('errConsult', '請至少勾選一項「除毛部位」');
-            if (!allPrecautionsChecked) return showError('errConsult', '請確認並勾選所有「服務聲明與注意事項」');
-            if (!isConsentChecked) return showError('errConsult', '請詳閱並勾選「本人同意聲明」');
-            if (consultPad.isEmpty()) return showError('errConsult', '請顧客於下方完成電子簽名確認');
+            // --- 資料驗證與自動捲動提示 ---
+            let errorMsg = '';
+            let targetEl = null;
+
+            if (!name) { 
+                errorMsg = '請填寫姓名'; targetEl = nameEl; 
+            } else if (!phone.startsWith('09') || phone.length !== 10) { 
+                errorMsg = '手機號碼格式錯誤，需為09開頭且共10碼'; targetEl = phoneEl; 
+            } else if (!bYear || !bMonth || !bDay) { 
+                errorMsg = '請選擇完整的生日資訊'; targetEl = yearEl.parentElement; 
+            } else if (areas.length === 0) { 
+                errorMsg = '請至少勾選一項「除毛部位」'; targetEl = document.querySelector('input[name="consultArea"]').closest('.grid'); 
+            } else if (!allPrecautionsChecked) { 
+                errorMsg = '請確認並勾選所有「服務聲明與注意事項」'; targetEl = document.querySelector('input[name="consultPrecautions"]').closest('.space-y-3'); 
+            } else if (!isConsentChecked) { 
+                errorMsg = '請詳閱並勾選「本人同意聲明」'; targetEl = consentEl.closest('.bg-stone-50'); 
+            } else if (consultPad.isEmpty()) { 
+                errorMsg = '請顧客於下方完成電子簽名確認'; targetEl = document.getElementById('consultSignatureContainer'); 
+            }
+
+            if (errorMsg) {
+                showError('errConsult', errorMsg);
+                if (targetEl) {
+                    // 平滑捲動至未填寫的區塊
+                    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    // 暫時加上紅色外框與背景，強烈提示顧客
+                    targetEl.classList.add('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50', 'transition', 'duration-300');
+                    setTimeout(() => {
+                        targetEl.classList.remove('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50');
+                    }, 2500);
+                }
+                return;
+            }
 
             setProcessing('btnSubmitConsultation', '傳送中...');
             try {
                 const signatureBase64 = consultPad.getData();
                 
-                // 將諮詢表資料直接寫入 Firebase 的 beauty_consultations 集合
-                const consultRef = collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_consultations');
+                // 將諮詢表資料寫入共用路徑的 beauty_consultations 集合
+                const consultRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_consultations');
                 await addDoc(consultRef, {
                     name: name,
                     phone: phone,
@@ -1453,10 +1494,10 @@
             clearProcessing('btnSubmitConsultation');
         });
 
-        // 綁定成功對話框的確認按鈕
+        // 綁定成功對話框的確認按鈕 (修改跳轉行為)
         document.getElementById('btnConfirmConsultSuccess').addEventListener('click', () => {
             closeModal('modalConsultSuccess');
-            switchView('list');
+            switchView('consultation'); // 改為跳轉回顧客諮詢表
         });
 
         // ==========================================
