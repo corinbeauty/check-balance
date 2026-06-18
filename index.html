@@ -55,6 +55,11 @@
                 </div>
                 
                 <div class="flex items-center gap-2 sm:gap-3">
+                    <button id="btnOpenReport" class="hidden items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+                        <i class="ph ph-chart-bar text-lg"></i>
+                        <span class="hidden sm:inline">業績結算</span>
+                    </button>
+
                     <button id="btnOpenConsultationView" class="flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm">
                         <i class="ph ph-clipboard-text text-lg"></i>
                         <span class="hidden sm:inline">顧客諮詢表</span>
@@ -79,7 +84,6 @@
                  VIEW 1: MEMBER LIST
                  ========================================== -->
             <div id="viewList" class="hidden space-y-4 animate-fade-in view-transition">
-                <!-- Search Bar -->
                 <div class="relative">
                     <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-xl text-stone-400"></i>
                     <input 
@@ -110,7 +114,6 @@
                  VIEW 2: MEMBER DETAILS
                  ========================================== -->
             <div id="viewDetail" class="hidden space-y-6 view-transition">
-                <!-- Member Identity -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <div class="flex items-center gap-4 w-full sm:w-auto">
                         <div id="detailAvatar" class="shrink-0 w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-2xl shadow-md">
@@ -129,7 +132,7 @@
                     </div>
                     <div class="flex flex-wrap gap-2 w-full sm:w-auto justify-end auth-required hidden">
                         <button id="btnOpenTransaction" class="px-4 py-2 bg-stone-800 text-white rounded-lg text-sm font-medium hover:bg-stone-900 shadow-sm flex items-center gap-1">
-                            <i class="ph ph-currency-dollar text-lg"></i> 儲值 / 消費結帳
+                            <i class="ph ph-currency-dollar text-lg"></i> 結帳與儲值
                         </button>
                         <button id="btnOpenAdjust" class="px-4 py-2 bg-white border border-stone-200 text-stone-700 rounded-lg text-sm font-medium hover:bg-stone-50 shadow-sm flex items-center gap-1">
                             <i class="ph ph-shield-warning text-lg"></i> 系統調整
@@ -176,19 +179,20 @@
                 <div class="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
                     <div class="p-4 sm:p-5 border-b border-stone-100 flex items-center gap-2 bg-stone-50/50">
                         <i class="ph ph-clock-counter-clockwise text-xl text-stone-500"></i>
-                        <h3 class="font-bold text-stone-800 text-lg">歷史結帳紀錄</h3>
+                        <h3 class="font-bold text-stone-800 text-lg">歷史結帳與儲值紀錄</h3>
                     </div>
                     
                     <div class="overflow-x-auto hide-scroll">
-                        <table class="w-full text-left border-collapse min-w-[700px]">
+                        <table class="w-full text-left border-collapse min-w-[800px]">
                             <thead>
                                 <tr class="bg-stone-50 text-stone-500 text-xs uppercase tracking-wider">
                                     <th class="p-4 font-medium border-b border-stone-100">時間</th>
-                                    <th class="p-4 font-medium border-b border-stone-100">類型</th>
-                                    <th class="p-4 font-medium border-b border-stone-100 text-right">本金異動</th>
-                                    <th class="p-4 font-medium border-b border-stone-100 text-right">贈送金異動</th>
-                                    <th class="p-4 font-medium border-b border-stone-100 text-right">最終本金</th>
-                                    <th class="p-4 font-medium border-b border-stone-100">顧客簽章 / 備註</th>
+                                    <th class="p-4 font-medium border-b border-stone-100">操作員</th>
+                                    <th class="p-4 font-medium border-b border-stone-100 text-rose-600">消費總額</th>
+                                    <th class="p-4 font-medium border-b border-stone-100 text-emerald-600">儲值本金</th>
+                                    <th class="p-4 font-medium border-b border-stone-100 text-emerald-600">贈送金</th>
+                                    <th class="p-4 font-medium border-b border-stone-100">最終餘額</th>
+                                    <th class="p-4 font-medium border-b border-stone-100">確認簽名 / 備註</th>
                                 </tr>
                             </thead>
                             <tbody id="transactionList" class="divide-y divide-stone-100 text-sm">
@@ -359,6 +363,95 @@
                 </div>
             </div>
 
+            <!-- ==========================================
+                 VIEW 4: COMMISSION REPORT (JERRY ONLY)
+                 ========================================== -->
+            <div id="viewReport" class="hidden space-y-6 view-transition relative block animate-fade-in">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-stone-100">
+                    <div class="border-b border-stone-100 pb-4 mb-6 flex justify-between items-center">
+                        <div>
+                            <h2 class="text-2xl font-bold text-stone-800 mb-1 flex items-center gap-2">
+                                <i class="ph ph-chart-line-up text-amber-500"></i> 業績與抽成結算
+                            </h2>
+                            <p class="text-sm text-stone-500">最高權限專屬區塊</p>
+                        </div>
+                    </div>
+
+                    <!-- Date Range Selection -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-8 bg-stone-50 p-4 rounded-xl border border-stone-100 items-end">
+                        <div class="flex-1 w-full">
+                            <label class="block text-sm font-medium text-stone-700 mb-1">起始日期</label>
+                            <input type="date" id="reportStartDate" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" />
+                        </div>
+                        <div class="flex-1 w-full">
+                            <label class="block text-sm font-medium text-stone-700 mb-1">結束日期</label>
+                            <input type="date" id="reportEndDate" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" />
+                        </div>
+                        <button id="btnGenerateReport" class="px-6 py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 shadow-sm transition w-full sm:w-auto h-[50px]">
+                            查詢結算
+                        </button>
+                    </div>
+
+                    <div id="reportResults" class="hidden space-y-6">
+                        <!-- LARMO -->
+                        <div class="bg-gradient-to-r from-pink-50 to-white p-5 rounded-xl border border-pink-100 shadow-sm relative overflow-hidden">
+                            <div class="absolute right-0 top-0 h-full w-2 bg-pink-500"></div>
+                            <h3 class="text-lg font-bold text-stone-800 mb-4">LARMO <span class="text-sm font-normal text-stone-500 ml-2">(消費業績抽成 100%)</span></h3>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <div>
+                                    <div class="text-xs text-stone-500 mb-1">總服務消費業績</div>
+                                    <div class="text-xl font-bold text-stone-800" id="repLarmoTotalConsume">$0</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-stone-500 mb-1">消費抽成獎金</div>
+                                    <div class="text-xl font-bold text-pink-600" id="repLarmoCommission">$0</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-stone-500 mb-1">期間儲值筆數</div>
+                                    <div class="text-xl font-bold text-stone-800" id="repLarmoDepositCount">0 筆</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-stone-500 mb-1">儲值級距獎金</div>
+                                    <div class="text-xl font-bold text-pink-600" id="repLarmoDepositBonus">$0</div>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-pink-100 flex justify-between items-center">
+                                <span class="text-sm font-medium text-stone-600">本期應發總獎金 (抽成 + 儲值)</span>
+                                <span class="text-2xl font-bold text-pink-700" id="repLarmoTotalPayout">$0</span>
+                            </div>
+                        </div>
+
+                        <!-- 小Q -->
+                        <div class="bg-gradient-to-r from-purple-50 to-white p-5 rounded-xl border border-purple-100 shadow-sm relative overflow-hidden">
+                            <div class="absolute right-0 top-0 h-full w-2 bg-purple-500"></div>
+                            <h3 class="text-lg font-bold text-stone-800 mb-4">小Q <span class="text-sm font-normal text-stone-500 ml-2">(消費業績抽成 40%)</span></h3>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                                <div>
+                                    <div class="text-xs text-stone-500 mb-1">總服務消費業績</div>
+                                    <div class="text-xl font-bold text-stone-800" id="repQTotalConsume">$0</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-stone-500 mb-1">消費抽成獎金</div>
+                                    <div class="text-xl font-bold text-purple-600" id="repQCommission">$0</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-stone-500 mb-1">期間儲值筆數</div>
+                                    <div class="text-xl font-bold text-stone-800" id="repQDepositCount">0 筆</div>
+                                </div>
+                                <div>
+                                    <div class="text-xs text-stone-500 mb-1">儲值級距獎金</div>
+                                    <div class="text-xl font-bold text-purple-600" id="repQDepositBonus">$0</div>
+                                </div>
+                            </div>
+                            <div class="mt-4 pt-4 border-t border-purple-100 flex justify-between items-center">
+                                <span class="text-sm font-medium text-stone-600">本期應發總獎金 (抽成 + 儲值)</span>
+                                <span class="text-2xl font-bold text-purple-700" id="repQTotalPayout">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -395,14 +488,14 @@
             </div>
             
             <div class="flex gap-3">
-                <button id="btnCancelLogin" class="flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200 transition">取消</button>
+                <button class="modal-close flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200 transition">取消</button>
                 <button id="btnSubmitLogin" class="flex-1 py-3 bg-stone-800 text-white font-medium rounded-xl hover:bg-stone-900 shadow-sm transition">登入</button>
             </div>
         </div>
     </div>
 
     <!-- 1. Add Member Modal (補登用) -->
-    <div id="modalAddMember" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalAddMember" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalAddMemberInner">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                 <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-user-plus text-xl text-pink-600"></i> 直接補登會員資料</h3>
@@ -445,7 +538,7 @@
     </div>
 
     <!-- 2. Transaction Modal -->
-    <div id="modalTransaction" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
+    <div id="modalTransaction" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-start sm:items-center justify-center p-4 z-50 overflow-y-auto transition-opacity duration-200">
         <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden my-8 transform scale-95 transition-transform duration-200" id="modalTransactionInner">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50">
                 <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2"><i class="ph ph-pen-nib text-xl text-pink-600"></i> 結帳與儲值作業</h3>
@@ -455,126 +548,99 @@
             <div class="p-5 space-y-5">
                 <div id="errTx" class="hidden p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2"></div>
                 
-                <!-- Type Toggles -->
-                <div class="flex bg-stone-100 p-1 rounded-xl relative">
-                    <button id="tabDeposit" class="flex-1 py-2 text-sm font-medium rounded-lg transition bg-white shadow text-emerald-600">儲值入帳 (Deposit)</button>
-                    <button id="tabConsume" class="flex-1 py-2 text-sm font-medium rounded-lg transition text-stone-500 hover:text-stone-700">服務消費 (Consume)</button>
-                </div>
-
                 <div class="space-y-4">
-                    <!-- Deposit specific fields -->
-                    <div id="depositFields" class="space-y-4">
-                        <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1">儲值支付方式</label>
-                            <select id="txPaymentMethodDeposit" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none bg-white">
+                    <!-- 消費金額 (移至最前方) -->
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1">本次服務消費總額 <span class="text-rose-500 text-xs font-normal ml-1">(若純儲值無消費請留空)</span></label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-rose-400">$</span>
+                            <input type="number" id="txConsumeTotal" class="w-full pl-8 pr-4 py-3 border border-rose-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none text-lg font-bold text-rose-600" placeholder="0" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 pt-2 border-t border-stone-100">
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-stone-700 mb-1">儲值本金</label>
+                            <input type="number" id="txAmount" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none font-bold" placeholder="0" />
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-stone-700 mb-1">加碼贈送金</label>
+                            <input type="number" id="txBonus" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0" />
+                        </div>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-stone-700 mb-1">支付方式 (儲值或補差額用)</label>
+                            <select id="txPaymentMethod" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 outline-none bg-white">
                                 <option value="現金">現金</option>
                                 <option value="轉帳">轉帳</option>
                                 <option value="LINEPAY">LINE PAY</option>
                                 <option value="街口支付">街口支付</option>
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1">本次儲值本金 <span class="text-emerald-500">*</span></label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400">$</span>
-                                <input type="number" id="txAmount" class="w-full pl-8 pr-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none text-lg font-bold" placeholder="0" />
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1">加碼贈送金</label>
-                                <input type="number" id="txBonus" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0" />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-stone-700 mb-1">新增滿額點數</label>
-                                <input type="number" id="txPoints" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0" />
-                            </div>
-                        </div>
-                        <!-- 計算總額預覽 -->
-                        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100 flex justify-between items-center">
-                            <span class="text-sm font-medium text-emerald-800">儲值入帳總額預覽 (本金+贈送)</span>
-                            <span id="lblDepositTotalPreview" class="text-xl font-bold text-emerald-700">$0</span>
+                        <div class="col-span-2 sm:col-span-1">
+                            <label class="block text-sm font-medium text-stone-700 mb-1">獲得滿額點數</label>
+                            <input type="number" id="txPoints" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0" />
                         </div>
                     </div>
 
-                    <!-- Consume specific fields -->
-                    <div id="consumeFields" class="hidden space-y-4">
+                    <!-- 即時結帳預覽區 -->
+                    <div class="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-2 relative overflow-hidden">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-stone-500">可用總儲值 (原餘額+本次儲值與贈送)</span>
+                            <span id="lblTotalAvailable" class="font-bold text-stone-800">$0</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-rose-600">預計扣除消費</span>
+                            <span id="lblDeductBalance" class="font-bold text-rose-600">-$0</span>
+                        </div>
+                        <div class="flex justify-between text-sm font-bold border-t border-stone-200 pt-2">
+                            <span class="text-stone-800">結帳後剩餘總儲值金</span>
+                            <span id="lblRemainingBalance" class="text-stone-800">$0</span>
+                        </div>
+                    </div>
+
+                    <!-- 差額區 -->
+                    <div id="shortfallSection" class="hidden bg-red-50 p-4 rounded-xl border border-red-200 space-y-3">
+                        <div class="flex justify-between text-sm font-bold text-red-800 pb-2">
+                            <span>儲值金餘額不足，尚欠差額</span>
+                            <span id="lblShortfallAmount" class="text-rose-600">$0</span>
+                        </div>
                         <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1">本次消費總金額 <span class="text-rose-500">*</span></label>
+                            <label class="block text-sm font-medium text-red-800 mb-1 flex justify-between">
+                                <span>已收取差額金額 <span class="text-red-500">*</span></span>
+                                <span class="text-xs font-normal text-red-600">(須達正負0)</span>
+                            </label>
                             <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400">$</span>
-                                <input type="number" id="txConsumeTotal" class="w-full pl-8 pr-4 py-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-rose-500 outline-none text-lg font-bold text-rose-600" placeholder="0" />
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-red-500">$</span>
+                                <input type="number" id="txShortfallPaid" class="w-full pl-7 pr-3 py-2 border border-red-200 rounded-lg focus:ring-2 focus:ring-red-500 outline-none font-bold text-red-700" placeholder="0" />
                             </div>
-                        </div>
-
-                        <div class="bg-stone-50 p-4 rounded-xl border border-stone-100 space-y-2">
-                            <div class="flex justify-between text-sm">
-                                <span class="text-stone-500">目前總儲值金餘額 (本金+贈送)</span>
-                                <span id="lblCurrentTotalBalance" class="font-bold text-stone-800">$0</span>
-                            </div>
-                            <div class="flex justify-between text-sm">
-                                <span class="text-rose-600">預計扣除儲值金</span>
-                                <span id="lblDeductBalance" class="font-bold text-rose-600">-$0</span>
-                            </div>
-                            <div class="flex justify-between text-sm font-bold border-t border-stone-200 pt-2">
-                                <span class="text-stone-800">結帳後剩餘儲值金</span>
-                                <span id="lblRemainingBalance" class="text-stone-800">$0</span>
-                            </div>
-                        </div>
-
-                        <div id="shortfallSection" class="hidden bg-amber-50 p-4 rounded-xl border border-amber-200 space-y-3">
-                            <div class="flex justify-between text-sm font-bold text-amber-800 border-b border-amber-200 pb-2">
-                                <span>儲值金餘額不足，尚欠差額</span>
-                                <span id="lblShortfallAmount" class="text-rose-600">$0</span>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-amber-800 mb-1">補足差額支付方式</label>
-                                <select id="txShortfallMethod" class="w-full p-2 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none bg-white text-sm">
-                                    <option value="現金">現金</option>
-                                    <option value="轉帳">轉帳</option>
-                                    <option value="LINEPAY">LINE PAY</option>
-                                    <option value="街口支付">街口支付</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-amber-800 mb-1 flex justify-between">
-                                    <span>已收取差額金額 <span class="text-rose-500">*</span></span>
-                                    <span class="text-xs font-normal text-amber-600">(須達正負0)</span>
-                                </label>
-                                <div class="relative">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-amber-500">$</span>
-                                    <input type="number" id="txShortfallPaid" class="w-full pl-7 pr-3 py-2 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-500 outline-none font-bold text-amber-700" placeholder="0" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label class="block text-sm font-medium text-stone-700 mb-1">本次獲得點數 (選填)</label>
-                            <input type="number" id="txPointsConsume" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0" />
                         </div>
                     </div>
                 </div>
 
                 <!-- Signature Pad -->
                 <div class="pt-4 border-t border-stone-100">
-                    <label class="block text-sm font-medium text-stone-700 mb-2 flex items-center gap-1">
-                        請顧客確認無誤後簽名 <span class="text-red-500">*</span>
+                    <label class="flex items-center gap-2 cursor-pointer p-3 bg-emerald-50 text-emerald-800 rounded-xl border border-emerald-100 mb-4 transition hover:bg-emerald-100">
+                        <input type="checkbox" id="chkNoConsumeOnlyDeposit" class="w-5 h-5 text-emerald-600 rounded focus:ring-emerald-500">
+                        <span class="text-sm font-medium">僅儲值尚未消費，免簽名直接存檔</span>
                     </label>
-                    <div class="flex flex-col items-center w-full">
+
+                    <div id="signaturePadContainer" class="flex flex-col items-center w-full transition-all duration-300">
+                        <label class="block text-sm font-medium text-stone-700 mb-2 w-full">請顧客確認金額無誤後簽名 <span class="text-red-500">*</span></label>
                         <div class="border-2 border-dashed border-gray-300 rounded-xl overflow-hidden bg-gray-50 relative w-full touch-none">
                             <canvas id="signaturePad" width="350" height="200" class="w-full bg-white cursor-crosshair"></canvas>
                             <div class="absolute top-2 right-2 text-xs text-gray-400 pointer-events-none">請在此簽名</div>
                         </div>
-                        <div class="flex justify-between w-full mt-4 space-x-2">
-                            <button id="btnClearSignature" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition">
-                                清除重寫
+                    </div>
+                    
+                    <div class="flex justify-between w-full mt-4 space-x-2">
+                        <button id="btnClearSignature" class="px-4 py-2 bg-gray-100 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-200 transition">
+                            清除重寫
+                        </button>
+                        <div class="space-x-2 flex">
+                            <button class="modal-close px-4 py-2 text-stone-500 text-sm font-medium hover:bg-stone-100 rounded-lg transition">取消</button>
+                            <button id="btnSubmitTx" class="px-4 py-2 bg-pink-600 text-white rounded-lg text-sm font-medium hover:bg-pink-700 shadow-sm flex items-center gap-1 transition">
+                                確認簽名並送出
                             </button>
-                            <div class="space-x-2 flex">
-                                <button class="modal-close px-4 py-2 text-stone-500 text-sm font-medium hover:bg-stone-100 rounded-lg transition">取消</button>
-                                <button id="btnSubmitTx" class="px-4 py-2 bg-pink-600 text-white rounded-lg text-sm font-medium hover:bg-pink-700 shadow-sm flex items-center gap-1 transition">
-                                    確認並送出
-                                </button>
-                            </div>
                         </div>
                     </div>
                 </div>
@@ -583,7 +649,7 @@
     </div>
 
     <!-- 3. Admin Auth Modal -->
-    <div id="modalAdjustAuth" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalAdjustAuth" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalAdjustAuthInner">
             <i class="ph ph-shield-check text-5xl text-stone-800 mx-auto mb-4 block"></i>
             <h3 class="font-bold text-xl text-stone-800 mb-2">需要最高管理權限</h3>
@@ -601,7 +667,7 @@
     </div>
 
     <!-- 4. Adjust Form Modal -->
-    <div id="modalAdjustForm" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalAdjustForm" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200">
         <div class="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden transform scale-95 transition-transform duration-200" id="modalAdjustFormInner">
             <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-red-50">
                 <h3 class="font-bold text-lg text-red-800 flex items-center gap-2"><i class="ph ph-wrench text-xl"></i> 系統資料強制調整</h3>
@@ -642,7 +708,7 @@
     </div>
 
     <!-- 5. Convert Points Modal -->
-    <div id="modalConvert" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalConvert" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalConvertInner">
             <i class="ph ph-gift text-5xl text-amber-500 mx-auto mb-4 block"></i>
             <h3 class="font-bold text-xl text-stone-800 mb-2">滿額點數兌換</h3>
@@ -674,7 +740,7 @@
     </div>
 
     <!-- 6. Consult Success Modal -->
-    <div id="modalConsultSuccess" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+    <div id="modalConsultSuccess" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50 transition-opacity duration-200">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center transform scale-95 transition-transform duration-200" id="modalConsultSuccessInner">
             <div class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
                 <i class="ph ph-cloud-check text-4xl"></i>
@@ -715,7 +781,6 @@
         let transactions = [];
         let consultations = [];
         let selectedMember = null;
-        let txType = 'deposit'; 
         let isProcessing = false;
         
         // RBAC State
@@ -724,15 +789,17 @@
         let clockInterval = null;
 
         // ==========================================
-        // UI Helpers
+        // UI Helpers & Modal Logic
         // ==========================================
         const DOM = {
             viewList: document.getElementById('viewList'),
             viewDetail: document.getElementById('viewDetail'),
             viewConsultation: document.getElementById('viewConsultation'),
+            viewReport: document.getElementById('viewReport'),
             btnBack: document.getElementById('btnBack'),
             btnAddMemberView: document.getElementById('btnAddMemberView'),
             btnOpenConsultationView: document.getElementById('btnOpenConsultationView'),
+            btnOpenReport: document.getElementById('btnOpenReport'),
             searchInput: document.getElementById('searchInput'),
             memberList: document.getElementById('memberList'),
             emptyListState: document.getElementById('emptyListState'),
@@ -743,12 +810,8 @@
         const showElement = (el) => { 
             if(el) { 
                 el.classList.remove('hidden');
-                el.classList.remove('block');
-                if (el.classList.contains('items-center')) {
-                    el.style.display = 'flex';
-                } else {
-                    el.style.display = '';
-                }
+                if (el.classList.contains('items-center')) el.style.display = 'flex';
+                else el.style.display = 'block';
             }
         };
         const hideElement = (el) => { 
@@ -766,15 +829,93 @@
         }
 
         // ==========================================
+        // 嚴謹的 Modal 開關機制 (修復遮罩卡住問題)
+        // ==========================================
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            const inner = document.getElementById(id + 'Inner');
+            if(!modal) return;
+            
+            // 移除隱藏，設定 flex 排版
+            modal.classList.remove('hidden');
+            modal.style.display = 'flex';
+            
+            // 清除之前的錯誤訊息
+            document.querySelectorAll('[id^="err"]').forEach(hideElement);
+            
+            // 強制重繪以觸發動畫
+            void modal.offsetWidth; 
+            
+            // 加入不透明度與縮放動畫
+            modal.classList.add('opacity-100');
+            if(inner) {
+                inner.classList.remove('scale-95');
+                inner.classList.add('scale-100');
+            }
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            const inner = document.getElementById(id + 'Inner');
+            if(!modal) return;
+            
+            // 移除動畫類別
+            modal.classList.remove('opacity-100');
+            if(inner) {
+                inner.classList.remove('scale-100');
+                inner.classList.add('scale-95');
+            }
+            
+            // 等待動畫完成後徹底隱藏
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.style.display = ''; // 必須清空 inline style 否則 hidden 無效
+                isProcessing = false;
+            }, 200); 
+        }
+
+        document.querySelectorAll('.modal-close').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const modalId = e.target.closest('[id^="modal"]').id;
+                closeModal(modalId);
+                // 特殊邏輯：新增會員取消時回列表
+                if (modalId === 'modalAddMember') {
+                    switchView('list');
+                }
+            });
+        });
+
+        const showError = (id, msg) => {
+            const el = document.getElementById(id);
+            el.innerHTML = `<i class="ph ph-warning-circle"></i> ${msg}`;
+            showElement(el);
+            isProcessing = false;
+        };
+        const setProcessing = (btnId, text) => {
+            isProcessing = true;
+            const btn = document.getElementById(btnId);
+            btn.dataset.original = btn.innerHTML;
+            btn.innerHTML = `<i class="ph ph-spinner-gap animate-spin"></i> ${text}`;
+            btn.disabled = true;
+            btn.classList.add('opacity-70');
+        };
+        const clearProcessing = (btnId) => {
+            isProcessing = false;
+            const btn = document.getElementById(btnId);
+            if (btn.dataset.original) btn.innerHTML = btn.dataset.original;
+            btn.disabled = false;
+            btn.classList.remove('opacity-70');
+        };
+
+        // ==========================================
         // Role Based Access Control (RBAC) UI Update
         // ==========================================
         function updateRBACUI() {
             const authRequiredElements = document.querySelectorAll('.auth-required');
             
             if (loggedInBeautician) {
-                // 已登入
                 DOM.authStatusArea.innerHTML = `
-                    <div class="flex items-center gap-2 bg-pink-50 border border-pink-200 px-3 py-1.5 rounded-lg">
+                    <div class="flex items-center gap-2 bg-pink-50 border border-pink-200 px-3 py-1.5 rounded-lg shadow-sm">
                         <div class="w-6 h-6 bg-pink-200 text-pink-700 rounded-full flex items-center justify-center text-xs font-bold">
                             ${loggedInBeautician.charAt(0)}
                         </div>
@@ -792,10 +933,15 @@
                 
                 showElement(DOM.btnAddMemberView);
                 hideElement(DOM.noticeNotLoggedIn);
-                
                 authRequiredElements.forEach(el => showElement(el));
+
+                // 最高權限獨家顯示業績報表
+                if (loggedInBeautician === 'Jerry') {
+                    showElement(DOM.btnOpenReport);
+                } else {
+                    hideElement(DOM.btnOpenReport);
+                }
             } else {
-                // 未登入
                 DOM.authStatusArea.innerHTML = `
                     <button id="btnOpenBeauticianLogin" class="flex items-center gap-1 bg-stone-100 text-stone-600 hover:bg-stone-200 px-3 py-2 rounded-lg text-sm font-medium transition">
                         <i class="ph ph-user text-lg"></i>
@@ -809,34 +955,30 @@
                 });
                 
                 hideElement(DOM.btnAddMemberView);
+                hideElement(DOM.btnOpenReport);
                 showElement(DOM.noticeNotLoggedIn);
-                
                 authRequiredElements.forEach(el => hideElement(el));
             }
         }
 
-        // Beautician Login Logic
         document.getElementById('btnSubmitLogin').addEventListener('click', () => {
             const user = document.getElementById('loginUser').value.trim();
             const pwd = document.getElementById('loginPwd').value;
             
-            // 驗證邏輯: LARMO(8888), 小Q(9999), Jerry(7310168888)
             if ((user === 'LARMO' && pwd === '8888') || 
                 (user === '小Q' && pwd === '9999') || 
                 (user === 'Jerry' && pwd === '7310168888')) {
                 loggedInBeautician = user;
                 closeModal('modalLogin');
                 updateRBACUI();
-                switchView('list'); // 登入成功後跳轉至會員列表
+                switchView('list');
             } else {
                 showError('errLogin', '帳號或密碼錯誤，請重新輸入');
             }
         });
 
-        // 點擊取消登入時，確保跳回諮詢表
         document.getElementById('btnCancelLogin').addEventListener('click', () => {
             closeModal('modalLogin');
-            switchView('consultation');
         });
 
         // ==========================================
@@ -848,7 +990,6 @@
                     try {
                         await signInWithCustomToken(auth, __initial_auth_token);
                     } catch (customError) {
-                        console.warn("自訂 Token 驗證失敗，切換為匿名登入:", customError);
                         await signInAnonymously(auth);
                     }
                 } else {
@@ -856,19 +997,6 @@
                 }
             } catch (error) {
                 console.error("Auth error:", error);
-                document.getElementById('loadingContent').innerHTML = `
-                    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm mx-4 text-left border border-red-100">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
-                                <i class="ph ph-warning-circle text-2xl"></i>
-                            </div>
-                            <h3 class="text-lg font-bold text-stone-800">資料庫連線錯誤</h3>
-                        </div>
-                        <p class="text-stone-600 text-sm leading-relaxed mb-4">
-                            請確認專案已啟用匿名登入。<br/>${error.message}
-                        </p>
-                    </div>
-                `;
             }
         };
 
@@ -895,7 +1023,6 @@
         let publicConsults = [];
 
         function mergeData() {
-            // 合併並過濾重複的會員資料
             const allMem = [...publicMembers, ...privateMembers];
             const uniqueMem = [];
             const seenMem = new Set();
@@ -904,7 +1031,6 @@
             }
             members = uniqueMem;
 
-            // 合併並過濾重複的交易紀錄
             const allTx = [...publicTx, ...privateTx];
             const uniqueTx = [];
             const seenTx = new Set();
@@ -912,8 +1038,6 @@
                 if(!seenTx.has(t.id)) { seenTx.add(t.id); uniqueTx.push(t); }
             }
             transactions = uniqueTx;
-
-            // 諮詢表資料
             consultations = publicConsults;
 
             if (selectedMember) {
@@ -928,40 +1052,32 @@
         function fetchData() {
             if (!currentUser) return;
             
-            // 讀取全店共用會員庫
             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members'), (snapshot) => {
                 publicMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 mergeData();
             }, (err) => console.warn("Public members read denied."));
 
-            // 讀取個人舊版會員庫 (防止舊資料遺失)
             onSnapshot(collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_members'), (snapshot) => {
                 privateMembers = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 mergeData();
             });
 
-            // 讀取全店共用交易紀錄
             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions'), (snapshot) => {
                 publicTx = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 mergeData();
             }, (err) => console.warn("Public tx read denied."));
 
-            // 讀取個人舊版交易紀錄
             onSnapshot(collection(db, 'artifacts', APP_ID, 'users', currentUser.uid, 'beauty_transactions'), (snapshot) => {
                 privateTx = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 mergeData();
             });
 
-            // 讀取諮詢表紀錄
             onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_consultations'), (snapshot) => {
                 publicConsults = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 mergeData();
             }, (err) => console.warn("Public consults read denied."));
         }
 
-        // ==========================================
-        // Robust Firebase Writers
-        // ==========================================
         async function robustAddDoc(collName, data) {
             try {
                 return await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', collName), data);
@@ -999,12 +1115,14 @@
             hideElement(DOM.viewList);
             hideElement(DOM.viewDetail);
             hideElement(DOM.viewConsultation);
+            hideElement(DOM.viewReport);
             
             if (view === 'list') {
                 showElement(DOM.viewList);
                 hideElement(DOM.btnBack);
                 if(loggedInBeautician) showElement(DOM.btnAddMemberView);
                 showElement(DOM.btnOpenConsultationView);
+                if(loggedInBeautician === 'Jerry') showElement(DOM.btnOpenReport);
                 selectedMember = null;
                 renderMembers();
             } else if (view === 'detail') {
@@ -1012,12 +1130,14 @@
                 showElement(DOM.btnBack);
                 hideElement(DOM.btnAddMemberView);
                 hideElement(DOM.btnOpenConsultationView);
+                hideElement(DOM.btnOpenReport);
                 renderMemberDetail();
             } else if (view === 'consultation') {
                 showElement(DOM.viewConsultation);
                 showElement(DOM.btnBack);
                 hideElement(DOM.btnAddMemberView);
                 hideElement(DOM.btnOpenConsultationView);
+                hideElement(DOM.btnOpenReport);
                 setTimeout(initConsultationPad, 100);
                 
                 const updateClock = () => {
@@ -1029,26 +1149,41 @@
                 };
                 updateClock();
                 clockInterval = setInterval(updateClock, 1000); 
+            } else if (view === 'report') {
+                showElement(DOM.viewReport);
+                showElement(DOM.btnBack);
+                hideElement(DOM.btnAddMemberView);
+                hideElement(DOM.btnOpenConsultationView);
+                hideElement(DOM.btnOpenReport);
+                
+                // 預設設定當月第一天與最後一天
+                const today = new Date();
+                const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+                const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+                document.getElementById('reportStartDate').value = firstDay.toISOString().split('T')[0];
+                document.getElementById('reportEndDate').value = lastDay.toISOString().split('T')[0];
+                hideElement(document.getElementById('reportResults'));
             }
         }
 
         function renderMembers() {
-            const term = DOM.searchInput.value.trim().toLowerCase();
+            const rawTerm = DOM.searchInput.value.trim().toLowerCase();
             DOM.memberList.innerHTML = '';
             
-            if (loggedInBeautician !== 'Jerry' && term === '') {
+            // Jerry 全開，其他美容師需搜尋
+            if (loggedInBeautician !== 'Jerry' && rawTerm === '') {
                 DOM.emptyListState.innerHTML = `
                     <div class="bg-pink-50 text-pink-700 p-6 rounded-2xl w-full max-w-sm mx-auto shadow-sm border border-pink-100">
                         <i class="ph ph-magnifying-glass text-5xl mb-3 opacity-50 block"></i>
-                        <h4 class="font-bold text-lg mb-1">請調閱會員資料</h4>
-                        <p class="text-sm opacity-80">請在上方輸入顧客的姓名、電話或生日進行查閱與編輯儲值金。</p>
+                        <h4 class="font-bold text-lg mb-1">請精準搜尋會員資料</h4>
+                        <p class="text-sm opacity-80">請在上方輸入顧客的姓名、電話或生日進行查閱以保護顧客隱私。</p>
                     </div>
                 `;
                 showElement(DOM.emptyListState);
                 return;
             }
 
-            const terms = term.split(/\s+/).filter(t => t);
+            const terms = rawTerm.split(/\s+/).filter(t => t);
             const filtered = members.filter(m => {
                 if (terms.length === 0) return true; 
                 
@@ -1174,21 +1309,19 @@
                     const tr = document.createElement('tr');
                     tr.className = "hover:bg-stone-50/50 transition";
                     
-                    let typeBadge = '';
-                    if(tx.type === 'deposit') typeBadge = '<span class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-medium">儲值</span>';
-                    else if(tx.type === 'consume') typeBadge = '<span class="bg-rose-100 text-rose-700 px-2 py-1 rounded text-xs font-medium">消費</span>';
-                    else if(tx.type === 'adjust') typeBadge = '<span class="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs font-medium">系統調整</span>';
-                    else if(tx.type === 'convert') typeBadge = '<span class="bg-amber-100 text-amber-700 px-2 py-1 rounded text-xs font-medium">點數兌換</span>';
-                    
-                    const amtColor = tx.amountChange > 0 ? 'text-emerald-600' : (tx.amountChange < 0 ? 'text-rose-600' : 'text-stone-400');
-                    const bnsColor = tx.bonusChange > 0 ? 'text-emerald-600' : (tx.bonusChange < 0 ? 'text-rose-600' : 'text-stone-400');
+                    // 為了相容舊版紀錄，計算消費總額與儲值金額
+                    let consumeAmt = tx.consumeAmount || 0;
+                    let depositAmt = tx.depositAmount || 0;
+                    if (!tx.consumeAmount && tx.amountChange < 0) consumeAmt = Math.abs(tx.amountChange);
+                    if (!tx.depositAmount && tx.amountChange > 0) depositAmt = tx.amountChange;
 
                     tr.innerHTML = `
                         <td class="p-4 text-stone-500 whitespace-nowrap">${formatDate(tx.timestamp)}</td>
-                        <td class="p-4">${typeBadge}</td>
-                        <td class="p-4 text-right font-medium ${amtColor}">${tx.amountChange > 0 ? '+' : ''}${tx.amountChange}</td>
-                        <td class="p-4 text-right font-medium ${bnsColor}">${tx.bonusChange > 0 ? '+' : ''}${tx.bonusChange}</td>
-                        <td class="p-4 text-right font-bold text-stone-800">$${formatNumber(tx.newBalance)}</td>
+                        <td class="p-4"><span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs font-medium">${tx.operator || '系統'}</span></td>
+                        <td class="p-4 font-bold text-rose-600">${consumeAmt > 0 ? '$' + formatNumber(consumeAmt) : '-'}</td>
+                        <td class="p-4 font-bold text-emerald-600">${depositAmt > 0 ? '$' + formatNumber(depositAmt) : '-'}</td>
+                        <td class="p-4 font-bold text-emerald-600">${tx.bonusChange > 0 ? '$' + formatNumber(tx.bonusChange) : '-'}</td>
+                        <td class="p-4 text-right font-bold text-stone-800 bg-stone-50">$${formatNumber(tx.newBalance)}</td>
                         <td class="p-4 max-w-[200px]">
                             ${tx.signature 
                                 ? `<div class="flex items-center gap-2"><img src="${tx.signature}" class="h-8 rounded bg-white border border-stone-200" /><span class="text-xs text-stone-400 truncate">${tx.remark || ''}</span></div>`
@@ -1202,89 +1335,90 @@
         }
 
         // ==========================================
-        // Event Listeners (Modals)
+        // UI & Forms Handling (Unified Transaction)
         // ==========================================
         DOM.searchInput.addEventListener('input', renderMembers);
         DOM.btnBack.addEventListener('click', () => switchView('list'));
         DOM.btnOpenConsultationView.addEventListener('click', () => switchView('consultation'));
+        DOM.btnOpenReport.addEventListener('click', () => switchView('report'));
         DOM.btnAddMemberView.addEventListener('click', () => openModal('modalAddMember'));
         
         document.getElementById('btnOpenTransaction').addEventListener('click', () => {
-            txType = 'deposit';
+            // Reset fields
+            document.getElementById('txConsumeTotal').value = '';
             document.getElementById('txAmount').value = '';
             document.getElementById('txBonus').value = '';
             document.getElementById('txPoints').value = '';
-            document.getElementById('txConsumeTotal').value = '';
             document.getElementById('txShortfallPaid').value = '';
-            document.getElementById('txPointsConsume').value = '';
-            calcDepositPreview();
-            calcConsumePreview();
+            document.getElementById('chkNoConsumeOnlyDeposit').checked = false;
             
-            updateTxUI();
+            calcUnifiedPreview();
+            updateSignatureVisibility();
             openModal('modalTransaction');
             setTimeout(initSignaturePad, 100);
         });
+        
         document.getElementById('btnOpenAdjust').addEventListener('click', () => {
             document.getElementById('adminPin').value = '';
             openModal('modalAdjustAuth');
         });
         document.getElementById('btnConvertPoints').addEventListener('click', () => openModal('modalConvert'));
 
-        // Modal Helpers
-        function openModal(id) {
-            const modal = document.getElementById(id);
-            const inner = document.getElementById(id + 'Inner');
-            showElement(modal);
-            document.querySelectorAll('[id^="err"]').forEach(hideElement);
-            // Request reflow
-            void modal.offsetWidth;
-            modal.classList.add('opacity-100');
-            if(inner) { inner.classList.remove('scale-95'); inner.classList.add('scale-100'); }
+        // Preview Calculation logic for unified form
+        function calcUnifiedPreview() {
+            if (!selectedMember) return;
+            const consumeTotal = parseFloat(document.getElementById('txConsumeTotal').value) || 0;
+            const depositPrincipal = parseFloat(document.getElementById('txAmount').value) || 0;
+            const depositBonus = parseFloat(document.getElementById('txBonus').value) || 0;
+
+            const baseTotal = (selectedMember.balance || 0) + (selectedMember.bonusBalance || 0);
+            const totalAvailable = baseTotal + depositPrincipal + depositBonus;
+
+            let deduct = 0;
+            let shortfall = 0;
+
+            if (consumeTotal <= totalAvailable) {
+                deduct = consumeTotal;
+                shortfall = 0;
+            } else {
+                deduct = totalAvailable;
+                shortfall = consumeTotal - totalAvailable;
+            }
+
+            const remaining = totalAvailable - deduct;
+
+            document.getElementById('lblTotalAvailable').textContent = `$${formatNumber(totalAvailable)}`;
+            document.getElementById('lblDeductBalance').textContent = `-$${formatNumber(deduct)}`;
+            document.getElementById('lblRemainingBalance').textContent = `$${formatNumber(remaining)}`;
+
+            const shortfallSec = document.getElementById('shortfallSection');
+            if (shortfall > 0) {
+                showElement(shortfallSec);
+                document.getElementById('lblShortfallAmount').textContent = `$${formatNumber(shortfall)}`;
+            } else {
+                hideElement(shortfallSec);
+                document.getElementById('txShortfallPaid').value = ''; 
+            }
         }
+        
+        document.getElementById('txConsumeTotal').addEventListener('input', calcUnifiedPreview);
+        document.getElementById('txAmount').addEventListener('input', calcUnifiedPreview);
+        document.getElementById('txBonus').addEventListener('input', calcUnifiedPreview);
 
-        function closeModal(id) {
-            const modal = document.getElementById(id);
-            const inner = document.getElementById(id + 'Inner');
-            if(inner) { inner.classList.remove('scale-100'); inner.classList.add('scale-95'); }
-            modal.classList.remove('opacity-100');
-            setTimeout(() => {
-                hideElement(modal);
-                isProcessing = false;
-            }, 200); 
+        function updateSignatureVisibility() {
+            const isChecked = document.getElementById('chkNoConsumeOnlyDeposit').checked;
+            const sigContainer = document.getElementById('signaturePadContainer');
+            const btnSubmit = document.getElementById('btnSubmitTx');
+            
+            if (isChecked) {
+                sigContainer.classList.add('hidden');
+                btnSubmit.innerHTML = '確認儲值並存檔';
+            } else {
+                sigContainer.classList.remove('hidden');
+                btnSubmit.innerHTML = '確認簽名並送出';
+            }
         }
-
-        document.querySelectorAll('.modal-close').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const modalId = e.target.closest('[id^="modal"]').id;
-                closeModal(modalId);
-                
-                if (modalId === 'modalAddMember') {
-                    switchView('list');
-                }
-            });
-        });
-
-        const showError = (id, msg) => {
-            const el = document.getElementById(id);
-            el.innerHTML = `<i class="ph ph-warning-circle"></i> ${msg}`;
-            showElement(el);
-            isProcessing = false;
-        };
-        const setProcessing = (btnId, text) => {
-            isProcessing = true;
-            const btn = document.getElementById(btnId);
-            btn.dataset.original = btn.innerHTML;
-            btn.innerHTML = `<i class="ph ph-spinner-gap animate-spin"></i> ${text}`;
-            btn.disabled = true;
-            btn.classList.add('opacity-70');
-        };
-        const clearProcessing = (btnId) => {
-            isProcessing = false;
-            const btn = document.getElementById(btnId);
-            if (btn.dataset.original) btn.innerHTML = btn.dataset.original;
-            btn.disabled = false;
-            btn.classList.remove('opacity-70');
-        };
+        document.getElementById('chkNoConsumeOnlyDeposit').addEventListener('change', updateSignatureVisibility);
 
         // ==========================================
         // Signature Pad System Factory
@@ -1357,137 +1491,29 @@
 
         function initSignaturePad() { txPad.init(); }
         document.getElementById('btnClearSignature').addEventListener('click', txPad.clear);
-
         function initConsultationPad() { consultPad.init(); }
         document.getElementById('btnClearConsultPad').addEventListener('click', consultPad.clear);
-
-        // ==========================================
-        // 初始化生日下拉選單
-        // ==========================================
+        
         function initBirthdayDropdowns() {
             const yearSelect = document.getElementById('consultYear');
             const monthSelect = document.getElementById('consultMonth');
             const daySelect = document.getElementById('consultDay');
-            
             for (let y = 2026; y >= 1950; y--) {
-                const opt = document.createElement('option');
-                opt.value = y;
-                opt.textContent = `${y}年`;
-                yearSelect.appendChild(opt);
+                const opt = document.createElement('option'); opt.value = y; opt.textContent = `${y}年`; yearSelect.appendChild(opt);
             }
             for (let m = 1; m <= 12; m++) {
-                const opt = document.createElement('option');
-                opt.value = m;
-                opt.textContent = `${m}月`;
-                monthSelect.appendChild(opt);
+                const opt = document.createElement('option'); opt.value = m; opt.textContent = `${m}月`; monthSelect.appendChild(opt);
             }
             for (let d = 1; d <= 31; d++) {
-                const opt = document.createElement('option');
-                opt.value = d;
-                opt.textContent = `${d}日`;
-                daySelect.appendChild(opt);
+                const opt = document.createElement('option'); opt.value = d; opt.textContent = `${d}日`; daySelect.appendChild(opt);
             }
         }
         initBirthdayDropdowns();
 
         // ==========================================
-        // Action Handlers
+        // Form Submit Handlers
         // ==========================================
         
-        // 1. Add Member (Manual)
-        document.getElementById('btnSubmitAddMember').addEventListener('click', async () => {
-            if (isProcessing || !loggedInBeautician) return;
-            const name = document.getElementById('newMemName').value.trim();
-            const phone = document.getElementById('newMemPhone').value.trim();
-            const birthday = document.getElementById('newMemBirthday').value;
-            const gender = document.getElementById('newMemGender').value;
-
-            if (!name || !phone) return showError('errAddMember', '姓名與電話為必填欄位');
-            
-            setProcessing('btnSubmitAddMember', '處理中...');
-            try {
-                await robustAddDoc('beauty_members', {
-                    name, phone, birthday, gender,
-                    balance: 0, bonusBalance: 0, points: 0,
-                    createdAt: new Date().getTime(),
-                    createdBy: loggedInBeautician
-                });
-                
-                document.getElementById('newMemName').value = '';
-                document.getElementById('newMemPhone').value = '';
-                document.getElementById('newMemBirthday').value = '';
-                
-                closeModal('modalAddMember');
-                switchView('list'); 
-            } catch (err) {
-                showError('errAddMember', "新增失敗: " + err.message);
-            }
-            clearProcessing('btnSubmitAddMember');
-        });
-
-        // 2. Transactions
-        document.getElementById('tabDeposit').addEventListener('click', () => { txType = 'deposit'; updateTxUI(); });
-        document.getElementById('tabConsume').addEventListener('click', () => { txType = 'consume'; updateTxUI(); });
-
-        function calcDepositPreview() {
-            const amt = parseFloat(document.getElementById('txAmount').value) || 0;
-            const bns = parseFloat(document.getElementById('txBonus').value) || 0;
-            document.getElementById('lblDepositTotalPreview').textContent = `$${formatNumber(amt + bns)}`;
-        }
-        document.getElementById('txAmount').addEventListener('input', calcDepositPreview);
-        document.getElementById('txBonus').addEventListener('input', calcDepositPreview);
-
-        function calcConsumePreview() {
-            if (!selectedMember) return;
-            const consumeTotal = parseFloat(document.getElementById('txConsumeTotal').value) || 0;
-            const currentTotal = (selectedMember.balance || 0) + (selectedMember.bonusBalance || 0);
-
-            let deduct = 0;
-            let shortfall = 0;
-
-            if (consumeTotal <= currentTotal) {
-                deduct = consumeTotal;
-                shortfall = 0;
-            } else {
-                deduct = currentTotal;
-                shortfall = consumeTotal - currentTotal;
-            }
-
-            const remaining = currentTotal - deduct;
-
-            document.getElementById('lblCurrentTotalBalance').textContent = `$${formatNumber(currentTotal)}`;
-            document.getElementById('lblDeductBalance').textContent = `-$${formatNumber(deduct)}`;
-            document.getElementById('lblRemainingBalance').textContent = `$${formatNumber(remaining)}`;
-
-            const shortfallSec = document.getElementById('shortfallSection');
-            if (shortfall > 0) {
-                showElement(shortfallSec);
-                document.getElementById('lblShortfallAmount').textContent = `$${formatNumber(shortfall)}`;
-            } else {
-                hideElement(shortfallSec);
-                document.getElementById('txShortfallPaid').value = ''; 
-            }
-        }
-        document.getElementById('txConsumeTotal').addEventListener('input', calcConsumePreview);
-
-        function updateTxUI() {
-            const tDep = document.getElementById('tabDeposit');
-            const tCon = document.getElementById('tabConsume');
-            
-            if (txType === 'deposit') {
-                tDep.className = "flex-1 py-2 text-sm font-medium rounded-lg transition bg-white shadow text-emerald-600";
-                tCon.className = "flex-1 py-2 text-sm font-medium rounded-lg transition text-stone-500 hover:text-stone-700";
-                showElement(document.getElementById('depositFields'));
-                hideElement(document.getElementById('consumeFields'));
-            } else {
-                tCon.className = "flex-1 py-2 text-sm font-medium rounded-lg transition bg-white shadow text-rose-600";
-                tDep.className = "flex-1 py-2 text-sm font-medium rounded-lg transition text-stone-500 hover:text-stone-700";
-                hideElement(document.getElementById('depositFields'));
-                showElement(document.getElementById('consumeFields'));
-                calcConsumePreview();
-            }
-        }
-
         async function executeTransaction(payload) {
             const newBalance = (selectedMember.balance || 0) + (payload.amountChange || 0);
             const newBonus = (selectedMember.bonusBalance || 0) + (payload.bonusChange || 0);
@@ -1496,6 +1522,8 @@
             const txDoc = {
                 memberId: selectedMember.id,
                 type: payload.type,
+                consumeAmount: payload.consumeAmount || 0,
+                depositAmount: payload.depositAmount || 0,
                 amountChange: payload.amountChange || 0,
                 bonusChange: payload.bonusChange || 0,
                 pointsChange: payload.pointsChange || 0,
@@ -1513,65 +1541,63 @@
             await robustUpdateMember(selectedMember.id, { balance: newBalance, bonusBalance: newBonus, points: newPoints });
         }
 
+        // Unified Transaction Submission
         document.getElementById('btnSubmitTx').addEventListener('click', async () => {
             if (isProcessing || !loggedInBeautician) return;
             
-            if(txPad.isEmpty()) return showError('errTx', '必須請顧客完成簽名');
-
-            let amtChange = 0;
-            let bonusChange = 0;
-            let pointsChange = 0;
-            let finalRemark = '';
-
-            if (txType === 'deposit') {
-                const rawAmt = parseFloat(document.getElementById('txAmount').value);
-                if (isNaN(rawAmt) || rawAmt <= 0) return showError('errTx', '請輸入正確的儲值本金 (須大於零)');
-                
-                amtChange = rawAmt;
-                bonusChange = parseFloat(document.getElementById('txBonus').value || 0);
-                pointsChange = parseFloat(document.getElementById('txPoints').value || 0);
-                const pMethod = document.getElementById('txPaymentMethodDeposit').value;
-                finalRemark = `[儲值入帳] 支付方式: ${pMethod}`;
+            const consumeTotal = parseFloat(document.getElementById('txConsumeTotal').value) || 0;
+            const depositPrincipal = parseFloat(document.getElementById('txAmount').value) || 0;
+            const depositBonus = parseFloat(document.getElementById('txBonus').value) || 0;
+            const pointsChange = parseFloat(document.getElementById('txPoints').value) || 0;
+            const payMethod = document.getElementById('txPaymentMethod').value;
+            const noSignatureMode = document.getElementById('chkNoConsumeOnlyDeposit').checked;
             
-            } else if (txType === 'consume') {
-                const consumeTotal = parseFloat(document.getElementById('txConsumeTotal').value);
-                if (isNaN(consumeTotal) || consumeTotal <= 0) return showError('errTx', '請輸入正確的消費總金額');
+            if (consumeTotal === 0 && depositPrincipal === 0 && depositBonus === 0) {
+                return showError('errTx', '請輸入消費或儲值金額');
+            }
 
-                const currentTotal = (selectedMember.balance || 0) + (selectedMember.bonusBalance || 0);
-                let deduct = Math.min(consumeTotal, currentTotal);
-                let shortfall = consumeTotal > currentTotal ? consumeTotal - currentTotal : 0;
+            if (!noSignatureMode && txPad.isEmpty()) {
+                return showError('errTx', '必須請顧客完成簽名，或勾選免簽名儲值');
+            }
+            if (noSignatureMode && consumeTotal > 0) {
+                return showError('errTx', '有消費扣款時，必須由顧客簽名確認！');
+            }
 
-                if (shortfall > 0) {
-                    const paid = parseFloat(document.getElementById('txShortfallPaid').value);
-                    if (isNaN(paid) || paid !== shortfall) {
-                        return showError('errTx', `請正確收取差額，尚欠 $${formatNumber(shortfall)}，必須達到正負0後才可以存檔`);
-                    }
-                }
+            const currentTotal = (selectedMember.balance || 0) + (selectedMember.bonusBalance || 0) + depositPrincipal + depositBonus;
+            let deduct = Math.min(consumeTotal, currentTotal);
+            let shortfall = consumeTotal > currentTotal ? consumeTotal - currentTotal : 0;
 
-                let deductBonus = Math.min(selectedMember.bonusBalance || 0, deduct);
-                let deductBalance = deduct - deductBonus;
-
-                amtChange = -deductBalance;
-                bonusChange = -deductBonus;
-                pointsChange = parseFloat(document.getElementById('txPointsConsume').value || 0);
-
-                finalRemark = `[服務消費] 總額: $${formatNumber(consumeTotal)}`;
-                if (deduct > 0) finalRemark += `，扣儲值金: $${formatNumber(deduct)}`;
-                if (shortfall > 0) {
-                    const shortfallMethod = document.getElementById('txShortfallMethod').value;
-                    finalRemark += `，${shortfallMethod}補差額: $${formatNumber(shortfall)}`;
+            if (shortfall > 0) {
+                const paid = parseFloat(document.getElementById('txShortfallPaid').value);
+                if (isNaN(paid) || paid !== shortfall) {
+                    return showError('errTx', `請正確收取差額，尚欠 $${formatNumber(shortfall)}，必須達到正負0後才可以存檔`);
                 }
             }
+
+            // Calculate exact deduction priorities (Bonus first, then Principal)
+            let deductBonus = Math.min((selectedMember.bonusBalance || 0) + depositBonus, deduct);
+            let deductBalance = deduct - deductBonus;
+
+            // Final changes to Principal and Bonus pools
+            const netAmountChange = depositPrincipal - deductBalance;
+            const netBonusChange = depositBonus - deductBonus;
+
+            let finalRemark = '';
+            if (consumeTotal > 0) finalRemark += `[服務消費] 總額: $${formatNumber(consumeTotal)}`;
+            if (depositPrincipal > 0) finalRemark += (finalRemark?'，':'') + `[儲值入帳] 本金: $${formatNumber(depositPrincipal)} 支付方式: ${payMethod}`;
+            if (shortfall > 0) finalRemark += `，${payMethod}補差額: $${formatNumber(shortfall)}`;
 
             setProcessing('btnSubmitTx', '處理中...');
             try {
                 await executeTransaction({
-                    type: txType,
-                    amountChange: amtChange,
-                    bonusChange: bonusChange,
+                    type: 'unified',
+                    consumeAmount: consumeTotal,
+                    depositAmount: depositPrincipal,
+                    amountChange: netAmountChange,
+                    bonusChange: netBonusChange,
                     pointsChange: pointsChange,
-                    signature: txPad.getData(),
-                    remark: finalRemark
+                    signature: noSignatureMode ? null : txPad.getData(),
+                    remark: finalRemark || '純金額異動'
                 });
                 
                 closeModal('modalTransaction');
@@ -1581,18 +1607,73 @@
             clearProcessing('btnSubmitTx');
         });
 
-        // 3. Admin Check 
-        document.getElementById('btnVerifyPin').addEventListener('click', () => {
-            const pin = document.getElementById('adminPin').value;
-            if (pin === '7310168888') {
-                closeModal('modalAdjustAuth');
-                setTimeout(() => openModal('modalAdjustForm'), 250);
-            } else {
-                showError('errAuth', '最高授權碼錯誤，拒絕存取');
+        // Report Generation (Jerry Only)
+        function calculateDepositBonus(count) {
+            let bonus = 0;
+            let c = count;
+            if (c > 15) { bonus += (c - 15) * 500; c = 15; }
+            if (c > 8) { bonus += (c - 8) * 400; c = 8; }
+            if (c > 3) { bonus += (c - 3) * 300; c = 3; }
+            if (c > 0) { bonus += c * 200; }
+            return bonus;
+        }
+
+        document.getElementById('btnGenerateReport').addEventListener('click', () => {
+            const startDateStr = document.getElementById('reportStartDate').value;
+            const endDateStr = document.getElementById('reportEndDate').value;
+            
+            if (!startDateStr || !endDateStr) {
+                alert("請選擇起始與結束日期！");
+                return;
             }
+
+            const startTs = new Date(startDateStr + 'T00:00:00').getTime();
+            const endTs = new Date(endDateStr + 'T23:59:59').getTime();
+
+            const periodTx = transactions.filter(tx => tx.timestamp >= startTs && tx.timestamp <= endTs);
+
+            let larmoStats = { consume: 0, depositCount: 0 };
+            let qStats = { consume: 0, depositCount: 0 };
+
+            periodTx.forEach(tx => {
+                const operator = tx.operator || '';
+                // 若為舊格式相容，找出實際消費金額與儲值特徵
+                let cAmt = tx.consumeAmount || 0;
+                let dAmt = tx.depositAmount || 0;
+                if (!tx.consumeAmount && tx.amountChange < 0) cAmt = Math.abs(tx.amountChange);
+                if (!tx.depositAmount && tx.amountChange > 0) dAmt = tx.amountChange;
+
+                if (operator.includes('LARMO')) {
+                    larmoStats.consume += cAmt;
+                    if (dAmt > 0) larmoStats.depositCount++;
+                } else if (operator.includes('小Q') || operator.includes('Q')) {
+                    qStats.consume += cAmt;
+                    if (dAmt > 0) qStats.depositCount++;
+                }
+            });
+
+            // LARMO 計算 (100% 業績)
+            const larmoCommission = Math.floor(larmoStats.consume * 1.0);
+            const larmoDepBonus = calculateDepositBonus(larmoStats.depositCount);
+            document.getElementById('repLarmoTotalConsume').textContent = `$${formatNumber(larmoStats.consume)}`;
+            document.getElementById('repLarmoCommission').textContent = `$${formatNumber(larmoCommission)}`;
+            document.getElementById('repLarmoDepositCount').textContent = `${larmoStats.depositCount} 筆`;
+            document.getElementById('repLarmoDepositBonus').textContent = `$${formatNumber(larmoDepBonus)}`;
+            document.getElementById('repLarmoTotalPayout').textContent = `$${formatNumber(larmoCommission + larmoDepBonus)}`;
+
+            // 小Q 計算 (40% 業績)
+            const qCommission = Math.floor(qStats.consume * 0.4);
+            const qDepBonus = calculateDepositBonus(qStats.depositCount);
+            document.getElementById('repQTotalConsume').textContent = `$${formatNumber(qStats.consume)}`;
+            document.getElementById('repQCommission').textContent = `$${formatNumber(qCommission)}`;
+            document.getElementById('repQDepositCount').textContent = `${qStats.depositCount} 筆`;
+            document.getElementById('repQDepositBonus').textContent = `$${formatNumber(qDepBonus)}`;
+            document.getElementById('repQTotalPayout').textContent = `$${formatNumber(qCommission + qDepBonus)}`;
+
+            showElement(document.getElementById('reportResults'));
         });
 
-        // 4. Submit Adjust
+        // Admin Adjustment
         document.getElementById('btnSubmitAdjust').addEventListener('click', async () => {
             if (isProcessing) return;
             const remark = document.getElementById('adjRemark').value.trim();
@@ -1619,7 +1700,17 @@
             clearProcessing('btnSubmitAdjust');
         });
 
-        // 5. Submit Convert Points
+        document.getElementById('btnVerifyPin').addEventListener('click', () => {
+            const pin = document.getElementById('adminPin').value;
+            if (pin === '7310168888') {
+                closeModal('modalAdjustAuth');
+                setTimeout(() => openModal('modalAdjustForm'), 250);
+            } else {
+                showError('errAuth', '最高授權碼錯誤，拒絕存取');
+            }
+        });
+
+        // Submission for Add Member, Consultation, Conversion...
         document.getElementById('btnSubmitConvert').addEventListener('click', async () => {
             if (isProcessing || !loggedInBeautician) return;
             if ((selectedMember.points || 0) < 5) return showError('errConvert', '點數不足 5 點無法兌換');
@@ -1640,7 +1731,6 @@
             clearProcessing('btnSubmitConvert');
         });
 
-        // 6. Submit Consultation Form to Firebase & Auto-Create Member
         document.getElementById('btnSubmitConsultation').addEventListener('click', async () => {
             if (isProcessing) return;
             
@@ -1650,72 +1740,52 @@
             const name = document.getElementById('consultName').value.trim();
             const phone = document.getElementById('consultPhone').value.trim();
             const gender = document.querySelector('input[name="consultGender"]:checked')?.value;
-            
             const bYear = document.getElementById('consultYear').value;
             const bMonth = document.getElementById('consultMonth').value;
             const bDay = document.getElementById('consultDay').value;
             const birthday = (bYear && bMonth && bDay) ? `${bYear}-${String(bMonth).padStart(2,'0')}-${String(bDay).padStart(2,'0')}` : '';
-
-            const areaCheckboxes = document.querySelectorAll('input[name="consultArea"]:checked');
-            const areas = Array.from(areaCheckboxes).map(cb => cb.value);
-
+            const areas = Array.from(document.querySelectorAll('input[name="consultArea"]:checked')).map(cb => cb.value);
             const isConsentChecked = document.getElementById('consultConsent').checked;
-
-            const precautionCheckboxes = document.querySelectorAll('input[name="consultPrecautions"]');
-            const allPrecautionsChecked = Array.from(precautionCheckboxes).every(cb => cb.checked);
+            const allPrecautionsChecked = Array.from(document.querySelectorAll('input[name="consultPrecautions"]')).every(cb => cb.checked);
 
             let errorMsg = '';
             let targetEl = null;
 
             if (!name) { errorMsg = '請填寫真實姓名'; targetEl = document.getElementById('consultName'); }
-            else if (!phone.startsWith('09') || phone.length !== 10) { errorMsg = '手機號碼格式錯誤，需為09開頭且共10碼'; targetEl = document.getElementById('consultPhone'); }
-            else if (!bYear || !bMonth || !bDay) { errorMsg = '請選擇完整的生日資訊'; targetEl = document.getElementById('consultYear').parentElement; }
-            else if (areas.length === 0) { errorMsg = '請至少勾選一項「服務部位需求」'; targetEl = document.getElementById('sectionAreas'); }
-            else if (!allPrecautionsChecked) { errorMsg = '請詳閱並勾選所有「服務聲明與注意事項」'; targetEl = document.getElementById('sectionPrecautions'); }
-            else if (!isConsentChecked) { errorMsg = '請詳閱並勾選「本人同意聲明」'; targetEl = document.getElementById('sectionConsent'); }
-            else if (consultPad.isEmpty()) { errorMsg = '請顧客於下方完成電子簽名確認'; targetEl = document.getElementById('sectionSignature'); }
+            else if (!phone.startsWith('09') || phone.length !== 10) { errorMsg = '手機號碼格式錯誤'; targetEl = document.getElementById('consultPhone'); }
+            else if (!bYear || !bMonth || !bDay) { errorMsg = '請選擇生日'; targetEl = document.getElementById('consultYear').parentElement; }
+            else if (areas.length === 0) { errorMsg = '請勾選服務部位'; targetEl = document.getElementById('sectionAreas'); }
+            else if (!allPrecautionsChecked) { errorMsg = '請勾選所有注意事項'; targetEl = document.getElementById('sectionPrecautions'); }
+            else if (!isConsentChecked) { errorMsg = '請同意聲明'; targetEl = document.getElementById('sectionConsent'); }
+            else if (consultPad.isEmpty()) { errorMsg = '請完成簽名'; targetEl = document.getElementById('sectionSignature'); }
 
             if (errorMsg) {
                 showError('errConsult', errorMsg);
                 if (targetEl) {
                     targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     targetEl.classList.add('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50', 'transition', 'duration-300');
-                    setTimeout(() => {
-                        targetEl.classList.remove('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50');
-                    }, 2500);
+                    setTimeout(() => targetEl.classList.remove('ring-2', 'ring-red-500', 'border-red-500', 'bg-red-50'), 2500);
                 }
                 return;
             }
 
             setProcessing('btnSubmitConsultation', '傳送中...');
             try {
-                const signatureBase64 = consultPad.getData();
-                
-                // 1. 寫入諮詢表紀錄
-                await robustAddDoc('beauty_consultations', {
-                    name: name,
-                    phone: phone,
-                    gender: gender,
-                    birthday: birthday,
-                    areas: areas,
+                const consultRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_consultations');
+                await addDoc(consultRef, {
+                    name, phone, gender, birthday, areas,
                     precautionsAgreed: allPrecautionsChecked,
                     consentStatus: isConsentChecked,
-                    signature: signatureBase64,
+                    signature: consultPad.getData(),
                     timestamp: new Date().getTime(),
                     createdAt: new Date().toISOString()
                 });
 
-                // 2. 自動判斷並建檔儲值金會員 (使用電話作為唯一識別)
                 const existingMember = members.find(m => m.phone === phone);
                 if (!existingMember) {
                     await robustAddDoc('beauty_members', {
-                        name: name,
-                        phone: phone,
-                        birthday: birthday,
-                        gender: gender,
-                        balance: 0,
-                        bonusBalance: 0,
-                        points: 0,
+                        name, phone, birthday, gender,
+                        balance: 0, bonusBalance: 0, points: 0,
                         createdAt: new Date().getTime(),
                         createdBy: 'System_Auto'
                     });
@@ -1734,35 +1804,28 @@
                 consultPad.clear();
 
             } catch (err) {
-                showError('errConsult', '表單儲存失敗: ' + err.message);
+                showError('errConsult', '儲存失敗: ' + err.message);
             }
             clearProcessing('btnSubmitConsultation');
         });
 
         document.getElementById('btnConfirmConsultSuccess').addEventListener('click', () => {
             closeModal('modalConsultSuccess');
-            switchView('consultation'); 
+            switchView('consultation');
         });
 
-        // ==========================================
-        // Keyboard Events (ESC & ENTER)
-        // ==========================================
         document.addEventListener('keydown', (e) => {
             const openModalEl = Array.from(document.querySelectorAll('[id^="modal"]')).find(el => !el.classList.contains('hidden'));
             
             if (e.key === 'Escape') {
                 if (openModalEl) {
-                    if (openModalEl.id === 'modalLogin') {
-                        document.getElementById('btnCancelLogin').click();
-                    } else {
-                        closeModal(openModalEl.id);
-                    }
+                    if (openModalEl.id === 'modalLogin') document.getElementById('btnCancelLogin').click();
+                    else closeModal(openModalEl.id);
                 }
             } else if (e.key === 'Enter') {
                 if (openModalEl) {
                     if (document.activeElement.tagName.toLowerCase() === 'textarea') return;
                     e.preventDefault(); 
-                    
                     if (openModalEl.id === 'modalLogin') document.getElementById('btnSubmitLogin').click();
                     else if (openModalEl.id === 'modalAddMember') document.getElementById('btnSubmitAddMember').click();
                     else if (openModalEl.id === 'modalAdjustAuth') document.getElementById('btnVerifyPin').click();
