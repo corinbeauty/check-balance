@@ -113,7 +113,7 @@
                         <!-- Members rendered via JS -->
                     </ul>
                     <div id="emptyListState" class="hidden p-10 text-center text-stone-500 flex flex-col items-center justify-center min-h-[300px]">
-                        <!-- Content injected via JS based on Role -->
+                        <!-- Content injected via JS -->
                     </div>
                 </div>
             </div>
@@ -141,6 +141,9 @@
                     <div class="flex flex-wrap gap-2 w-full sm:w-auto justify-end auth-required hidden">
                         <button id="btnOpenTransaction" class="px-4 py-2 bg-stone-800 text-white rounded-lg text-sm font-medium hover:bg-stone-900 shadow-sm flex items-center gap-1">
                             <i class="ph ph-currency-dollar text-lg"></i> 結帳與儲值
+                        </button>
+                        <button id="btnOpenTransfer" class="px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg text-sm font-medium hover:bg-indigo-100 shadow-sm flex items-center gap-1">
+                            <i class="ph ph-paper-plane-tilt text-lg"></i> 餘額轉贈
                         </button>
                         <button id="btnOpenAdjust" class="px-4 py-2 bg-white border border-stone-200 text-stone-700 rounded-lg text-sm font-medium hover:bg-stone-50 shadow-sm flex items-center gap-1">
                             <i class="ph ph-shield-warning text-lg"></i> 系統調整
@@ -423,8 +426,21 @@
 
                     <!-- 分頁內容 2: 店務收支損益 -->
                     <div id="tabExpensesContent" class="hidden space-y-6">
+                        <!-- 系統總預收款餘額 (實收款) -->
+                        <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                            <div>
+                                <div class="text-indigo-800 font-bold flex items-center gap-2"><i class="ph ph-vault text-xl"></i> 總預收款餘額(實收款)</div>
+                                <div class="text-xs text-indigo-500 mt-1">此數值為最高權限專用，可篩選檢視指定人員的累計實收本金淨額。</div>
+                            </div>
+                            <div class="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
+                                <select id="filterPrepaidOp" class="hidden p-2 border border-indigo-200 rounded-lg text-sm bg-white text-indigo-800 outline-none w-full sm:w-auto shadow-sm">
+                                    <option value="all">全部同群組帳號</option>
+                                </select>
+                                <div id="lblTotalPrepaid" class="text-3xl font-black text-indigo-900 shrink-0">$0</div>
+                            </div>
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            
                             <!-- 新增收支項目表單 -->
                             <div class="md:col-span-1 bg-stone-50 p-5 rounded-2xl border border-stone-200 space-y-4">
                                 <h3 class="font-bold text-stone-800 text-base flex items-center gap-1">
@@ -513,6 +529,21 @@
          MODALS (Standard Modal overlays - Instant Toggle)
          ========================================== -->
     
+    <!-- Custom Delete Confirm Modal -->
+    <div id="modalDeleteConfirm" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-[90]">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center animate-in zoom-in duration-200">
+            <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="ph ph-trash text-3xl"></i>
+            </div>
+            <h3 class="font-bold text-xl text-stone-800 mb-2" id="deleteConfirmTitle">確認刪除</h3>
+            <p class="text-stone-600 text-sm mb-6 leading-relaxed" id="deleteConfirmMsg">您確定要刪除此筆資料嗎？此操作無法復原。</p>
+            <div class="flex gap-3">
+                <button class="modal-close flex-1 py-3 text-stone-600 font-medium bg-stone-100 rounded-xl hover:bg-stone-200 transition">取消</button>
+                <button id="btnConfirmDeleteAction" class="flex-1 py-3 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 shadow-sm transition">確認刪除</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 0. Beautician Login Modal -->
     <div id="modalLogin" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
         <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
@@ -581,6 +612,59 @@
         </div>
     </div>
 
+    <!-- Transfer Balance Modal -->
+    <div id="modalTransfer" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden">
+            <div class="p-5 border-b border-indigo-100 flex justify-between items-center bg-indigo-50">
+                <h3 class="font-bold text-lg text-indigo-800 flex items-center gap-2"><i class="ph ph-paper-plane-tilt text-xl"></i> 儲值金餘額轉贈</h3>
+                <button class="modal-close text-indigo-400 hover:text-indigo-600"><i class="ph ph-x text-xl"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="bg-indigo-50 text-indigo-700 text-xs p-3 rounded-lg border border-indigo-200">
+                    注意：僅能轉贈「儲值本金」，無法轉移贈送金與點數。轉贈後雙方明細皆會留下紀錄。
+                </div>
+                <div class="flex justify-between items-center bg-stone-50 p-3 rounded-lg border border-stone-200">
+                    <span class="text-sm font-medium text-stone-600">目前可轉贈本金</span>
+                    <span id="lblTransferMax" class="text-lg font-bold text-stone-800">$0</span>
+                </div>
+                
+                <div id="errTransfer" class="hidden p-2 bg-red-50 text-red-600 text-sm rounded"></div>
+                
+                <div id="transferSearchBlock">
+                    <label class="block text-sm font-medium text-stone-700 mb-1">接收方會員電話 <span class="text-red-500">*</span></label>
+                    <div class="flex gap-2">
+                        <input type="tel" id="transferTargetPhone" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="輸入接收方手機號碼" />
+                        <button id="btnFindTransferTarget" class="px-4 py-3 bg-indigo-100 text-indigo-700 font-bold rounded-xl hover:bg-indigo-200 transition whitespace-nowrap">查找</button>
+                    </div>
+                </div>
+
+                <div id="transferInputBlock" class="hidden space-y-4 pt-2 border-t border-stone-100">
+                    <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-center gap-3">
+                        <div class="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center font-bold text-lg shrink-0" id="targetAvatar">-</div>
+                        <div>
+                            <div class="text-xs text-emerald-600 font-medium">確認接收人</div>
+                            <div class="font-bold text-stone-800" id="targetNameDisplay">姓名</div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1">轉贈金額 <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-stone-400">$</span>
+                            <input type="number" id="transferAmount" class="w-full pl-8 pr-4 py-3 border border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-lg font-bold text-indigo-700" placeholder="0" />
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            <div class="p-5 border-t border-stone-100 bg-stone-50 flex gap-3 justify-end">
+                <button class="modal-close px-5 py-2.5 text-stone-500 font-medium hover:bg-stone-200 rounded-xl">取消</button>
+                <button id="btnSubmitTransfer" class="hidden px-5 py-2.5 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 shadow-sm flex items-center justify-center gap-2">
+                    確認轉出
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 2. Transaction Modal -->
     <div id="modalTransaction" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden items-start sm:items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden my-8">
@@ -631,9 +715,17 @@
                             <span class="text-rose-600">預計扣除消費</span>
                             <span id="lblDeductBalance" class="font-bold text-rose-600">-$0</span>
                         </div>
+                        <div class="flex justify-between text-sm text-stone-500 border-t border-stone-200 pt-2 border-dashed">
+                            <span>結帳後剩餘 <span class="text-xs">本金</span></span>
+                            <span id="lblRemainingP" class="">$0</span>
+                        </div>
+                        <div class="flex justify-between text-sm text-stone-500">
+                            <span>結帳後剩餘 <span class="text-xs">贈送金</span></span>
+                            <span id="lblRemainingB" class="">$0</span>
+                        </div>
                         <div class="flex justify-between text-sm font-bold border-t border-stone-200 pt-2">
-                            <span class="text-stone-800">結帳後剩餘總儲值金</span>
-                            <span id="lblRemainingBalance" class="text-stone-800">$0</span>
+                            <span class="text-stone-800">結帳後剩餘 <span class="text-pink-600">最終總餘額</span></span>
+                            <span id="lblRemainingBalance" class="text-pink-600 text-lg">$0</span>
                         </div>
                     </div>
                     <!-- 差額區 -->
@@ -706,21 +798,21 @@
             </div>
             <div class="p-5 space-y-4">
                 <div class="bg-red-100 text-red-700 text-xs p-3 rounded-lg border border-red-200">
-                    警告：所有的調整皆會永久記錄於系統日誌中。輸入正數增加，負數減少（如：-500）。
+                    警告：請直接輸入您期望修改後的「最終數字」，系統將自動換算差額並記錄於日誌中。
                 </div>
                 <div id="errAdjust" class="hidden p-2 bg-red-50 text-red-600 text-sm rounded"></div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">本金異動</label>
+                        <label class="block text-sm font-medium text-stone-700 mb-1">修改後 本金 <span class="text-xs text-stone-400">(原: <span id="adjCurrAmt">0</span>)</span></label>
                         <input type="number" id="adjAmount" class="w-full p-3 border border-stone-200 rounded-xl outline-none focus:border-red-500" placeholder="0" />
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-stone-700 mb-1">贈送金異動</label>
+                        <label class="block text-sm font-medium text-stone-700 mb-1">修改後 贈送金 <span class="text-xs text-stone-400">(原: <span id="adjCurrBonus">0</span>)</span></label>
                         <input type="number" id="adjBonus" class="w-full p-3 border border-stone-200 rounded-xl outline-none focus:border-red-500" placeholder="0" />
                     </div>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-stone-700 mb-1">點數異動</label>
+                    <label class="block text-sm font-medium text-stone-700 mb-1">修改後 點數 <span class="text-xs text-stone-400">(原: <span id="adjCurrPoints">0</span>)</span></label>
                     <input type="number" id="adjPoints" class="w-full p-3 border border-stone-200 rounded-xl outline-none focus:border-red-500" placeholder="0" />
                 </div>
                 <div>
@@ -848,6 +940,10 @@
                         <input type="text" id="opUsername" class="w-full p-2 border border-stone-200 rounded-lg outline-none" placeholder="例如: LARMO" />
                     </div>
                     <div>
+                        <label class="block text-xs text-stone-500 mb-1">群組 (共看業績用) *</label>
+                        <input type="text" id="opGroup" class="w-full p-2 border border-stone-200 rounded-lg outline-none" placeholder="例如: A店" />
+                    </div>
+                    <div>
                         <label class="block text-xs text-stone-500 mb-1">登入密碼 *</label>
                         <input type="text" id="opPassword" class="w-full p-2 border border-stone-200 rounded-lg outline-none" placeholder="例如: 8888" />
                     </div>
@@ -859,7 +955,7 @@
                             <option value="admin">最高管理者</option>
                         </select>
                     </div>
-                    <div>
+                    <div class="sm:col-span-2">
                         <label class="block text-xs text-stone-500 mb-1">抽成比例 (%) *</label>
                         <input type="number" id="opCommission" class="w-full p-2 border border-stone-200 rounded-lg outline-none" placeholder="0-100" min="0" max="100" />
                     </div>
@@ -875,8 +971,8 @@
                     <thead>
                         <tr class="bg-stone-50 text-stone-500 text-xs font-semibold">
                             <th class="p-3 border-b border-stone-100">帳號</th>
-                            <th class="p-3 border-b border-stone-100">權限級別</th>
-                            <th class="p-3 border-b border-stone-100 text-center">抽成 (%)</th>
+                            <th class="p-3 border-b border-stone-100">群組</th>
+                            <th class="p-3 border-b border-stone-100">權限</th>
                             <th class="p-3 border-b border-stone-100 text-center">狀態</th>
                             <th class="p-3 border-b border-stone-100 text-center">操作</th>
                         </tr>
@@ -967,6 +1063,12 @@
         let currentReportTab = 'commission'; 
         let clockInterval = null;
 
+        // Transfer Feature State
+        let transferTargetMember = null;
+
+        // Custom Confirm State
+        let deleteConfirmCallback = null;
+
         const DOM = {
             viewList: document.getElementById('viewList'),
             viewDetail: document.getElementById('viewDetail'),
@@ -1049,6 +1151,26 @@
             });
         });
 
+        // Custom Dialog Logic
+        function showCustomConfirm(title, msg, onConfirm) {
+            document.getElementById('deleteConfirmTitle').innerHTML = title;
+            document.getElementById('deleteConfirmMsg').innerHTML = msg;
+            deleteConfirmCallback = onConfirm;
+            openModal('modalDeleteConfirm');
+        }
+        
+        document.getElementById('btnConfirmDeleteAction').addEventListener('click', async () => {
+            if(deleteConfirmCallback) {
+                const btn = document.getElementById('btnConfirmDeleteAction');
+                btn.innerHTML = `<i class="ph ph-spinner-gap animate-spin"></i> 處理中...`;
+                btn.disabled = true;
+                await deleteConfirmCallback();
+                btn.innerHTML = `確認刪除`;
+                btn.disabled = false;
+            }
+            closeModal('modalDeleteConfirm');
+        });
+
         const showError = (id, msg) => {
             const el = document.getElementById(id);
             if(el) {
@@ -1094,6 +1216,27 @@
         }
 
         // ==========================================
+        // Helper: Get Allowed Operators based on Group
+        // ==========================================
+        function getAllowedOperators() {
+            if (!loggedInBeautician) return [];
+            
+            // 找出登入者紀錄
+            const myRecord = operators.find(o => (o.username || '').toLowerCase() === loggedInBeautician.toLowerCase());
+            
+            // 萬一系統預設帳號不在 DB (罕見)，就只允許看自己
+            if (!myRecord) return [loggedInBeautician];
+
+            const myGroup = (myRecord.group || '').trim();
+            // 如果該帳號沒設定群組，那也只能看自己
+            if (!myGroup) return [loggedInBeautician];
+
+            // 否則，回傳「相同群組」的所有帳號清單
+            return operators.filter(o => (o.group || '').trim() === myGroup).map(o => o.username);
+        }
+
+
+        // ==========================================
         // Role Based Access Control (RBAC) UI Update
         // ==========================================
         function updateRBACUI() {
@@ -1130,9 +1273,11 @@
                 if (loggedInRole === 'admin') {
                     showElement(DOM.btnOpenOperatorsView);
                     showElement(DOM.btnOpenImportExcel);
+                    showElement(document.getElementById('filterPrepaidOp'));
                 } else {
                     hideElement(DOM.btnOpenOperatorsView);
                     hideElement(DOM.btnOpenImportExcel);
+                    hideElement(document.getElementById('filterPrepaidOp'));
                 }
 
                 showElement(DOM.btnOpenReport);
@@ -1260,21 +1405,59 @@
                     
                     if (snapshot.empty) {
                         const defaults = [
-                            { username: "Jerry", password: "7310168888", role: "admin", commission: 100, status: "active" },
-                            { username: "LARMO", password: "8888", role: "beautician", commission: 100, status: "active" },
-                            { username: "小Q", password: "9999", role: "beautician", commission: 40, status: "active" },
-                            { username: "Boss", password: "1234", role: "owner", commission: 0, status: "active" }
+                            { username: "Jerry", password: "7310168888", role: "admin", commission: 100, status: "active", group: "預設群組" },
+                            { username: "LARMO", password: "8888", role: "beautician", commission: 100, status: "active", group: "預設群組" },
+                            { username: "小Q", password: "9999", role: "beautician", commission: 40, status: "active", group: "預設群組" },
+                            { username: "Boss", password: "1234", role: "owner", commission: 0, status: "active", group: "預設群組" }
                         ];
                         defaults.forEach(async (op) => {
                             await addDoc(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators'), op);
                         });
                     }
+                    
+                    // 根據登入者的 Group，填充 `filterPrepaidOp` 下拉選單 (且僅顯示 Admin/Owner 角色)
+                    const opSelect = document.getElementById('filterPrepaidOp');
+                    const currentVal = opSelect.value;
+                    const allowedOps = getAllowedOperators();
+                    const allowedAdminsAndOwners = operators.filter(o => allowedOps.includes(o.username) && (o.role === 'admin' || o.role === 'owner'));
+                    
+                    opSelect.innerHTML = '<option value="all">全部同群組帳號</option>' + allowedAdminsAndOwners.map(o => `<option value="${o.username}">${o.username}</option>`).join('');
+                    if (currentVal) opSelect.value = currentVal;
+
                     renderOperatorsList();
+                    renderPrepaidBalance();
                 }, (err) => console.error("Operators snapshot error: ", err));
             } catch(e) {
                 console.error("Fetch Data Initialization Error:", e);
             }
         }
+
+        function renderPrepaidBalance() {
+            if (loggedInRole === 'beautician') return;
+            const filterOp = document.getElementById('filterPrepaidOp').value;
+            let total = 0;
+            const allowed = getAllowedOperators();
+
+            transactions.forEach(tx => {
+                const opName = tx.operator || '系統';
+                
+                // 只有自己群組的交易才列入計算
+                if (!allowed.includes(opName)) return;
+
+                const opRecord = operators.find(o => o.username === opName);
+                const opRole = opRecord ? opRecord.role : 'beautician';
+
+                // 「只有最高權限及老闆權限的帳號新增的儲值金才看得到」
+                if (opRole === 'admin' || opRole === 'owner') {
+                    if (filterOp === 'all' || filterOp === opName) {
+                        total += (tx.amountChange || 0);
+                    }
+                }
+            });
+            document.getElementById('lblTotalPrepaid').textContent = `$${formatNumber(total)}`;
+        }
+
+        document.getElementById('filterPrepaidOp').addEventListener('change', renderPrepaidBalance);
 
         function mergeData() {
             if (selectedMember) {
@@ -1283,6 +1466,8 @@
             }
             if(currentActiveViewId === 'list') renderMembers();
             if(currentActiveViewId === 'detail') renderMemberDetail();
+            
+            renderPrepaidBalance();
         }
 
         async function robustAddDoc(collName, data) {
@@ -1347,9 +1532,9 @@
                 
                 const reportSubtitle = document.getElementById('reportSubtitle');
                 if (loggedInRole === 'admin') {
-                    reportSubtitle.textContent = '最高權限專屬：店務收支與綜合業績抽成結算';
+                    reportSubtitle.textContent = '店務收支與綜合業績抽成結算';
                 } else if (loggedInRole === 'owner') {
-                    reportSubtitle.textContent = '老闆專屬：店務損益與全店營業額讀取';
+                    reportSubtitle.textContent = '店務損益與全店營業額讀取';
                 } else {
                     reportSubtitle.textContent = `個人專屬區塊：${loggedInBeautician} 業績分析看板`;
                 }
@@ -1390,41 +1575,34 @@
 
             const member = members.find(m => m.id === tx.memberId);
             if (!member) {
-                if(confirm('找不到關聯的會員資料，無法回推餘額。是否僅強制刪除該交易紀錄？')) {
-                    try {
-                        await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
-                        if (currentActiveViewId === 'report') document.getElementById('btnGenerateReport').click();
-                    } catch(err) {
-                        alert('刪除失敗: ' + err.message);
-                    }
-                }
-                return;
-            }
-
-            if (!confirm('警告：確定要永久刪除此筆交易明細嗎？\n這將同時「回推並扣除」該會員當時產生的本金、贈送金與點數。')) {
-                return;
-            }
-
-            const newBalance = (member.balance || 0) - (tx.amountChange || 0);
-            const newBonus = (member.bonusBalance || 0) - (tx.bonusChange || 0);
-            const newPoints = (member.points || 0) - (tx.pointsChange || 0);
-
-            try {
-                await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', member.id), {
-                    balance: newBalance,
-                    bonusBalance: newBonus,
-                    points: newPoints
+                showCustomConfirm('警告', '找不到關聯的會員資料，無法回推餘額。是否僅強制刪除該交易紀錄？', async () => {
+                    await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
+                    if (currentActiveViewId === 'report') document.getElementById('btnGenerateReport').click();
                 });
-                
-                await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
-                
-                // If on report page, regenerate report manually since it's not fully reactive inside stats calculation
-                if (currentActiveViewId === 'report') {
-                    document.getElementById('btnGenerateReport').click();
-                }
-            } catch(err) {
-                alert('刪除失敗: ' + err.message);
+                return;
             }
+
+            showCustomConfirm('永久刪除確認', '確定要永久刪除此筆交易明細嗎？這將同時<strong class="text-rose-600">回推並扣除</strong>該會員當時產生的本金、贈送金與點數。', async () => {
+                const newBalance = (member.balance || 0) - (tx.amountChange || 0);
+                const newBonus = (member.bonusBalance || 0) - (tx.bonusChange || 0);
+                const newPoints = (member.points || 0) - (tx.pointsChange || 0);
+
+                try {
+                    await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', member.id), {
+                        balance: newBalance,
+                        bonusBalance: newBonus,
+                        points: newPoints
+                    });
+                    
+                    await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
+                    
+                    if (currentActiveViewId === 'report') {
+                        document.getElementById('btnGenerateReport').click();
+                    }
+                } catch(err) {
+                    alert('刪除失敗: ' + err.message);
+                }
+            });
         };
 
         // ==========================================
@@ -1523,6 +1701,7 @@
             }
 
             const consultListEl = document.getElementById('memberConsultationList');
+            // 會員的諮詢紀錄不受群組限制，會員資料是共用的
             const memberConsults = consultations.filter(c => c.phone === selectedMember.phone).sort((a,b) => b.timestamp - a.timestamp);
             
             if(memberConsults.length === 0) {
@@ -1546,8 +1725,13 @@
             const txListEl = document.getElementById('transactionList');
             txListEl.innerHTML = '';
             
+            // ==========================================
+            // 交易明細清單群組篩選機制：只顯示相同群組的操作員紀錄
+            // ==========================================
+            const allowed = getAllowedOperators();
+            
             const memberTx = transactions
-                .filter(t => t.memberId === selectedMember.id)
+                .filter(t => t.memberId === selectedMember.id && allowed.includes(t.operator))
                 .sort((a, b) => b.timestamp - a.timestamp);
 
             if (memberTx.length === 0) {
@@ -1574,7 +1758,7 @@
                         <td class="p-4 font-bold text-rose-600">${consumeAmt > 0 ? '$' + formatNumber(consumeAmt) : '-'}</td>
                         <td class="p-4 font-bold text-emerald-600">${depositAmt > 0 ? '$' + formatNumber(depositAmt) : '-'}</td>
                         <td class="p-4 font-bold text-emerald-600">${tx.bonusChange > 0 ? '$' + formatNumber(tx.bonusChange) : '-'}</td>
-                        <td class="p-4 text-right font-bold text-stone-800 bg-stone-50">$${formatNumber(tx.newBalance)}</td>
+                        <td class="p-4 text-right font-bold text-stone-800 bg-stone-50">$${formatNumber((tx.newBalance||0) + (tx.newBonus||0))}</td>
                         <td class="p-4 max-w-[200px]">
                             <div class="flex items-center justify-between gap-2">
                                 <div class="flex items-center gap-2 truncate">
@@ -1606,6 +1790,116 @@
         }
 
         // ==========================================
+        // Transfer Balance Feature
+        // ==========================================
+        document.getElementById('btnOpenTransfer').addEventListener('click', () => {
+            if (!selectedMember) return;
+            document.getElementById('lblTransferMax').textContent = `$${formatNumber(selectedMember.balance)}`;
+            document.getElementById('transferTargetPhone').value = '';
+            document.getElementById('transferAmount').value = '';
+            hideElement(document.getElementById('transferInputBlock'));
+            hideElement(document.getElementById('btnSubmitTransfer'));
+            hideElement(document.getElementById('errTransfer'));
+            transferTargetMember = null;
+            openModal('modalTransfer');
+        });
+
+        document.getElementById('btnFindTransferTarget').addEventListener('click', () => {
+            const phone = document.getElementById('transferTargetPhone').value.trim();
+            hideElement(document.getElementById('errTransfer'));
+
+            if (!phone) {
+                return showError('errTransfer', '請輸入欲轉贈對象的手機號碼');
+            }
+            if (phone === selectedMember.phone) {
+                return showError('errTransfer', '無法轉贈給自己');
+            }
+
+            const target = members.find(m => m.phone === phone);
+            if (!target) {
+                hideElement(document.getElementById('transferInputBlock'));
+                hideElement(document.getElementById('btnSubmitTransfer'));
+                return showError('errTransfer', '找不到此手機號碼對應的會員');
+            }
+
+            transferTargetMember = target;
+            document.getElementById('targetAvatar').textContent = target.name.charAt(0);
+            document.getElementById('targetNameDisplay').textContent = target.name;
+            
+            showElement(document.getElementById('transferInputBlock'));
+            showElement(document.getElementById('btnSubmitTransfer'));
+        });
+
+        document.getElementById('btnSubmitTransfer').addEventListener('click', async () => {
+            if (isProcessing || !transferTargetMember || !selectedMember) return;
+
+            hideElement(document.getElementById('errTransfer'));
+            const transferAmt = parseFloat(document.getElementById('transferAmount').value);
+
+            if (isNaN(transferAmt) || transferAmt <= 0) {
+                return showError('errTransfer', '轉贈金額必須是大於 0 的正整數');
+            }
+            if (transferAmt > (selectedMember.balance || 0)) {
+                return showError('errTransfer', `轉贈金額超出目前可用本金 (最多 $${formatNumber(selectedMember.balance)})`);
+            }
+
+            setProcessing('btnSubmitTransfer', '處理中...');
+
+            try {
+                // 1. Update Sender (扣款)
+                const senderNewBalance = (selectedMember.balance || 0) - transferAmt;
+                await robustUpdateMember(selectedMember.id, { balance: senderNewBalance });
+
+                await robustAddDoc('beauty_transactions', {
+                    memberId: selectedMember.id,
+                    type: 'transfer_out',
+                    consumeAmount: 0,
+                    depositAmount: 0,
+                    amountChange: -transferAmt,
+                    bonusChange: 0,
+                    pointsChange: 0,
+                    remark: `[餘額轉贈] 轉出至 ${transferTargetMember.phone} ${transferTargetMember.name}`,
+                    signature: null,
+                    timestamp: new Date().getTime(),
+                    previousBalance: selectedMember.balance || 0,
+                    previousBonus: selectedMember.bonusBalance || 0,
+                    newBalance: senderNewBalance,
+                    newBonus: selectedMember.bonusBalance || 0,
+                    operator: loggedInBeautician || '系統',
+                    audited: false
+                });
+
+                // 2. Update Receiver (入帳)
+                const receiverNewBalance = (transferTargetMember.balance || 0) + transferAmt;
+                await robustUpdateMember(transferTargetMember.id, { balance: receiverNewBalance });
+
+                await robustAddDoc('beauty_transactions', {
+                    memberId: transferTargetMember.id,
+                    type: 'transfer_in',
+                    consumeAmount: 0,
+                    depositAmount: 0,
+                    amountChange: transferAmt,
+                    bonusChange: 0,
+                    pointsChange: 0,
+                    remark: `[餘額接收] 來自 ${selectedMember.phone} ${selectedMember.name} 的轉贈`,
+                    signature: null,
+                    timestamp: new Date().getTime() + 10, // Slight offset for sorting
+                    previousBalance: transferTargetMember.balance || 0,
+                    previousBonus: transferTargetMember.bonusBalance || 0,
+                    newBalance: receiverNewBalance,
+                    newBonus: transferTargetMember.bonusBalance || 0,
+                    operator: loggedInBeautician || '系統',
+                    audited: false
+                });
+
+                closeModal('modalTransfer');
+            } catch (err) {
+                showError('errTransfer', '轉贈失敗: ' + err.message);
+            }
+            clearProcessing('btnSubmitTransfer');
+        });
+
+        // ==========================================
         // UI & Forms Handling (Unified Transaction)
         // ==========================================
         function calcUnifiedPreview() {
@@ -1614,8 +1908,12 @@
             const depositPrincipal = parseFloat(document.getElementById('txAmount').value) || 0;
             const depositBonus = parseFloat(document.getElementById('txBonus').value) || 0;
 
-            const baseTotal = (selectedMember.balance || 0) + (selectedMember.bonusBalance || 0);
-            const totalAvailable = baseTotal + depositPrincipal + depositBonus;
+            const baseP = selectedMember.balance || 0;
+            const baseB = selectedMember.bonusBalance || 0;
+            
+            const totalAvailableP = baseP + depositPrincipal;
+            const totalAvailableB = baseB + depositBonus;
+            const totalAvailable = totalAvailableP + totalAvailableB;
 
             let deduct = 0;
             let shortfall = 0;
@@ -1628,10 +1926,19 @@
                 shortfall = consumeTotal - totalAvailable;
             }
 
-            const remaining = totalAvailable - deduct;
+            // 優先扣除儲值本金邏輯
+            let deductP = Math.min(totalAvailableP, deduct);
+            let deductB = deduct - deductP;
+
+            const remainingP = totalAvailableP - deductP;
+            const remainingB = totalAvailableB - deductB;
+            const remaining = remainingP + remainingB;
 
             document.getElementById('lblTotalAvailable').textContent = `$${formatNumber(totalAvailable)}`;
             document.getElementById('lblDeductBalance').textContent = `-$${formatNumber(deduct)}`;
+            
+            document.getElementById('lblRemainingP').textContent = `$${formatNumber(remainingP)}`;
+            document.getElementById('lblRemainingB').textContent = `$${formatNumber(remainingB)}`;
             document.getElementById('lblRemainingBalance').textContent = `$${formatNumber(remaining)}`;
 
             const shortfallSec = document.getElementById('shortfallSection');
@@ -1775,7 +2082,7 @@
                 previousBalance: selectedMember.balance || 0,
                 previousBonus: selectedMember.bonusBalance || 0,
                 newBalance: newBalance,
-                newBonus: newBonus,
+                newBonus: newBonus, // Fix: Record newBonus as well
                 operator: loggedInBeautician || '系統',
                 audited: false // 新增核對狀態
             };
@@ -1805,7 +2112,13 @@
                 return showError('errTx', '有消費扣款時，必須由顧客簽名確認！');
             }
 
-            const currentTotal = (selectedMember.balance || 0) + (selectedMember.bonusBalance || 0) + depositPrincipal + depositBonus;
+            const baseP = selectedMember.balance || 0;
+            const baseB = selectedMember.bonusBalance || 0;
+            
+            const totalAvailableP = baseP + depositPrincipal;
+            const totalAvailableB = baseB + depositBonus;
+            const currentTotal = totalAvailableP + totalAvailableB;
+
             let deduct = Math.min(consumeTotal, currentTotal);
             let shortfall = consumeTotal > currentTotal ? consumeTotal - currentTotal : 0;
 
@@ -1816,11 +2129,12 @@
                 }
             }
 
-            let deductBonus = Math.min((selectedMember.bonusBalance || 0) + depositBonus, deduct);
-            let deductBalance = deduct - deductBonus;
+            // 優先扣除儲值本金邏輯
+            let deductP = Math.min(totalAvailableP, deduct);
+            let deductB = deduct - deductP;
 
-            const netAmountChange = depositPrincipal - deductBalance;
-            const netBonusChange = depositBonus - deductBonus;
+            const netAmountChange = depositPrincipal - deductP;
+            const netBonusChange = depositBonus - deductB;
 
             let finalRemark = '';
             if (consumeTotal > 0) finalRemark += `[服務消費] 總額: $${formatNumber(consumeTotal)}`;
@@ -1855,13 +2169,29 @@
             const remark = document.getElementById('adjRemark').value.trim();
             if(!remark) return showError('errAdjust', '強制調整必須填寫備註原因');
 
+            const adjFinalAmt = parseFloat(document.getElementById('adjAmount').value);
+            const adjFinalBonus = parseFloat(document.getElementById('adjBonus').value);
+            const adjFinalPoints = parseFloat(document.getElementById('adjPoints').value);
+            
+            if (isNaN(adjFinalAmt) || isNaN(adjFinalBonus) || isNaN(adjFinalPoints)) {
+                return showError('errAdjust', '請輸入有效的數字');
+            }
+
+            const amountChange = adjFinalAmt - (selectedMember.balance || 0);
+            const bonusChange = adjFinalBonus - (selectedMember.bonusBalance || 0);
+            const pointsChange = adjFinalPoints - (selectedMember.points || 0);
+
+            if (amountChange === 0 && bonusChange === 0 && pointsChange === 0) {
+                 return showError('errAdjust', '數值沒有改變，無需調整');
+            }
+
             setProcessing('btnSubmitAdjust', '寫入中...');
             try {
                 await executeTransaction({
                     type: 'adjust',
-                    amountChange: parseFloat(document.getElementById('adjAmount').value || 0),
-                    bonusChange: parseFloat(document.getElementById('adjBonus').value || 0),
-                    pointsChange: parseFloat(document.getElementById('adjPoints').value || 0),
+                    amountChange: amountChange,
+                    bonusChange: bonusChange,
+                    pointsChange: pointsChange,
                     remark: `[系統調整] ${remark}`
                 });
                 
@@ -1880,7 +2210,18 @@
             const pin = document.getElementById('adminPin').value;
             if (pin === '7310168888') {
                 closeModal('modalAdjustAuth');
-                setTimeout(() => openModal('modalAdjustForm'), 250);
+                setTimeout(() => {
+                    // Pre-fill fields with current values
+                    document.getElementById('adjCurrAmt').textContent = selectedMember.balance || 0;
+                    document.getElementById('adjCurrBonus').textContent = selectedMember.bonusBalance || 0;
+                    document.getElementById('adjCurrPoints').textContent = selectedMember.points || 0;
+
+                    document.getElementById('adjAmount').value = selectedMember.balance || 0;
+                    document.getElementById('adjBonus').value = selectedMember.bonusBalance || 0;
+                    document.getElementById('adjPoints').value = selectedMember.points || 0;
+
+                    openModal('modalAdjustForm');
+                }, 250);
             } else {
                 showError('errAuth', '最高授權碼錯誤，拒絕存取');
             }
@@ -1925,11 +2266,15 @@
             document.getElementById('editTxBonus').value = parseFloat(tx.bonusChange || 0);
             document.getElementById('editTxRemark').value = tx.remark || '';
 
+            // 僅顯示自己群組內的操作員提供修改選擇
+            const allowed = getAllowedOperators();
             const opSelect = document.getElementById('editTxOperator');
-            opSelect.innerHTML = operators.map(o => `
+            opSelect.innerHTML = operators.filter(o => allowed.includes(o.username)).map(o => `
                 <option value="${o.username}" ${tx.operator === o.username ? 'selected' : ''}>${o.username}</option>
             `).join('');
-            if (!operators.find(o => o.username === tx.operator)) {
+            
+            // 如果原本的帳號已經被刪除或跨群組，補上讓他可以維持
+            if (!Array.from(opSelect.options).some(o => o.value === tx.operator)) {
                 opSelect.innerHTML += `<option value="${tx.operator || '系統'}" selected>${tx.operator || '系統'}</option>`;
             }
 
@@ -2025,8 +2370,15 @@
 
             const startTs = new Date(startDateStr + 'T00:00:00').getTime();
             const endTs = new Date(endDateStr + 'T23:59:59').getTime();
+            
+            const allowed = getAllowedOperators();
 
-            const periodTx = transactions.filter(tx => tx.timestamp >= startTs && tx.timestamp <= endTs);
+            // 在報表中：只撈出「在自己群組內」的所有交易
+            const periodTx = transactions.filter(tx => 
+                tx.timestamp >= startTs && 
+                tx.timestamp <= endTs && 
+                allowed.includes(tx.operator)
+            );
 
             let operatorStats = {};
 
@@ -2061,11 +2413,9 @@
             let totalServiceSales = 0; 
 
             Object.keys(operatorStats).forEach(op => {
-                // 將判斷改為不區分大小寫，確保資料渲染正確卡控 Larmo 與 小Q 只能看到自己
-                if (loggedInRole === 'beautician' && loggedInBeautician.toLowerCase() !== op.toLowerCase()) {
-                    return;
-                }
-
+                // 因為 periodTx 已經受到 allowed (群組) 過濾
+                // 所有出現在 operatorStats 的都是自己群組的資料
+                
                 const stats = operatorStats[op];
                 totalServiceSales += stats.consume;
 
@@ -2204,7 +2554,7 @@
             });
 
             if (loggedInRole !== 'beautician') {
-                const periodExpenses = expenses.filter(e => e.timestamp >= startTs && e.timestamp <= endTs);
+                const periodExpenses = expenses.filter(e => e.timestamp >= startTs && e.timestamp <= endTs && allowed.includes(e.operator));
                 let totalExp = 0; 
 
                 periodExpenses.forEach(e => {
@@ -2273,6 +2623,9 @@
         function renderExpensesList() {
             const table = document.getElementById('expenseListTable');
             table.innerHTML = '';
+            
+            // 每次重新渲染列表也更新預收款總額
+            renderPrepaidBalance();
 
             const startDateStr = document.getElementById('reportStartDate').value;
             const endDateStr = document.getElementById('reportEndDate').value;
@@ -2280,9 +2633,11 @@
 
             const startTs = new Date(startDateStr + 'T00:00:00').getTime();
             const endTs = new Date(endDateStr + 'T23:59:59').getTime();
+            
+            const allowed = getAllowedOperators();
 
             const periodExpenses = expenses
-                .filter(e => e.timestamp >= startTs && e.timestamp <= endTs)
+                .filter(e => e.timestamp >= startTs && e.timestamp <= endTs && allowed.includes(e.operator))
                 .sort((a,b) => b.timestamp - a.timestamp);
 
             if (periodExpenses.length === 0) {
@@ -2314,14 +2669,14 @@
 
                 tr.querySelector('.btn-delete-expense').addEventListener('click', async (e) => {
                     const docId = e.currentTarget.getAttribute('data-id');
-                    if (confirm(`確認要刪除此筆 [${exp.category}] 金額 $${formatNumber(exp.amount)} 的紀錄嗎？`)) {
+                    showCustomConfirm('刪除確認', `確認要刪除此筆 [${exp.category}] 金額 $${formatNumber(exp.amount)} 的紀錄嗎？`, async () => {
                         try {
                             await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_expenses', docId));
                             document.getElementById('btnGenerateReport').click();
                         } catch(err) {
                             alert("刪除失敗: " + err.message);
                         }
-                    }
+                    });
                 });
 
                 table.appendChild(tr);
@@ -2427,6 +2782,7 @@
         function resetOperatorForm() {
             document.getElementById('opEditId').value = '';
             document.getElementById('opUsername').value = '';
+            document.getElementById('opGroup').value = '';
             document.getElementById('opUsername').disabled = false;
             document.getElementById('opPassword').value = '';
             document.getElementById('opRole').value = 'beautician';
@@ -2444,14 +2800,15 @@
         document.getElementById('btnSaveOperator').addEventListener('click', async () => {
             const editId = document.getElementById('opEditId').value;
             const username = document.getElementById('opUsername').value.trim();
+            const groupName = document.getElementById('opGroup').value.trim();
             const password = document.getElementById('opPassword').value.trim();
             const role = document.getElementById('opRole').value;
             const commission = parseFloat(document.getElementById('opCommission').value);
             
             hideElement(document.getElementById('errOperator'));
             
-            if (!username || !password || isNaN(commission)) {
-                showError('errOperator', '所有欄位皆為必填，且抽成比例須為有效數字');
+            if (!username || !password || !groupName || isNaN(commission)) {
+                showError('errOperator', '所有欄位(包含群組)皆為必填，且抽成比例須為有效數字');
                 return;
             }
             if (commission < 0 || commission > 100) {
@@ -2462,7 +2819,7 @@
             try {
                 if (editId) {
                     const opRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators', editId);
-                    const updateData = { password: password, commission: commission };
+                    const updateData = { password: password, commission: commission, group: groupName };
                     
                     if (username.toLowerCase() !== 'jerry') {
                         updateData.username = username;
@@ -2481,6 +2838,7 @@
                         username: username,
                         password: password,
                         role: role,
+                        group: groupName,
                         commission: commission,
                         status: 'active'
                     });
@@ -2513,9 +2871,8 @@
                 
                 tr.innerHTML = `
                     <td class="p-3 font-semibold text-stone-800">${op.username}</td>
-                    <td class="p-3 font-mono text-stone-500">${op.password}</td>
+                    <td class="p-3 font-semibold text-indigo-700">${op.group || '-'}</td>
                     <td class="p-3"><span class="bg-gray-100 text-stone-700 px-2 py-0.5 rounded text-xs font-semibold">${roleName}</span></td>
-                    <td class="p-3 text-center font-bold text-stone-700">${op.commission}%</td>
                     <td class="p-3 text-center">
                         <span class="px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}">${statusText}</span>
                     </td>
@@ -2532,6 +2889,7 @@
                 tr.querySelector('.btn-edit-op').addEventListener('click', () => {
                     document.getElementById('opEditId').value = op.id;
                     document.getElementById('opUsername').value = op.username;
+                    document.getElementById('opGroup').value = op.group || '';
                     
                     if (isJerry) {
                         document.getElementById('opUsername').disabled = true;
@@ -2771,9 +3129,11 @@
                     else if (openModalEl.id === 'modalAdjustForm') document.getElementById('btnSubmitAdjust').click();
                     else if (openModalEl.id === 'modalConvert') document.getElementById('btnSubmitConvert').click();
                     else if (openModalEl.id === 'modalTransaction') document.getElementById('btnSubmitTx').click();
+                    else if (openModalEl.id === 'modalTransfer') document.getElementById('btnSubmitTransfer').click();
                     else if (openModalEl.id === 'modalConsultSuccess') document.getElementById('btnConfirmConsultSuccess').click();
                     else if (openModalEl.id === 'modalEditTx') document.getElementById('btnSaveEditTx').click();
                     else if (openModalEl.id === 'modalOperators') document.getElementById('btnSaveOperator').click();
+                    else if (openModalEl.id === 'modalDeleteConfirm') document.getElementById('btnConfirmDeleteAction').click();
                 }
             }
         });
