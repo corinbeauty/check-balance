@@ -197,7 +197,7 @@
                                     <th class="p-4 font-medium border-b border-stone-100">時間</th>
                                     <th class="p-4 font-medium border-b border-stone-100">操作員</th>
                                     <th class="p-4 font-medium border-b border-stone-100 text-rose-600">消費總額</th>
-                                    <th class="p-4 font-medium border-b border-stone-100 text-emerald-600">儲值本金</th>
+                                    <th class="p-4 font-medium border-b border-stone-100 text-emerald-600">儲值/異動本金</th>
                                     <th class="p-4 font-medium border-b border-stone-100 text-emerald-600">贈送金</th>
                                     <th class="p-4 font-medium border-b border-stone-100">最終餘額</th>
                                     <th class="p-4 font-medium border-b border-stone-100">確認簽名 / 備註</th>
@@ -403,7 +403,7 @@
                         </div>
                     </div>
                     
-                    <div class="flex flex-col sm:flex-row gap-4 mb-8 bg-stone-50 p-4 rounded-xl border border-stone-100 items-end">
+                    <div class="flex flex-col sm:flex-row gap-4 mb-6 bg-stone-50 p-4 rounded-xl border border-stone-100 items-end">
                         <div class="flex-1 w-full">
                             <label class="block text-xs text-stone-500 mb-1">起始日期</label>
                             <input type="date" id="reportStartDate" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" />
@@ -419,6 +419,13 @@
 
                     <!-- 分頁內容 1: 業績抽成結算 -->
                     <div id="tabCommissionContent" class="space-y-6">
+                        <div id="reportOperatorFilterContainer" class="bg-stone-50 p-4 rounded-xl border border-stone-100 mb-6 hidden">
+                            <h4 class="text-sm font-bold text-stone-700 mb-3 flex items-center gap-1"><i class="ph ph-funnel"></i> 篩選檢視帳號業績 (可多選)</h4>
+                            <div id="reportOperatorCheckboxes" class="flex flex-wrap gap-3">
+                                <!-- Checkboxes injected by JS -->
+                            </div>
+                        </div>
+
                         <div id="reportResults" class="hidden space-y-6">
                             <div id="dynamicOperatorCards" class="grid grid-cols-1 gap-6"></div>
                         </div>
@@ -430,7 +437,6 @@
                         <div class="bg-indigo-50 p-5 rounded-2xl border border-indigo-200 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                             <div>
                                 <div class="text-indigo-800 font-bold flex items-center gap-2"><i class="ph ph-vault text-xl"></i> 總預收款餘額(實收款)</div>
-                                <div class="text-xs text-indigo-500 mt-1">此數值為最高權限專用，可篩選檢視指定人員的累計實收本金淨額。</div>
                             </div>
                             <div class="flex items-center gap-3 w-full sm:w-auto mt-2 sm:mt-0">
                                 <select id="filterPrepaidOp" class="hidden p-2 border border-indigo-200 rounded-lg text-sm bg-white text-indigo-800 outline-none w-full sm:w-auto shadow-sm">
@@ -1221,6 +1227,11 @@
         function getAllowedOperators() {
             if (!loggedInBeautician) return [];
             
+            // 最高權限 (Admin) 可以看見所有帳號，不受群組限制
+            if (loggedInRole === 'admin') {
+                return operators.map(o => o.username);
+            }
+
             // 找出登入者紀錄
             const myRecord = operators.find(o => (o.username || '').toLowerCase() === loggedInBeautician.toLowerCase());
             
@@ -1235,6 +1246,30 @@
             return operators.filter(o => (o.group || '').trim() === myGroup).map(o => o.username);
         }
 
+        // 重新渲染報告頁面的多選過濾器
+        function renderReportOperatorFilter() {
+            const allowedOps = getAllowedOperators();
+            const filterContainer = document.getElementById('reportOperatorFilterContainer');
+            const checkboxesDiv = document.getElementById('reportOperatorCheckboxes');
+            
+            if (loggedInRole === 'admin' || loggedInRole === 'owner') {
+                showElement(filterContainer);
+                const currentChecked = Array.from(checkboxesDiv.querySelectorAll('input:checked')).map(cb => cb.value);
+                const isFirstRender = checkboxesDiv.innerHTML === '';
+                
+                checkboxesDiv.innerHTML = allowedOps.map(op => {
+                    const isChecked = isFirstRender ? 'checked' : (currentChecked.includes(op) ? 'checked' : '');
+                    return `
+                    <label class="flex items-center gap-2 cursor-pointer bg-white px-3 py-1.5 rounded-lg border border-stone-200 hover:bg-stone-100 transition shadow-sm text-sm font-medium text-stone-700">
+                        <input type="checkbox" value="${op}" class="op-filter-cb w-4 h-4 text-pink-600 rounded focus:ring-pink-500" ${isChecked}>
+                        <span>${op}</span>
+                    </label>
+                    `;
+                }).join('');
+            } else {
+                hideElement(filterContainer);
+            }
+        }
 
         // ==========================================
         // Role Based Access Control (RBAC) UI Update
@@ -1296,6 +1331,10 @@
                 } else {
                     hideElement(btnOpenAdjust);
                 }
+
+                // 根據群組權限載入可以查看的帳號 checkbox
+                renderReportOperatorFilter();
+
             } else {
                 DOM.authStatusArea.innerHTML = `
                     <button id="btnOpenBeauticianLogin" class="flex items-center gap-1 bg-stone-100 text-stone-600 hover:bg-stone-200 px-3 py-2 rounded-lg text-sm font-medium transition">
@@ -1421,11 +1460,13 @@
                     const allowedOps = getAllowedOperators();
                     const allowedAdminsAndOwners = operators.filter(o => allowedOps.includes(o.username) && (o.role === 'admin' || o.role === 'owner'));
                     
-                    opSelect.innerHTML = '<option value="all">全部同群組帳號</option>' + allowedAdminsAndOwners.map(o => `<option value="${o.username}">${o.username}</option>`).join('');
+                    const allOptionText = loggedInRole === 'admin' ? '全部帳號' : '全部同群組帳號';
+                    opSelect.innerHTML = `<option value="all">${allOptionText}</option>` + allowedAdminsAndOwners.map(o => `<option value="${o.username}">${o.username}</option>`).join('');
                     if (currentVal) opSelect.value = currentVal;
 
                     renderOperatorsList();
                     renderPrepaidBalance();
+                    renderReportOperatorFilter(); // Update checkboxes
                 }, (err) => console.error("Operators snapshot error: ", err));
             } catch(e) {
                 console.error("Fetch Data Initialization Error:", e);
@@ -1439,6 +1480,8 @@
             const allowed = getAllowedOperators();
 
             transactions.forEach(tx => {
+                if (tx.type === 'admin_log') return; // 排除純紀錄性質的稽核
+
                 const opName = tx.operator || '系統';
                 
                 // 只有自己群組的交易才列入計算
@@ -1588,14 +1631,36 @@
                 const newPoints = (member.points || 0) - (tx.pointsChange || 0);
 
                 try {
+                    // Update the member balance
                     await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', member.id), {
                         balance: newBalance,
                         bonusBalance: newBonus,
                         points: newPoints
                     });
                     
+                    // Delete original tx
                     await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
                     
+                    // ADD AUDIT LOG
+                    await robustAddDoc('beauty_transactions', {
+                        memberId: member.id,
+                        type: 'admin_log',
+                        consumeAmount: 0,
+                        depositAmount: 0,
+                        amountChange: -(tx.amountChange || 0),
+                        bonusChange: -(tx.bonusChange || 0),
+                        pointsChange: -(tx.pointsChange || 0),
+                        remark: `[權限刪除] 移除了 ${formatDate(tx.timestamp).split(' ')[0]} 的紀錄。`,
+                        signature: null,
+                        timestamp: new Date().getTime(),
+                        previousBalance: member.balance || 0,
+                        previousBonus: member.bonusBalance || 0,
+                        newBalance: newBalance,
+                        newBonus: newBonus,
+                        operator: loggedInBeautician || '系統',
+                        audited: true
+                    });
+
                     if (currentActiveViewId === 'report') {
                         document.getElementById('btnGenerateReport').click();
                     }
@@ -1748,22 +1813,33 @@
                     if (tx.consumeAmount === undefined && tx.amountChange < 0) consumeAmt = Math.abs(tx.amountChange);
                     if (tx.depositAmount === undefined && tx.amountChange > 0) depositAmt = tx.amountChange;
 
+                    const isAdminLog = tx.type === 'admin_log';
                     const isJerry = loggedInRole === 'admin';
-                    const editBtnHtml = isJerry ? `<button class="btn-edit-tx ml-1 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded font-bold shadow-sm" data-id="${tx.id}">修改</button>` : '';
-                    const deleteBtnHtml = isJerry ? `<button class="btn-delete-tx ml-1 text-xs bg-rose-100 hover:bg-rose-200 text-rose-800 px-2 py-1 rounded font-bold shadow-sm" data-id="${tx.id}">刪除</button>` : '';
+                    const editBtnHtml = (isJerry && !isAdminLog) ? `<button class="btn-edit-tx ml-1 text-xs bg-amber-100 hover:bg-amber-200 text-amber-800 px-2 py-1 rounded font-bold shadow-sm" data-id="${tx.id}">修改</button>` : '';
+                    const deleteBtnHtml = (isJerry && !isAdminLog) ? `<button class="btn-delete-tx ml-1 text-xs bg-rose-100 hover:bg-rose-200 text-rose-800 px-2 py-1 rounded font-bold shadow-sm" data-id="${tx.id}">刪除</button>` : '';
+
+                    let consumeAmtStr = consumeAmt > 0 ? '$' + formatNumber(consumeAmt) : '-';
+                    let depositAmtStr = depositAmt > 0 ? '$' + formatNumber(depositAmt) : '-';
+                    let bonusAmtStr = tx.bonusChange > 0 ? '$' + formatNumber(tx.bonusChange) : '-';
+
+                    if (isAdminLog) {
+                        consumeAmtStr = '-';
+                        depositAmtStr = tx.amountChange !== 0 ? (tx.amountChange > 0 ? '+' : '') + '$' + formatNumber(tx.amountChange) : '-';
+                        bonusAmtStr = tx.bonusChange !== 0 ? (tx.bonusChange > 0 ? '+' : '') + '$' + formatNumber(tx.bonusChange) : '-';
+                    }
 
                     tr.innerHTML = `
                         <td class="p-4 text-stone-500 whitespace-nowrap">${formatDate(tx.timestamp)}</td>
-                        <td class="p-4"><span class="font-medium text-stone-700">${tx.operator || '系統'}</span></td>
-                        <td class="p-4 font-bold text-rose-600">${consumeAmt > 0 ? '$' + formatNumber(consumeAmt) : '-'}</td>
-                        <td class="p-4 font-bold text-emerald-600">${depositAmt > 0 ? '$' + formatNumber(depositAmt) : '-'}</td>
-                        <td class="p-4 font-bold text-emerald-600">${tx.bonusChange > 0 ? '$' + formatNumber(tx.bonusChange) : '-'}</td>
+                        <td class="p-4"><span class="font-medium ${isAdminLog ? 'text-amber-600' : 'text-stone-700'}">${tx.operator || '系統'}</span></td>
+                        <td class="p-4 font-bold text-rose-600">${consumeAmtStr}</td>
+                        <td class="p-4 font-bold ${isAdminLog && tx.amountChange < 0 ? 'text-rose-600' : 'text-emerald-600'}">${depositAmtStr}</td>
+                        <td class="p-4 font-bold ${isAdminLog && tx.bonusChange < 0 ? 'text-rose-600' : 'text-emerald-600'}">${bonusAmtStr}</td>
                         <td class="p-4 text-right font-bold text-stone-800 bg-stone-50">$${formatNumber((tx.newBalance||0) + (tx.newBonus||0))}</td>
                         <td class="p-4 max-w-[200px]">
                             <div class="flex items-center justify-between gap-2">
                                 <div class="flex items-center gap-2 truncate">
-                                    ${tx.signature ? `<img src="${tx.signature}" class="h-8 rounded bg-white border border-stone-200" />` : ''}
-                                    <span class="text-xs text-stone-400 truncate" title="${tx.remark || ''}">${tx.remark || '無備註'}</span>
+                                    ${tx.signature && !isAdminLog ? `<img src="${tx.signature}" class="h-8 rounded bg-white border border-stone-200" />` : ''}
+                                    <span class="text-xs ${isAdminLog ? 'text-amber-600 font-bold' : 'text-stone-400'} truncate" title="${tx.remark || ''}">${tx.remark || '無備註'}</span>
                                 </div>
                                 <div class="flex shrink-0">
                                     ${editBtnHtml}
@@ -1773,7 +1849,7 @@
                         </td>
                     `;
                     
-                    if (isJerry) {
+                    if (isJerry && !isAdminLog) {
                         tr.querySelector('.btn-edit-tx').addEventListener('click', (e) => {
                             const txId = e.currentTarget.getAttribute('data-id');
                             openEditTxModal(txId);
@@ -2309,6 +2385,7 @@
 
             setProcessing('btnSaveEditTx', '儲存中...');
             try {
+                // Update Original TX
                 const txRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId);
                 await updateDoc(txRef, {
                     consumeAmount: newConsume,
@@ -2321,10 +2398,31 @@
                     newBonus: tx.previousBonus + newBonus
                 });
 
+                // Update Member
                 const memberRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', selectedMember.id);
                 await updateDoc(memberRef, {
                     balance: updatedBalance,
                     bonusBalance: updatedBonus
+                });
+
+                // ADD AUDIT LOG
+                await robustAddDoc('beauty_transactions', {
+                    memberId: selectedMember.id,
+                    type: 'admin_log',
+                    consumeAmount: 0,
+                    depositAmount: 0,
+                    amountChange: netAmountDiff,
+                    bonusChange: bonusDiff,
+                    pointsChange: 0,
+                    remark: `[權限修改] 修正了 ${formatDate(tx.timestamp).split(' ')[0]} 的紀錄。`,
+                    signature: null,
+                    timestamp: new Date().getTime(),
+                    previousBalance: selectedMember.balance || 0,
+                    previousBonus: selectedMember.bonusBalance || 0,
+                    newBalance: updatedBalance,
+                    newBonus: updatedBonus,
+                    operator: loggedInBeautician || '系統',
+                    audited: true
                 });
 
                 closeModal('modalEditTx');
@@ -2371,13 +2469,23 @@
             const startTs = new Date(startDateStr + 'T00:00:00').getTime();
             const endTs = new Date(endDateStr + 'T23:59:59').getTime();
             
-            const allowed = getAllowedOperators();
+            let selectedOps = [];
+            if (loggedInRole === 'admin' || loggedInRole === 'owner') {
+                selectedOps = Array.from(document.querySelectorAll('.op-filter-cb:checked')).map(cb => cb.value);
+                if(selectedOps.length === 0) {
+                    alert("請至少選擇一個帳號來檢視業績！");
+                    return;
+                }
+            } else {
+                selectedOps = [loggedInBeautician];
+            }
 
-            // 在報表中：只撈出「在自己群組內」的所有交易
+            // 在報表中：排除 admin_log 且依據勾選名單過濾
             const periodTx = transactions.filter(tx => 
                 tx.timestamp >= startTs && 
                 tx.timestamp <= endTs && 
-                allowed.includes(tx.operator)
+                selectedOps.includes(tx.operator) &&
+                tx.type !== 'admin_log'
             );
 
             let operatorStats = {};
@@ -2413,8 +2521,7 @@
             let totalServiceSales = 0; 
 
             Object.keys(operatorStats).forEach(op => {
-                // 因為 periodTx 已經受到 allowed (群組) 過濾
-                // 所有出現在 operatorStats 的都是自己群組的資料
+                // 因為 periodTx 已經受到 selectedOps 過濾，不須再做名稱限制
                 
                 const stats = operatorStats[op];
                 totalServiceSales += stats.consume;
@@ -2554,7 +2661,7 @@
             });
 
             if (loggedInRole !== 'beautician') {
-                const periodExpenses = expenses.filter(e => e.timestamp >= startTs && e.timestamp <= endTs && allowed.includes(e.operator));
+                const periodExpenses = expenses.filter(e => e.timestamp >= startTs && e.timestamp <= endTs && selectedOps.includes(e.operator));
                 let totalExp = 0; 
 
                 periodExpenses.forEach(e => {
@@ -2634,6 +2741,7 @@
             const startTs = new Date(startDateStr + 'T00:00:00').getTime();
             const endTs = new Date(endDateStr + 'T23:59:59').getTime();
             
+            // 店務收支依據群組篩選
             const allowed = getAllowedOperators();
 
             const periodExpenses = expenses
