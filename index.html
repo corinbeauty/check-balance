@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>美業儲值金會員查詢系統 V1.8</title>
+    <title>美業儲值金會員查詢系統</title>
     
     <!-- LINE與社群分享預覽設定 (OG Tags) -->
     <meta property="og:title" content="美業會員系統">
@@ -50,17 +50,17 @@
                 <div class="flex items-center justify-between w-full sm:w-auto">
                     <div class="flex items-center gap-2">
                         <button id="btnBack" class="hidden p-2 -ml-2 text-stone-500 hover:text-pink-600 rounded-full hover:bg-pink-50 transition">
-                            <i class="ph ph-caret-left text-2xl"></i>
-                        </button>
-                        <div class="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center text-white shadow-sm">
-                            <i class="ph ph-sparkle text-xl"></i>
-                        </div>
-                        <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600 truncate max-w-[150px] sm:max-w-none">
-                            美業管理系統 <span class="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full ml-1 align-middle">V1.8</span>
-                        </h1>
+                        <i class="ph ph-caret-left text-2xl"></i>
+                    </button>
+                    <div class="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center text-white shadow-sm">
+                        <i class="ph ph-sparkle text-xl"></i>
                     </div>
-                    
-                    <!-- 收合選單按鈕區 (解決頁面卡佔位問題) -->
+                    <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600 truncate max-w-[150px] sm:max-w-none">
+                        美業管理系統
+                    </h1>
+                </div>
+                
+                <!-- 收合選單按鈕區 (解決頁面卡佔位問題) -->
                     <div class="flex items-center">
                         <button id="btnToggleTopMenuDesktop" class="hidden sm:block p-1.5 ml-3 text-stone-400 hover:text-pink-600 rounded-lg bg-stone-50 hover:bg-pink-50 transition border border-stone-200" title="收合/展開選單">
                             <i id="iconToggleTopMenuDesktop" class="ph ph-arrows-in-line-horizontal text-xl"></i>
@@ -550,6 +550,11 @@
             </div>
 
         </main>
+
+        <!-- 頁尾版權宣告 -->
+        <footer class="py-4 text-center text-xs text-stone-400 font-medium shrink-0 border-t border-stone-100 bg-stone-50">
+            原點數位科技 &copy; 2026 All rights reserved.
+        </footer>
     </div>
 
     <!-- ==========================================
@@ -1389,7 +1394,12 @@
                 showElement(DOM.btnOpenReport);
                 
                 const btnTabExpenses = document.getElementById('btnTabExpenses');
-                showElement(btnTabExpenses); // 全角色開放收支分頁
+                if (loggedInRole === 'beautician') {
+                    hideElement(btnTabExpenses);
+                    if (currentReportTab === 'expenses') switchReportTab('commission'); // 安全性退回
+                } else {
+                    showElement(btnTabExpenses);
+                }
                 
                 const btnOpenAdjust = document.getElementById('btnOpenAdjust');
                 if (loggedInRole === 'admin') {
@@ -1645,6 +1655,7 @@
                 showElement(contentComm);
                 hideElement(contentExp);
             } else {
+                if (loggedInRole === 'beautician') return; // 防呆安全鎖
                 btnExp.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-lg bg-white shadow text-stone-800";
                 btnComm.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-lg text-stone-500 hover:text-stone-700";
                 showElement(contentExp);
