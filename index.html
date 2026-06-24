@@ -824,8 +824,25 @@
         </div>
     </div>
 
+    <!-- 8. Confirm Delete Modal -->
+    <div id="modalConfirmDelete" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[70]">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="ph ph-trash text-4xl"></i>
+            </div>
+            <h3 class="font-bold text-xl text-stone-800 mb-2">確認刪除</h3>
+            <p id="confirmDeleteMsg" class="text-stone-500 text-sm mb-6 leading-relaxed">您確定要刪除此筆資料嗎？</p>
+            <div class="flex gap-3">
+                <button class="modal-close flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200 transition">取消</button>
+                <button id="btnConfirmDelete" class="flex-1 py-3 bg-red-600 text-white font-medium rounded-xl hover:bg-red-700 shadow-sm transition flex items-center justify-center gap-2">
+                    <i class="ph ph-warning-circle text-lg"></i> 確認刪除
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- SIDE DRAWERS (No dark overlay) -->
-    <!-- 8. Operator Management Drawer (Super Admin Only) -->
+    <!-- 9. Operator Management Drawer (Super Admin Only) -->
     <div id="modalOperators" class="fixed inset-y-0 right-0 w-full sm:w-[500px] bg-white shadow-2xl border-l border-stone-200 transform translate-x-full transition-transform duration-300 z-[60] flex flex-col hidden">
         <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50 shrink-0">
             <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2">
@@ -893,7 +910,7 @@
         </div>
     </div>
 
-    <!-- 9. Excel Import Drawer -->
+    <!-- 10. Excel Import Drawer -->
     <div id="modalImportExcel" class="fixed inset-y-0 right-0 w-full sm:w-[450px] bg-white shadow-2xl border-l border-stone-200 transform translate-x-full transition-transform duration-300 z-[60] flex flex-col hidden">
         <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-emerald-50 shrink-0">
             <h3 class="font-bold text-lg text-emerald-800 flex items-center gap-2">
@@ -972,6 +989,7 @@
         let currentActiveViewId = 'consultation'; 
         let currentReportTab = 'commission'; 
         let clockInterval = null;
+        let pendingDeleteAction = null; // 用於儲存彈窗確認後的刪除函式
 
         const DOM = {
             viewList: document.getElementById('viewList'),
@@ -1051,6 +1069,9 @@
                     if (modalEl.id === 'modalAddMember') {
                         switchView('list');
                     }
+                    if (modalEl.id === 'modalConfirmDelete') {
+                        pendingDeleteAction = null;
+                    }
                 }
             });
         });
@@ -1098,6 +1119,25 @@
             const day = String(d.getDate()).padStart(2, '0');
             return `${y}-${m}-${day}`;
         }
+
+        // ==========================================
+        // UI & Global Confirm Delete Action
+        // ==========================================
+        window.showDeleteConfirm = function(message, actionCallback) {
+            document.getElementById('confirmDeleteMsg').innerHTML = message;
+            pendingDeleteAction = actionCallback;
+            openModal('modalConfirmDelete');
+        };
+
+        document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
+            if (pendingDeleteAction) {
+                setProcessing('btnConfirmDelete', '刪除中...');
+                await pendingDeleteAction();
+                clearProcessing('btnConfirmDelete');
+                closeModal('modalConfirmDelete');
+                pendingDeleteAction = null;
+            }
+        });
 
         // ==========================================
         // Role Based Access Control (RBAC) UI Update
@@ -1399,49 +1439,47 @@
         }
 
         // ==========================================
-        // API - Delete Transaction (For Admin)
+        // API - Delete Transaction (For Admin) - Updated with Modal Confirm
         // ==========================================
-        window.deleteTransaction = async function(txId) {
+        window.deleteTransaction = function(txId) {
             const tx = transactions.find(t => t.id === txId);
             if (!tx) return;
 
             const member = members.find(m => m.id === tx.memberId);
             if (!member) {
-                if(confirm('找不到關聯的會員資料，無法回推餘額。是否僅強制刪除該交易紀錄？')) {
+                showDeleteConfirm('找不到關聯的會員資料，無法回推餘額。<br>是否僅<span class="text-red-500 font-bold">強制刪除</span>該交易紀錄？', async () => {
                     try {
                         await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
                         if (currentActiveViewId === 'report') document.getElementById('btnGenerateReport').click();
                     } catch(err) {
                         alert('刪除失敗: ' + err.message);
                     }
-                }
-                return;
-            }
-
-            if (!confirm('警告：確定要永久刪除此筆交易明細嗎？\n這將同時「回推並扣除」該會員當時產生的本金、贈送金與點數。')) {
-                return;
-            }
-
-            const newBalance = (member.balance || 0) - (tx.amountChange || 0);
-            const newBonus = (member.bonusBalance || 0) - (tx.bonusChange || 0);
-            const newPoints = (member.points || 0) - (tx.pointsChange || 0);
-
-            try {
-                await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', member.id), {
-                    balance: newBalance,
-                    bonusBalance: newBonus,
-                    points: newPoints
                 });
-                
-                await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
-                
-                // If on report page, regenerate report manually since it's not fully reactive inside stats calculation
-                if (currentActiveViewId === 'report') {
-                    document.getElementById('btnGenerateReport').click();
-                }
-            } catch(err) {
-                alert('刪除失敗: ' + err.message);
+                return;
             }
+
+            showDeleteConfirm('警告：確定要永久刪除此筆交易明細嗎？<br><span class="text-red-600 font-bold text-xs mt-3 block bg-red-50 p-2 rounded">這將同時「回推並扣除」該會員當時產生的<br>本金、贈送金與點數。</span>', async () => {
+                const newBalance = (member.balance || 0) - (tx.amountChange || 0);
+                const newBonus = (member.bonusBalance || 0) - (tx.bonusChange || 0);
+                const newPoints = (member.points || 0) - (tx.pointsChange || 0);
+
+                try {
+                    await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', member.id), {
+                        balance: newBalance,
+                        bonusBalance: newBonus,
+                        points: newPoints
+                    });
+                    
+                    await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
+                    
+                    // If on report page, regenerate report manually since it's not fully reactive inside stats calculation
+                    if (currentActiveViewId === 'report') {
+                        document.getElementById('btnGenerateReport').click();
+                    }
+                } catch(err) {
+                    alert('刪除失敗: ' + err.message);
+                }
+            });
         };
 
         // ==========================================
@@ -2256,7 +2294,17 @@
             });
 
             if (loggedInRole !== 'beautician') {
-                const periodExpenses = expenses.filter(e => e.timestamp >= startTs && e.timestamp <= endTs);
+                const periodExpenses = expenses.filter(e => e.timestamp >= startTs && e.timestamp <= endTs)
+                    .filter(e => {
+                        if (loggedInRole === 'admin') return true;
+                        if (loggedInRole === 'owner') {
+                            // 歷史資料防呆：若該筆支出沒有紀錄群組，則反查操作員的群組
+                            const eGroup = e.group || (operators.find(o => o.username === e.operator)?.group) || '未分類';
+                            return eGroup === loggedInGroup;
+                        }
+                        return false;
+                    });
+                    
                 let totalExp = 0; 
 
                 periodExpenses.forEach(e => {
@@ -2309,6 +2357,7 @@
                     amount: finalAmt,
                     remark: remark,
                     operator: loggedInBeautician,
+                    group: loggedInGroup || '未分類', // 儲存時一併記錄所屬群組
                     timestamp: new Date().getTime()
                 });
 
@@ -2335,6 +2384,14 @@
 
             const periodExpenses = expenses
                 .filter(e => e.timestamp >= startTs && e.timestamp <= endTs)
+                .filter(e => {
+                    if (loggedInRole === 'admin') return true;
+                    if (loggedInRole === 'owner') {
+                        const eGroup = e.group || (operators.find(o => o.username === e.operator)?.group) || '未分類';
+                        return eGroup === loggedInGroup;
+                    }
+                    return false;
+                })
                 .sort((a,b) => b.timestamp - a.timestamp);
 
             if (periodExpenses.length === 0) {
@@ -2364,16 +2421,17 @@
                     </td>
                 `;
 
-                tr.querySelector('.btn-delete-expense').addEventListener('click', async (e) => {
+                // 修改成使用美化版的彈窗 (showDeleteConfirm)
+                tr.querySelector('.btn-delete-expense').addEventListener('click', (e) => {
                     const docId = e.currentTarget.getAttribute('data-id');
-                    if (confirm(`確認要刪除此筆 [${exp.category}] 金額 $${formatNumber(exp.amount)} 的紀錄嗎？`)) {
+                    showDeleteConfirm(`確認要刪除此筆 <br><span class="font-bold text-stone-700">[${exp.category}]</span> 金額 <span class="font-bold text-rose-600">$${formatNumber(exp.amount)}</span> 的紀錄嗎？`, async () => {
                         try {
                             await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_expenses', docId));
                             document.getElementById('btnGenerateReport').click();
                         } catch(err) {
                             alert("刪除失敗: " + err.message);
                         }
-                    }
+                    });
                 });
 
                 table.appendChild(tr);
@@ -2616,7 +2674,17 @@
                     document.getElementById('opRole').value = op.role;
                     document.getElementById('opGroup').value = op.group || '未分類';
                     document.getElementById('opCommission').value = op.commission;
-                    document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-pencil-simple text-amber-600"></i> 修改帳號: ${op.username}`;
+                    
+                    const formTitle = document.getElementById('operatorFormTitle');
+                    formTitle.innerHTML = `<i class="ph ph-pencil-simple text-amber-600"></i> 修改帳號: ${op.username}`;
+                    
+                    // 平滑滾動至修改表單處
+                    formTitle.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // 加上短暫的高亮提示框，讓視覺焦點集中
+                    const formContainer = formTitle.closest('.bg-stone-50');
+                    formContainer.classList.add('ring-2', 'ring-amber-500', 'transition', 'duration-300');
+                    setTimeout(() => formContainer.classList.remove('ring-2', 'ring-amber-500'), 1500);
                 });
                 
                 if (!isJerry) {
@@ -2846,6 +2914,7 @@
                     else if (openModalEl.id === 'modalConsultSuccess') document.getElementById('btnConfirmConsultSuccess').click();
                     else if (openModalEl.id === 'modalEditTx') document.getElementById('btnSaveEditTx').click();
                     else if (openModalEl.id === 'modalOperators') document.getElementById('btnSaveOperator').click();
+                    else if (openModalEl.id === 'modalConfirmDelete') document.getElementById('btnConfirmDelete').click();
                 }
             }
         });
