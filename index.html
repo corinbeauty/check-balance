@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>美業儲值金會員查詢系統 V1.7</title>
+    <title>美業儲值金會員查詢系統 V1.8</title>
     
     <!-- LINE與社群分享預覽設定 (OG Tags) -->
     <meta property="og:title" content="美業會員系統">
@@ -24,6 +24,11 @@
         canvas { touch-action: none; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .highlight-flash { animation: flashHighlight 1.5s ease-out; }
+        @keyframes flashHighlight {
+            0% { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.5); border-color: #f59e0b; }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
     </style>
 </head>
 <body class="bg-stone-50 font-sans text-stone-800 antialiased selection:bg-pink-200 selection:text-pink-900 overflow-x-hidden">
@@ -50,7 +55,7 @@
                         <i class="ph ph-sparkle text-xl"></i>
                     </div>
                     <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600 truncate max-w-[150px] sm:max-w-none">
-                        美業管理系統 <span class="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full ml-1 align-middle">V1.7</span>
+                        美業管理系統 <span class="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full ml-1 align-middle">V1.8</span>
                     </h1>
                 </div>
                 
@@ -467,15 +472,15 @@
                             <div class="md:col-span-2 space-y-6">
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
-                                        <div class="text-xs text-stone-500 mb-1">總服務消費業績</div>
+                                        <div class="text-xs text-stone-500 mb-1">本群組服務消費業績</div>
                                         <div id="pnlTotalSales" class="text-xl font-bold text-stone-800">$0</div>
                                     </div>
                                     <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
-                                        <div class="text-xs text-stone-500 mb-1">雜項收支總計</div>
+                                        <div class="text-xs text-stone-500 mb-1">本群組雜項收支總計</div>
                                         <div id="pnlTotalExpenses" class="text-xl font-bold text-rose-600">$0</div>
                                     </div>
                                     <div class="p-4 rounded-xl border shadow-sm relative overflow-hidden" id="pnlNetCard">
-                                        <div class="text-xs mb-1 opacity-70">本期淨損益 (P&L)</div>
+                                        <div class="text-xs mb-1 opacity-70">本群組本期淨損益 (P&L)</div>
                                         <div id="pnlNetProfit" class="text-2xl font-black">$0</div>
                                     </div>
                                 </div>
@@ -489,7 +494,7 @@
                                                     <th class="p-3 font-medium">時間</th>
                                                     <th class="p-3 font-medium">類別</th>
                                                     <th class="p-3 font-medium text-right">金額</th>
-                                                    <th class="p-3 font-medium">備註說明</th>
+                                                    <th class="p-3 font-medium">群組 / 備註</th>
                                                     <th class="p-3 font-medium text-center">操作</th>
                                                 </tr>
                                             </thead>
@@ -614,6 +619,7 @@
                                 <option value="轉帳">轉帳</option>
                                 <option value="LINEPAY">LINE PAY</option>
                                 <option value="街口支付">街口支付</option>
+                                <option value="舊系統轉移">舊系統轉移</option>
                             </select>
                         </div>
                         <div class="col-span-2 sm:col-span-1">
@@ -841,8 +847,25 @@
         </div>
     </div>
 
+    <!-- 9. Custom Action / Duplicate Alert Dialog Modal -->
+    <div id="modalCustomDialog" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4 z-[80]">
+        <div class="bg-white rounded-2xl w-full max-w-sm shadow-2xl overflow-hidden p-6 text-center">
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="ph ph-info text-4xl"></i>
+            </div>
+            <h3 id="customDialogTitle" class="font-bold text-xl text-stone-800 mb-2">提示</h3>
+            <p id="customDialogMessage" class="text-stone-500 text-sm mb-6 leading-relaxed">訊息內容</p>
+            <div class="flex gap-3">
+                <button class="modal-close flex-1 py-3 text-stone-500 font-medium bg-stone-100 rounded-xl hover:bg-stone-200 transition" id="btnCustomDialogCancel">取消</button>
+                <button id="btnCustomDialogConfirm" class="flex-1 py-3 bg-blue-600 text-white font-medium rounded-xl hover:bg-blue-700 shadow-sm transition flex items-center justify-center gap-2">
+                    確認
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- SIDE DRAWERS (No dark overlay) -->
-    <!-- 9. Operator Management Drawer (Super Admin Only) -->
+    <!-- 10. Operator Management Drawer (Super Admin Only) -->
     <div id="modalOperators" class="fixed inset-y-0 right-0 w-full sm:w-[500px] bg-white shadow-2xl border-l border-stone-200 transform translate-x-full transition-transform duration-300 z-[60] flex flex-col hidden">
         <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-stone-50 shrink-0">
             <h3 class="font-bold text-lg text-stone-800 flex items-center gap-2">
@@ -852,7 +875,7 @@
         </div>
         
         <div class="p-5 space-y-6 overflow-y-auto flex-grow hide-scroll bg-white">
-            <div class="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-4">
+            <div id="operatorFormContainer" class="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-4 transition-all">
                 <h4 class="font-bold text-sm text-stone-700 flex items-center gap-1" id="operatorFormTitle">
                     <i class="ph ph-user-plus text-emerald-600"></i> 新增/修改帳號
                 </h4>
@@ -910,7 +933,7 @@
         </div>
     </div>
 
-    <!-- 10. Excel Import Drawer -->
+    <!-- 11. Excel Import Drawer -->
     <div id="modalImportExcel" class="fixed inset-y-0 right-0 w-full sm:w-[450px] bg-white shadow-2xl border-l border-stone-200 transform translate-x-full transition-transform duration-300 z-[60] flex flex-col hidden">
         <div class="p-5 border-b border-stone-100 flex justify-between items-center bg-emerald-50 shrink-0">
             <h3 class="font-bold text-lg text-emerald-800 flex items-center gap-2">
@@ -1072,6 +1095,9 @@
                     if (modalEl.id === 'modalConfirmDelete') {
                         pendingDeleteAction = null;
                     }
+                    if (modalEl.id === 'modalCustomDialog') {
+                        customDialogConfirmAction = null;
+                    }
                 }
             });
         });
@@ -1083,6 +1109,10 @@
                 showElement(el);
             }
             isProcessing = false;
+        };
+
+        const showSimpleMessage = (msg) => {
+            alert(msg); // Fallback if custom dialog is not appropriate, but mostly replaced by custom dialog now.
         };
 
         const setProcessing = (btnId, text) => {
@@ -1121,8 +1151,34 @@
         }
 
         // ==========================================
-        // UI & Global Confirm Delete Action
+        // UI & Global Custom Dialog & Confirm Action
         // ==========================================
+        let customDialogConfirmAction = null;
+        window.openCustomDialog = function({title, message, confirmText, cancelText, onConfirm}) {
+            document.getElementById('customDialogTitle').innerHTML = title || '提示';
+            document.getElementById('customDialogMessage').innerHTML = message || '';
+            document.getElementById('btnCustomDialogConfirm').innerHTML = confirmText || '確認';
+            const cancelBtn = document.getElementById('btnCustomDialogCancel');
+            
+            if (cancelText === false) {
+                cancelBtn.style.display = 'none';
+            } else {
+                cancelBtn.style.display = 'block';
+                cancelBtn.innerHTML = cancelText || '取消';
+            }
+            
+            customDialogConfirmAction = onConfirm;
+            openModal('modalCustomDialog');
+        };
+
+        document.getElementById('btnCustomDialogConfirm').addEventListener('click', async () => {
+            if (customDialogConfirmAction) {
+                await customDialogConfirmAction();
+            }
+            closeModal('modalCustomDialog');
+            customDialogConfirmAction = null;
+        });
+
         window.showDeleteConfirm = function(message, actionCallback) {
             document.getElementById('confirmDeleteMsg').innerHTML = message;
             pendingDeleteAction = actionCallback;
@@ -1406,7 +1462,7 @@
                 if (loggedInRole === 'admin') {
                     reportSubtitle.textContent = '最高權限專屬：店務收支與綜合業績抽成結算';
                 } else if (loggedInRole === 'owner') {
-                    reportSubtitle.textContent = '老闆專屬：店務損益與全店營業額讀取';
+                    reportSubtitle.textContent = `老闆專屬：店務損益與全店營業額讀取 (${loggedInGroup})`;
                 } else {
                     reportSubtitle.textContent = `個人專屬區塊：${loggedInBeautician} 業績分析看板`;
                 }
@@ -1439,48 +1495,63 @@
         }
 
         // ==========================================
-        // API - Delete Transaction (For Admin) - Updated with Modal Confirm
+        // Member Add Manual Form Logic
         // ==========================================
-        window.deleteTransaction = function(txId) {
-            const tx = transactions.find(t => t.id === txId);
-            if (!tx) return;
+        document.getElementById('btnSubmitAddMember').addEventListener('click', async () => {
+            if (isProcessing) return;
+            hideElement(document.getElementById('errAddMember'));
+            
+            const name = document.getElementById('newMemName').value.trim();
+            let phoneStr = document.getElementById('newMemPhone').value.trim();
+            const birthday = document.getElementById('newMemBirthday').value;
+            const area = document.getElementById('newMemArea').value.trim();
 
-            const member = members.find(m => m.id === tx.memberId);
-            if (!member) {
-                showDeleteConfirm('找不到關聯的會員資料，無法回推餘額。<br>是否僅<span class="text-red-500 font-bold">強制刪除</span>該交易紀錄？', async () => {
-                    try {
-                        await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
-                        if (currentActiveViewId === 'report') document.getElementById('btnGenerateReport').click();
-                    } catch(err) {
-                        alert('刪除失敗: ' + err.message);
+            phoneStr = phoneStr.replace(/\D/g, ''); // 防呆：過濾純數字
+
+            if (!name || !phoneStr) {
+                return showError('errAddMember', '會員姓名與聯絡電話為必填欄位');
+            }
+
+            // 【精美對話框】防呆：只檢查電話是否重複
+            const exist = members.find(m => m.phone === phoneStr);
+            if (exist) {
+                openCustomDialog({
+                    title: "會員已存在",
+                    message: `您好，電話號碼 <span class="font-bold text-blue-600">${phoneStr}</span> 已經註冊過會員資料囉！<br><br>是否要直接查看該會員，並進行結帳儲值？`,
+                    confirmText: "前往查看",
+                    cancelText: "取消新增",
+                    onConfirm: () => {
+                        closeModal('modalAddMember');
+                        selectedMember = exist;
+                        switchView('detail');
                     }
                 });
                 return;
             }
 
-            showDeleteConfirm('警告：確定要永久刪除此筆交易明細嗎？<br><span class="text-red-600 font-bold text-xs mt-3 block bg-red-50 p-2 rounded">這將同時「回推並扣除」該會員當時產生的<br>本金、贈送金與點數。</span>', async () => {
-                const newBalance = (member.balance || 0) - (tx.amountChange || 0);
-                const newBonus = (member.bonusBalance || 0) - (tx.bonusChange || 0);
-                const newPoints = (member.points || 0) - (tx.pointsChange || 0);
-
-                try {
-                    await updateDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members', member.id), {
-                        balance: newBalance,
-                        bonusBalance: newBonus,
-                        points: newPoints
-                    });
-                    
-                    await deleteDoc(doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions', txId));
-                    
-                    // If on report page, regenerate report manually since it's not fully reactive inside stats calculation
-                    if (currentActiveViewId === 'report') {
-                        document.getElementById('btnGenerateReport').click();
-                    }
-                } catch(err) {
-                    alert('刪除失敗: ' + err.message);
-                }
-            });
-        };
+            setProcessing('btnSubmitAddMember', '建立中...');
+            try {
+                await robustAddDoc('beauty_members', {
+                    name: name,
+                    phone: phoneStr,
+                    birthday: birthday,
+                    area: area,
+                    balance: 0,
+                    bonusBalance: 0,
+                    points: 0,
+                    createdAt: new Date().getTime(),
+                    createdBy: loggedInBeautician || 'System'
+                });
+                
+                closeModal('modalAddMember');
+                // 自動帶入搜尋框方便查詢
+                DOM.searchInput.value = phoneStr;
+                renderMembers();
+            } catch (err) {
+                showError('errAddMember', '建立失敗: ' + err.message);
+            }
+            clearProcessing('btnSubmitAddMember');
+        });
 
         // ==========================================
         // Member List & Details Renderer
@@ -2294,17 +2365,7 @@
             });
 
             if (loggedInRole !== 'beautician') {
-                const periodExpenses = expenses.filter(e => e.timestamp >= startTs && e.timestamp <= endTs)
-                    .filter(e => {
-                        if (loggedInRole === 'admin') return true;
-                        if (loggedInRole === 'owner') {
-                            // 歷史資料防呆：若該筆支出沒有紀錄群組，則反查操作員的群組
-                            const eGroup = e.group || (operators.find(o => o.username === e.operator)?.group) || '未分類';
-                            return eGroup === loggedInGroup;
-                        }
-                        return false;
-                    });
-                    
+                const periodExpenses = expenses.filter(e => e.timestamp >= startTs && e.timestamp <= endTs);
                 let totalExp = 0; 
 
                 periodExpenses.forEach(e => {
@@ -2357,7 +2418,6 @@
                     amount: finalAmt,
                     remark: remark,
                     operator: loggedInBeautician,
-                    group: loggedInGroup || '未分類', // 儲存時一併記錄所屬群組
                     timestamp: new Date().getTime()
                 });
 
@@ -2384,14 +2444,6 @@
 
             const periodExpenses = expenses
                 .filter(e => e.timestamp >= startTs && e.timestamp <= endTs)
-                .filter(e => {
-                    if (loggedInRole === 'admin') return true;
-                    if (loggedInRole === 'owner') {
-                        const eGroup = e.group || (operators.find(o => o.username === e.operator)?.group) || '未分類';
-                        return eGroup === loggedInGroup;
-                    }
-                    return false;
-                })
                 .sort((a,b) => b.timestamp - a.timestamp);
 
             if (periodExpenses.length === 0) {
@@ -2439,7 +2491,7 @@
         }
 
         // ==========================================
-        // Submit Consultation Form
+        // Submit Consultation Form (Updated with Custom Dialog)
         // ==========================================
         document.getElementById('btnSubmitConsultation').addEventListener('click', async () => {
             if (isProcessing) return;
@@ -2448,7 +2500,9 @@
             hideElement(document.getElementById('successConsult'));
 
             const name = document.getElementById('consultName').value.trim();
-            const phone = document.getElementById('consultPhone').value.trim();
+            let phone = document.getElementById('consultPhone').value.trim();
+            phone = phone.replace(/\D/g, ''); // 清理電話字元
+            
             const gender = document.querySelector('input[name="consultGender"]:checked')?.value;
             const bYear = document.getElementById('consultYear').value;
             const bMonth = document.getElementById('consultMonth').value;
@@ -2480,10 +2534,32 @@
                 return;
             }
 
-            setProcessing('btnSubmitConsultation', '傳送中...');
+            const isMemberExists = members.some(m => m.phone === phone);
+            const signatureBase64 = consultPad.getData();
+
+            if (isMemberExists) {
+                // 【精美對話框】直接跳出提示，明確告知重複
+                openCustomDialog({
+                    title: "貼心提醒",
+                    message: `您好！電話號碼 <span class="font-bold text-blue-600">${phone}</span> 已經註冊過我們的會員系統囉！<br><br>系統將直接為您記錄本次諮詢內容，無需重複註冊。`,
+                    confirmText: "了解，繼續諮詢",
+                    cancelText: false, // 隱藏取消按鈕
+                    onConfirm: async () => {
+                        await finalizeConsultation(name, phone, gender, birthday, areas, allPrecautionsChecked, isConsentChecked, signatureBase64);
+                    }
+                });
+                return; // 中斷後續自動建檔流程
+            }
+
+            // 若不存在，則執行標準流程
+            await finalizeConsultation(name, phone, gender, birthday, areas, allPrecautionsChecked, isConsentChecked, signatureBase64);
+        });
+
+        // 將資料送出並建立會員的封裝函式
+        async function finalizeConsultation(name, phone, gender, birthday, areas, allPrecautionsChecked, isConsentChecked, signatureBase64) {
+            setProcessing('btnSubmitConsultation', '系統處理中...');
             try {
-                const signatureBase64 = consultPad.getData();
-                
+                // 送出諮詢內容
                 await robustAddDoc('beauty_consultations', {
                     name, phone, gender, birthday, areas,
                     precautionsAgreed: allPrecautionsChecked,
@@ -2493,8 +2569,8 @@
                     createdAt: new Date().toISOString()
                 });
 
-                const existingMember = members.find(m => m.phone === phone);
-                if (!existingMember) {
+                // 若原本不存在才建立會員
+                if (!members.some(m => m.phone === phone)) {
                     await robustAddDoc('beauty_members', {
                         name, phone, birthday, gender,
                         balance: 0, bonusBalance: 0, points: 0,
@@ -2505,6 +2581,7 @@
 
                 openModal('modalConsultSuccess');
                 
+                // 清空表單
                 document.getElementById('consultName').value = '';
                 document.getElementById('consultPhone').value = '';
                 document.getElementById('consultYear').value = '';
@@ -2515,11 +2592,12 @@
                 document.querySelectorAll('input[name="consultPrecautions"]').forEach(cb => cb.checked = false);
                 consultPad.clear();
 
-            } catch (err) {
-                showError('errConsult', '儲存失敗: ' + err.message);
+            } catch (e) {
+                showError('errConsult', '系統發生錯誤，請稍後再試: ' + e.message);
+            } finally {
+                clearProcessing('btnSubmitConsultation');
             }
-            clearProcessing('btnSubmitConsultation');
-        });
+        }
 
         document.getElementById('btnConfirmConsultSuccess').addEventListener('click', () => {
             closeModal('modalConsultSuccess');
@@ -2674,17 +2752,16 @@
                     document.getElementById('opRole').value = op.role;
                     document.getElementById('opGroup').value = op.group || '未分類';
                     document.getElementById('opCommission').value = op.commission;
+                    document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-pencil-simple text-amber-600"></i> 修改帳號: ${op.username}`;
                     
-                    const formTitle = document.getElementById('operatorFormTitle');
-                    formTitle.innerHTML = `<i class="ph ph-pencil-simple text-amber-600"></i> 修改帳號: ${op.username}`;
+                    // 平滑滾動與高亮效果
+                    const formContainer = document.getElementById('operatorFormContainer');
+                    formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
                     
-                    // 平滑滾動至修改表單處
-                    formTitle.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    
-                    // 加上短暫的高亮提示框，讓視覺焦點集中
-                    const formContainer = formTitle.closest('.bg-stone-50');
-                    formContainer.classList.add('ring-2', 'ring-amber-500', 'transition', 'duration-300');
-                    setTimeout(() => formContainer.classList.remove('ring-2', 'ring-amber-500'), 1500);
+                    // 觸發 CSS 動畫
+                    formContainer.classList.remove('highlight-flash');
+                    void formContainer.offsetWidth; // trigger reflow
+                    formContainer.classList.add('highlight-flash');
                 });
                 
                 if (!isJerry) {
@@ -2915,10 +2992,4 @@
                     else if (openModalEl.id === 'modalEditTx') document.getElementById('btnSaveEditTx').click();
                     else if (openModalEl.id === 'modalOperators') document.getElementById('btnSaveOperator').click();
                     else if (openModalEl.id === 'modalConfirmDelete') document.getElementById('btnConfirmDelete').click();
-                }
-            }
-        });
-
-    </script>
-</body>
-</html>
+                    else if (openModalEl.id === 'modalCustomDialog') document.getElementById('btnCustomDialogConfirm').click();
