@@ -2226,80 +2226,6 @@
         // ==========================================
         // Main Report Generator (P&L and Performance with Details)
         // ==========================================
-        function renderPaymentSummary() {
-            if (loggedInRole === 'beautician') {
-                hideElement(document.getElementById('paymentSummarySection'));
-                return;
-            }
-
-            let summary = {
-                '現金': { count: 0, amount: 0 },
-                '轉帳': { count: 0, amount: 0 },
-                'LINEPAY': { count: 0, amount: 0 },
-                '街口支付': { count: 0, amount: 0 },
-                '舊系統轉移': { count: 0, amount: 0 }
-            };
-
-            // 遍歷當前報表上顯示的所有明細，並只加總有打勾核對(audited)的資料
-            currentReportTxs.forEach(tx => {
-                if (!tx.audited) return;
-
-                // 為了相容舊資料：若 DB 沒有紀錄 payMethod，則嘗試從 remark 擷取
-                let fallbackShortfall = 0;
-                let fallbackMethod = '現金';
-                const methodMatch = tx.remark?.match(/支付方式:\s*([^\s，]+)/);
-                if (methodMatch) fallbackMethod = methodMatch[1];
-                
-                const shortMatch = tx.remark?.match(/，(.*?)補差額:\s*\$(\d+(?:,\d+)*)/);
-                if (shortMatch) {
-                    fallbackMethod = shortMatch[1];
-                    fallbackShortfall = parseFloat(shortMatch[2].replace(/,/g, ''));
-                }
-                
-                let actualMethod = tx.payMethod || fallbackMethod;
-                // 實際收到的金額 = 儲值本金 + 補差額
-                let actualAmount = (parseFloat(tx.depositAmount) || 0) + (parseFloat(tx.shortfallPaid) || fallbackShortfall);
-
-                if (actualAmount > 0) {
-                    if (!summary[actualMethod]) summary[actualMethod] = { count: 0, amount: 0 };
-                    summary[actualMethod].count += 1;
-                    summary[actualMethod].amount += actualAmount;
-                }
-            });
-
-            // 渲染統計表格
-            const tbody = document.getElementById('paymentSummaryTbody');
-            tbody.innerHTML = '';
-            let totalCount = 0;
-            let totalAmt = 0;
-
-            Object.keys(summary).forEach(method => {
-                const data = summary[method];
-                // 如果有金額，或者是常見選項，都顯示出來
-                if (data.count > 0 || data.amount > 0 || ['現金', '轉帳', 'LINEPAY', '街口支付'].includes(method)) {
-                    totalCount += data.count;
-                    totalAmt += data.amount;
-                    tbody.innerHTML += `
-                        <tr class="border-b border-stone-100 transition hover:bg-stone-50">
-                            <td class="p-3 font-semibold text-stone-700">${method}</td>
-                            <td class="p-3 text-right font-medium text-stone-600">${data.count}</td>
-                            <td class="p-3 text-right font-bold text-emerald-600">$${formatNumber(data.amount)}</td>
-                        </tr>
-                    `;
-                }
-            });
-
-            tbody.innerHTML += `
-                <tr class="bg-stone-100 font-bold text-stone-800 text-lg">
-                    <td class="p-3">打勾核對總計</td>
-                    <td class="p-3 text-right">${totalCount} 筆</td>
-                    <td class="p-3 text-right text-emerald-700">$${formatNumber(totalAmt)}</td>
-                </tr>
-            `;
-
-            showElement(document.getElementById('paymentSummarySection'));
-        }
-
         document.getElementById('btnGenerateReport').addEventListener('click', () => {
             const startDateStr = document.getElementById('reportStartDate').value;
             const endDateStr = document.getElementById('reportEndDate').value;
@@ -2337,8 +2263,15 @@
                 if (tx.depositAmount === undefined && tx.amountChange > 0) dAmt = tx.amountChange;
 
                 operatorStats[op].consume += cAmt;
-                // 【儲值級距獎金若儲值金額未達5000則不計算筆數】
-                if (dAmt >= 5000) {
+
+                // 判斷支付方式 (支援舊資料從 remark 解析)
+                let fallbackMethod = '現金';
+                const methodMatch = tx.remark?.match(/支付方式:\s*([^\s，]+)/);
+                if (methodMatch) fallbackMethod = methodMatch[1];
+                let actualMethod = tx.payMethod || fallbackMethod;
+
+                // 【儲值級距獎金改為：只要支付方式是舊系統轉移，就不計算該筆獎金筆數】
+                if (dAmt > 0 && actualMethod !== '舊系統轉移') {
                     operatorStats[op].depositCount += 1;
                 }
                 
@@ -2483,7 +2416,7 @@
                                 <div class="text-xl font-bold text-emerald-600">$${formatNumber(commission)}</div>
                             </div>
                             <div>
-                                <div class="text-xs text-stone-500 mb-1">儲值成功筆數 (>=5千)</div>
+                                <div class="text-xs text-stone-500 mb-1">儲值成功筆數 (排除舊系統)</div>
                                 <div class="text-xl font-bold text-stone-800">${stats.depositCount} 筆</div>
                             </div>
                             <div>
@@ -2920,4 +2853,251 @@
                     document.getElementById('opRole').value = op.role;
                     document.getElementById('opGroup').value = op.group || '未分類';
                     document.getElementById('opCommission').value = op.commission;
-                    document.getElementById('operatorFormTitle').innerHTML = `<i class="
+                    document.getElementById('operatorFormTitle').innerHTML = `<i class="ph ph-pencil-simple text-amber-600"></i> 修改帳號: ${op.username}`;
+                    
+                    // 平滑滾動與高亮效果
+                    const formContainer = document.getElementById('operatorFormContainer');
+                    formContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    
+                    // 觸發 CSS 動畫
+                    formContainer.classList.remove('highlight-flash');
+                    void formContainer.offsetWidth; // trigger reflow
+                    formContainer.classList.add('highlight-flash');
+                });
+                
+                if (!isJerry) {
+                    tr.querySelector('.btn-toggle-op').addEventListener('click', async (e) => {
+                        const id = e.currentTarget.getAttribute('data-id');
+                        const currentStatus = e.currentTarget.getAttribute('data-status');
+                        const nextStatus = currentStatus === 'active' ? 'disabled' : 'active';
+                        
+                        try {
+                            const opRef = doc(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators', id);
+                            await updateDoc(opRef, { status: nextStatus });
+                        } catch (err) {
+                            alert("更新失敗: " + err.message);
+                        }
+                    });
+                }
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        // ==========================================
+        // Excel Import
+        // ==========================================
+        document.getElementById('btnOpenImportExcel').addEventListener('click', () => {
+            document.getElementById('excelFileInput').value = '';
+            document.getElementById('excelFileName').textContent = '點擊此處選擇檔案，或將檔案拖曳至此';
+            hideElement(document.getElementById('errImportExcel'));
+            openModal('modalImportExcel');
+        });
+
+        document.getElementById('excelFileInput').addEventListener('change', (e) => {
+            const fileNameLabel = document.getElementById('excelFileName');
+            if (e.target.files.length > 0) {
+                fileNameLabel.textContent = e.target.files[0].name;
+                fileNameLabel.classList.add('text-emerald-600', 'font-bold');
+            } else {
+                fileNameLabel.textContent = '點擊此處選擇檔案，或將檔案拖曳至此';
+                fileNameLabel.classList.remove('text-emerald-600', 'font-bold');
+            }
+        });
+
+        document.getElementById('btnSubmitImportExcel').addEventListener('click', async () => {
+            const fileInput = document.getElementById('excelFileInput');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                return showError('errImportExcel', '請先選擇您的 Excel 檔案 (.xlsx 或 .csv)');
+            }
+
+            const file = fileInput.files[0];
+            setProcessing('btnSubmitImportExcel', '分析與寫入雲端中...');
+            hideElement(document.getElementById('errImportExcel'));
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    const json = XLSX.utils.sheet_to_json(worksheet, { defval: "" });
+
+                    if (json.length === 0) throw new Error("您上傳的表格為空或無法解析");
+
+                    let successCount = 0;
+                    let skipCount = 0;
+
+                    for (const row of json) {
+                        const name = row['姓名'] || row['Name'] || row['name'] || '';
+                        const phoneRaw = row['電話'] || row['Phone'] || row['手機'] || row['phone'] || '';
+                        
+                        let phoneStr = String(phoneRaw).trim();
+                        if (phoneStr && phoneStr.length === 9 && !phoneStr.startsWith('0')) {
+                            phoneStr = '0' + phoneStr;
+                        }
+
+                        if (!name || !phoneStr) {
+                            skipCount++;
+                            continue; 
+                        }
+
+                        const exist = members.find(m => m.phone === phoneStr);
+                        if (!exist) {
+                            await robustAddDoc('beauty_members', {
+                                name: String(name),
+                                phone: phoneStr,
+                                birthday: row['生日'] ? String(row['生日']) : '',
+                                area: row['居住地區'] || row['地區'] || '',
+                                balance: parseFloat(row['本金餘額'] || row['儲值本金'] || 0) || 0,
+                                bonusBalance: parseFloat(row['贈送金餘額'] || row['贈送金'] || 0) || 0,
+                                points: parseInt(row['滿額點數'] || row['點數'] || 0) || 0,
+                                createdAt: new Date().getTime(),
+                                createdBy: loggedInBeautician || 'Excel Batch Import'
+                            });
+                            successCount++;
+                        } else {
+                            skipCount++; 
+                        }
+                    }
+
+                    closeModal('modalImportExcel');
+                    alert(`✅ 雲端匯入完成！\n成功建立：${successCount} 筆\n跳過重複或無效：${skipCount} 筆`);
+                    fileInput.value = '';
+
+                } catch (err) {
+                    showError('errImportExcel', '解析失敗: ' + err.message);
+                }
+                clearProcessing('btnSubmitImportExcel');
+            };
+            
+            reader.onerror = () => {
+                showError('errImportExcel', '檔案讀取發生錯誤，請檢查檔案格式');
+                clearProcessing('btnSubmitImportExcel');
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+
+        // ==========================================
+        // Initialization & Auth Setup
+        // ==========================================
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    try {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } catch (customError) {
+                        console.warn("自訂 Token 驗證失敗，切換為匿名登入:", customError);
+                        await signInAnonymously(auth);
+                    }
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+                document.getElementById('loadingContent').innerHTML = `
+                    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm mx-4 text-left border border-red-100 animate-in fade-in">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
+                                <i class="ph ph-warning-circle text-2xl"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-stone-800">資料庫連線錯誤</h3>
+                        </div>
+                        <p class="text-stone-600 text-sm leading-relaxed mb-4">
+                            請確認專案已啟用匿名登入。<br/>${error.message}
+                        </p>
+                    </div>
+                `;
+            }
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                fetchData();
+                updateRBACUI(); 
+                hideElement(document.getElementById('loadingScreen'));
+                showElement(document.getElementById('appContent'));
+                switchView('consultation'); 
+            }
+        });
+
+        initAuth();
+
+        // ==========================================
+        // General UI Click Bindings & Keydowns
+        // ==========================================
+        DOM.btnBack.addEventListener('click', () => switchView('list'));
+        DOM.btnOpenConsultationView.addEventListener('click', () => switchView('consultation'));
+        DOM.btnOpenReport.addEventListener('click', () => switchView('report'));
+        DOM.btnAddMemberView.addEventListener('click', () => {
+            document.getElementById('newMemName').value = '';
+            document.getElementById('newMemPhone').value = '';
+            document.getElementById('newMemBirthday').value = '';
+            document.getElementById('newMemArea').value = '';
+            openModal('modalAddMember');
+        });
+
+        document.getElementById('btnOpenTransaction').addEventListener('click', () => {
+            document.getElementById('txConsumeTotal').value = '';
+            document.getElementById('txAmount').value = '';
+            document.getElementById('txBonus').value = '';
+            document.getElementById('txPoints').value = '';
+            document.getElementById('txShortfallPaid').value = '';
+            document.getElementById('chkNoConsumeOnlyDeposit').checked = false;
+            calcUnifiedPreview();
+            updateSignatureVisibility();
+            openModal('modalTransaction');
+            setTimeout(initSignaturePad, 100);
+        });
+
+        document.getElementById('btnOpenAdjust').addEventListener('click', () => {
+            document.getElementById('adminPin').value = '';
+            openModal('modalAdjustAuth');
+        });
+
+        document.getElementById('btnConvertPoints').addEventListener('click', () => openModal('modalConvert'));
+        document.getElementById('btnTabCommission').addEventListener('click', () => switchReportTab('commission'));
+        document.getElementById('btnTabExpenses').addEventListener('click', () => switchReportTab('expenses'));
+
+        // 新增搜尋框即時監聽事件，達成打字動態隱藏/顯示功能
+        DOM.searchInput.addEventListener('input', renderMembers);
+
+        // ESC & ENTER 全域快捷鍵
+        document.addEventListener('keydown', (e) => {
+            const openModalEl = Array.from(document.querySelectorAll('[id^="modal"]')).find(el => !el.classList.contains('hidden'));
+            
+            if (e.key === 'Escape') {
+                if (openModalEl) {
+                    if (openModalEl.id === 'modalLogin') {
+                        document.getElementById('btnCancelLogin').click();
+                    } else {
+                        closeModal(openModalEl.id);
+                    }
+                }
+            } else if (e.key === 'Enter') {
+                if (openModalEl) {
+                    // 若在 textarea 按下 Enter 則允許換行，不送出
+                    if (document.activeElement.tagName.toLowerCase() === 'textarea') return;
+                    e.preventDefault(); 
+                    
+                    if (openModalEl.id === 'modalLogin') document.getElementById('btnSubmitLogin').click();
+                    else if (openModalEl.id === 'modalAddMember') document.getElementById('btnSubmitAddMember').click();
+                    else if (openModalEl.id === 'modalAdjustAuth') document.getElementById('btnVerifyPin').click();
+                    else if (openModalEl.id === 'modalAdjustForm') document.getElementById('btnSubmitAdjust').click();
+                    else if (openModalEl.id === 'modalConvert') document.getElementById('btnSubmitConvert').click();
+                    else if (openModalEl.id === 'modalTransaction') document.getElementById('btnSubmitTx').click();
+                    else if (openModalEl.id === 'modalConsultSuccess') document.getElementById('btnConfirmConsultSuccess').click();
+                    else if (openModalEl.id === 'modalEditTx') document.getElementById('btnSaveEditTx').click();
+                    else if (openModalEl.id === 'modalOperators') document.getElementById('btnSaveOperator').click();
+                    else if (openModalEl.id === 'modalConfirmDelete') document.getElementById('btnConfirmDelete').click();
+                    else if (openModalEl.id === 'modalCustomDialog') document.getElementById('btnCustomDialogConfirm').click();
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>
