@@ -45,49 +45,61 @@
     <div id="appContent" class="min-h-screen hidden flex flex-col">
         
         <!-- Header -->
-        <header class="bg-white shadow-sm border-b border-pink-100 sticky top-0 z-10 shrink-0">
-            <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <button id="btnBack" class="hidden p-2 -ml-2 text-stone-500 hover:text-pink-600 rounded-full hover:bg-pink-50 transition">
-                        <i class="ph ph-caret-left text-2xl"></i>
-                    </button>
-                    <div class="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center text-white shadow-sm">
-                        <i class="ph ph-sparkle text-xl"></i>
+        <header class="bg-white shadow-sm border-b border-pink-100 sticky top-0 z-[40] shrink-0">
+            <div class="max-w-4xl mx-auto px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between transition-all">
+                <div class="flex items-center justify-between w-full sm:w-auto">
+                    <div class="flex items-center gap-2">
+                        <button id="btnBack" class="hidden p-2 -ml-2 text-stone-500 hover:text-pink-600 rounded-full hover:bg-pink-50 transition">
+                            <i class="ph ph-caret-left text-2xl"></i>
+                        </button>
+                        <div class="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center text-white shadow-sm">
+                            <i class="ph ph-sparkle text-xl"></i>
+                        </div>
+                        <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600 truncate max-w-[150px] sm:max-w-none">
+                            美業管理系統 <span class="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full ml-1 align-middle">V1.8</span>
+                        </h1>
                     </div>
-                    <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600 truncate max-w-[150px] sm:max-w-none">
-                        美業管理系統 <span class="text-[10px] font-normal text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full ml-1 align-middle">V1.8</span>
-                    </h1>
+                    
+                    <!-- 收合選單按鈕區 (解決頁面卡佔位問題) -->
+                    <div class="flex items-center">
+                        <button id="btnToggleTopMenuDesktop" class="hidden sm:block p-1.5 ml-3 text-stone-400 hover:text-pink-600 rounded-lg bg-stone-50 hover:bg-pink-50 transition border border-stone-200" title="收合/展開選單">
+                            <i id="iconToggleTopMenuDesktop" class="ph ph-arrows-in-line-horizontal text-xl"></i>
+                        </button>
+                        <button id="btnToggleTopMenu" class="sm:hidden p-2 text-stone-400 hover:text-pink-600 rounded-lg bg-stone-50 hover:bg-pink-50 transition border border-stone-200 ml-2" title="展開選單">
+                            <i id="iconToggleTopMenu" class="ph ph-list text-xl"></i>
+                        </button>
+                    </div>
                 </div>
                 
-                <div class="flex items-center gap-2 sm:gap-3">
-                    <button id="btnOpenImportExcel" class="hidden items-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 px-3 py-2 rounded-lg text-sm font-semibold transition shadow-sm">
+                <div id="topActionMenu" class="hidden sm:flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 mt-4 sm:mt-0 w-full sm:w-auto transition-all">
+                    <button id="btnOpenImportExcel" class="hidden items-center justify-center gap-1 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 px-3 py-2 rounded-lg text-sm font-semibold transition shadow-sm">
                         <i class="ph ph-file-xls text-lg"></i>
-                        <span class="hidden sm:inline">Excel匯入</span>
+                        <span>Excel匯入</span>
                     </button>
 
-                    <button id="btnOpenOperatorsView" class="hidden items-center gap-1 bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200 px-3 py-2 rounded-lg text-sm font-semibold transition shadow-sm">
+                    <button id="btnOpenOperatorsView" class="hidden items-center justify-center gap-1 bg-amber-100 text-amber-800 border border-amber-200 hover:bg-amber-200 px-3 py-2 rounded-lg text-sm font-semibold transition shadow-sm">
                         <i class="ph ph-users-three text-lg"></i>
-                        <span class="hidden sm:inline">帳號管理</span>
+                        <span>帳號管理</span>
                     </button>
 
-                    <button id="btnOpenReport" class="hidden items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+                    <button id="btnOpenReport" class="hidden items-center justify-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm">
                         <i class="ph ph-chart-bar text-lg"></i>
-                        <span class="hidden sm:inline">業績與店務</span>
+                        <span>業績與店務</span>
                     </button>
 
-                    <button id="btnOpenConsultationView" class="flex items-center gap-1 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+                    <button id="btnOpenConsultationView" class="flex items-center justify-center gap-1 bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm">
                         <i class="ph ph-clipboard-text text-lg"></i>
-                        <span class="hidden sm:inline">顧客諮詢表</span>
+                        <span>顧客諮詢表</span>
                     </button>
                     
                     <!-- 登入狀態區塊 -->
-                    <div id="authStatusArea" class="flex items-center gap-2">
+                    <div id="authStatusArea" class="flex items-center justify-center gap-2">
                         <!-- 按鈕由 JS 動態生成 -->
                     </div>
                     
-                    <button id="btnAddMemberView" class="hidden items-center gap-1 bg-pink-600 hover:bg-pink-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm">
+                    <button id="btnAddMemberView" class="hidden items-center justify-center gap-1 bg-pink-600 hover:bg-pink-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition shadow-sm">
                         <i class="ph ph-user-plus text-lg"></i>
-                        <span class="hidden sm:inline">新增會員</span>
+                        <span>新增會員</span>
                     </button>
                 </div>
             </div>
@@ -1113,6 +1125,15 @@
             isProcessing = false;
         };
 
+        // 點擊背景自動關閉 Modal (Drawer不受影響，維持點擊X關閉)
+        document.querySelectorAll('[id^="modal"]').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal && !['modalOperators', 'modalImportExcel'].includes(modal.id)) {
+                    closeModal(modal.id);
+                }
+            });
+        });
+
         document.querySelectorAll('.modal-close').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const modalEl = e.target.closest('[id^="modal"]');
@@ -1225,6 +1246,79 @@
         });
 
         // ==========================================
+        // Clear Application Data Function (登出徹底清除資料)
+        // ==========================================
+        function clearAllData() {
+            selectedMember = null;
+            DOM.searchInput.value = '';
+            currentReportTxs = [];
+            
+            const fieldsToClear = [
+                'txConsumeTotal', 'txAmount', 'txBonus', 'txPoints', 'txShortfallPaid',
+                'consultName', 'consultPhone', 'consultYear', 'consultMonth', 'consultDay',
+                'newMemName', 'newMemPhone', 'newMemBirthday', 'newMemArea',
+                'adjAmount', 'adjBonus', 'adjPoints', 'adjRemark',
+                'expAmount', 'expRemark',
+                'loginUser', 'loginPwd'
+            ];
+            fieldsToClear.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+
+            const checksToClear = [
+                'chkNoConsumeOnlyDeposit', 'consultConsent'
+            ];
+            checksToClear.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.checked = false;
+            });
+
+            document.querySelectorAll('input[name="consultArea"]:checked').forEach(cb => cb.checked = false);
+            document.querySelectorAll('input[name="consultPrecautions"]:checked').forEach(cb => cb.checked = false);
+            
+            if (typeof txPad !== 'undefined' && txPad) txPad.clear();
+            if (typeof consultPad !== 'undefined' && consultPad) consultPad.clear();
+            
+            // 重置報表畫面與預設日期
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+            document.getElementById('reportStartDate').value = getLocalYMD(firstDay);
+            document.getElementById('reportEndDate').value = getLocalYMD(lastDay);
+            document.getElementById('dynamicOperatorCards').innerHTML = '';
+            document.getElementById('paymentSummaryTbody').innerHTML = '';
+            document.getElementById('expenseListTable').innerHTML = '';
+            hideElement(document.getElementById('paymentSummarySection'));
+            hideElement(document.getElementById('reportResults'));
+            
+            renderMembers();
+        }
+
+        // ==========================================
+        // Top Navigation Menu Toggle
+        // ==========================================
+        function toggleMenu() {
+            const menu = document.getElementById('topActionMenu');
+            const iconMobile = document.getElementById('iconToggleTopMenu');
+            const iconDesktop = document.getElementById('iconToggleTopMenuDesktop');
+            
+            if (menu.classList.contains('hidden')) {
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+                iconMobile.classList.replace('ph-list', 'ph-x');
+                iconDesktop.classList.replace('ph-arrows-in-line-horizontal', 'ph-arrows-out-line-horizontal');
+            } else {
+                menu.classList.add('hidden');
+                menu.classList.remove('flex');
+                iconMobile.classList.replace('ph-x', 'ph-list');
+                iconDesktop.classList.replace('ph-arrows-out-line-horizontal', 'ph-arrows-in-line-horizontal');
+            }
+        }
+        document.getElementById('btnToggleTopMenu').addEventListener('click', toggleMenu);
+        document.getElementById('btnToggleTopMenuDesktop').addEventListener('click', toggleMenu);
+
+        // ==========================================
         // Role Based Access Control (RBAC) UI Update
         // ==========================================
         function updateRBACUI() {
@@ -1245,6 +1339,8 @@
                 document.getElementById('btnLogout').addEventListener('click', () => {
                     loggedInBeautician = null;
                     loggedInRole = null;
+                    loggedInGroup = null;
+                    clearAllData(); // 徹底清除前面輸入的資料
                     updateRBACUI();
                     switchView('consultation');
                 });
@@ -3096,7 +3192,7 @@
         });
 
         // ==========================================
-        // Initialization & Auth Setup
+        // Initialization & Auth Setup (防呆:確保解除Loading)
         // ==========================================
         const initAuth = async () => {
             try {
@@ -3112,30 +3208,26 @@
                 }
             } catch (error) {
                 console.error("Auth error:", error);
-                document.getElementById('loadingContent').innerHTML = `
-                    <div class="bg-white p-6 rounded-2xl shadow-xl max-w-sm mx-4 text-left border border-red-100 animate-in fade-in">
-                        <div class="flex items-center gap-3 mb-4">
-                            <div class="w-10 h-10 bg-red-100 text-red-600 rounded-full flex items-center justify-center">
-                                <i class="ph ph-warning-circle text-2xl"></i>
-                            </div>
-                            <h3 class="text-lg font-bold text-stone-800">資料庫連線錯誤</h3>
-                        </div>
-                        <p class="text-stone-600 text-sm leading-relaxed mb-4">
-                            請確認專案已啟用匿名登入。<br/>${error.message}
-                        </p>
-                    </div>
-                `;
+                // 絕對保證解除 Loading Screen 以防畫面卡死
+                hideElement(document.getElementById('loadingScreen'));
+                showElement(document.getElementById('appContent'));
+                alert('系統連線異常，已切換至離線模式。請確認網路環境後重新整理頁面。');
             }
         };
 
         onAuthStateChanged(auth, (user) => {
+            // 絕對保證解除 Loading Screen 以防畫面卡死
+            hideElement(document.getElementById('loadingScreen'));
+            showElement(document.getElementById('appContent'));
+            
             if (user) {
                 currentUser = user;
                 fetchData();
                 updateRBACUI(); 
-                hideElement(document.getElementById('loadingScreen'));
-                showElement(document.getElementById('appContent'));
                 switchView('consultation'); 
+            } else {
+                updateRBACUI();
+                switchView('consultation');
             }
         });
 
