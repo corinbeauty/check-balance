@@ -498,15 +498,15 @@
                             <div class="md:col-span-2 space-y-6">
                                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
-                                        <div class="text-xs text-stone-500 mb-1">本群組服務消費業績</div>
+                                        <div id="lblPnlSales" class="text-xs text-stone-500 mb-1">服務消費業績總計</div>
                                         <div id="pnlTotalSales" class="text-xl font-bold text-stone-800">$0</div>
                                     </div>
                                     <div class="bg-white p-4 rounded-xl border border-stone-200 shadow-sm">
-                                        <div class="text-xs text-stone-500 mb-1">本群組雜項收支總計</div>
+                                        <div id="lblPnlExp" class="text-xs text-stone-500 mb-1">帳號雜項收支總計</div>
                                         <div id="pnlTotalExpenses" class="text-xl font-bold text-rose-600">$0</div>
                                     </div>
                                     <div class="p-4 rounded-xl border shadow-sm relative overflow-hidden" id="pnlNetCard">
-                                        <div class="text-xs mb-1 opacity-70">本群組本期淨損益 (P&L)</div>
+                                        <div id="lblPnlNet" class="text-xs mb-1 opacity-70">帳號淨損益 (P&L)</div>
                                         <div id="pnlNetProfit" class="text-2xl font-black">$0</div>
                                     </div>
                                 </div>
@@ -520,7 +520,7 @@
                                                     <th class="p-3 font-medium">時間</th>
                                                     <th class="p-3 font-medium">類別</th>
                                                     <th class="p-3 font-medium text-right">金額</th>
-                                                    <th class="p-3 font-medium">群組 / 備註</th>
+                                                    <th class="p-3 font-medium">操作員 / 備註</th>
                                                     <th class="p-3 font-medium text-center">操作</th>
                                                 </tr>
                                             </thead>
@@ -1040,8 +1040,8 @@
         let currentActiveViewId = 'consultation'; 
         let currentReportTab = 'commission'; 
         let clockInterval = null;
-        let pendingDeleteAction = null; // 用於儲存彈窗確認後的刪除函式
-        let currentReportTxs = []; // 儲存當前報表中篩選出的明細，用於打勾連動計算
+        let pendingDeleteAction = null; 
+        let currentReportTxs = []; 
 
         const DOM = {
             viewList: document.getElementById('viewList'),
@@ -1141,7 +1141,7 @@
         };
 
         const showSimpleMessage = (msg) => {
-            alert(msg); // Fallback if custom dialog is not appropriate, but mostly replaced by custom dialog now.
+            alert(msg);
         };
 
         const setProcessing = (btnId, text) => {
@@ -1277,6 +1277,13 @@
                         `;
                     });
 
+                    // 綁定過濾器變更事件，直接觸發查詢
+                    document.querySelectorAll('.admin-op-cb').forEach(cb => {
+                        cb.addEventListener('change', () => {
+                            document.getElementById('btnGenerateReport').click();
+                        });
+                    });
+
                 } else {
                     hideElement(DOM.btnOpenOperatorsView);
                     hideElement(DOM.btnOpenImportExcel);
@@ -1286,12 +1293,7 @@
                 showElement(DOM.btnOpenReport);
                 
                 const btnTabExpenses = document.getElementById('btnTabExpenses');
-                if (loggedInRole === 'beautician') {
-                    hideElement(btnTabExpenses);
-                    if (currentReportTab === 'expenses') switchReportTab('commission');
-                } else {
-                    showElement(btnTabExpenses);
-                }
+                showElement(btnTabExpenses); // 全角色開放收支分頁
                 
                 const btnOpenAdjust = document.getElementById('btnOpenAdjust');
                 if (loggedInRole === 'admin') {
@@ -1529,6 +1531,7 @@
                 }
                 
                 document.getElementById('btnThisMonth').click();
+                setTimeout(() => document.getElementById('btnGenerateReport').click(), 50); // 自動載入資料
                 switchReportTab('commission'); 
             }
         }
@@ -1546,7 +1549,6 @@
                 showElement(contentComm);
                 hideElement(contentExp);
             } else {
-                if (loggedInRole === 'beautician') return; 
                 btnExp.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-lg bg-white shadow text-stone-800";
                 btnComm.className = "flex-1 sm:flex-none px-4 py-2 text-sm font-medium rounded-lg text-stone-500 hover:text-stone-700";
                 showElement(contentExp);
@@ -2226,6 +2228,80 @@
         // ==========================================
         // Main Report Generator (P&L and Performance with Details)
         // ==========================================
+        function renderPaymentSummary() {
+            if (loggedInRole === 'beautician') {
+                hideElement(document.getElementById('paymentSummarySection'));
+                return;
+            }
+
+            let summary = {
+                '現金': { count: 0, amount: 0 },
+                '轉帳': { count: 0, amount: 0 },
+                'LINEPAY': { count: 0, amount: 0 },
+                '街口支付': { count: 0, amount: 0 },
+                '舊系統轉移': { count: 0, amount: 0 }
+            };
+
+            // 遍歷當前報表上顯示的所有明細，並只加總有打勾核對(audited)的資料
+            currentReportTxs.forEach(tx => {
+                if (!tx.audited) return;
+
+                // 為了相容舊資料：若 DB 沒有紀錄 payMethod，則嘗試從 remark 擷取
+                let fallbackShortfall = 0;
+                let fallbackMethod = '現金';
+                const methodMatch = tx.remark?.match(/支付方式:\s*([^\s，]+)/);
+                if (methodMatch) fallbackMethod = methodMatch[1];
+                
+                const shortMatch = tx.remark?.match(/，(.*?)補差額:\s*\$(\d+(?:,\d+)*)/);
+                if (shortMatch) {
+                    fallbackMethod = shortMatch[1];
+                    fallbackShortfall = parseFloat(shortMatch[2].replace(/,/g, ''));
+                }
+                
+                let actualMethod = tx.payMethod || fallbackMethod;
+                // 實際收到的金額 = 儲值本金 + 補差額
+                let actualAmount = (parseFloat(tx.depositAmount) || 0) + (parseFloat(tx.shortfallPaid) || fallbackShortfall);
+
+                if (actualAmount > 0) {
+                    if (!summary[actualMethod]) summary[actualMethod] = { count: 0, amount: 0 };
+                    summary[actualMethod].count += 1;
+                    summary[actualMethod].amount += actualAmount;
+                }
+            });
+
+            // 渲染統計表格
+            const tbody = document.getElementById('paymentSummaryTbody');
+            tbody.innerHTML = '';
+            let totalCount = 0;
+            let totalAmt = 0;
+
+            Object.keys(summary).forEach(method => {
+                const data = summary[method];
+                // 如果有金額，或者是常見選項，都顯示出來
+                if (data.count > 0 || data.amount > 0 || ['現金', '轉帳', 'LINEPAY', '街口支付'].includes(method)) {
+                    totalCount += data.count;
+                    totalAmt += data.amount;
+                    tbody.innerHTML += `
+                        <tr class="border-b border-stone-100 transition hover:bg-stone-50">
+                            <td class="p-3 font-semibold text-stone-700">${method}</td>
+                            <td class="p-3 text-right font-medium text-stone-600">${data.count}</td>
+                            <td class="p-3 text-right font-bold text-emerald-600">$${formatNumber(data.amount)}</td>
+                        </tr>
+                    `;
+                }
+            });
+
+            tbody.innerHTML += `
+                <tr class="bg-stone-100 font-bold text-stone-800 text-lg">
+                    <td class="p-3">打勾核對總計</td>
+                    <td class="p-3 text-right">${totalCount} 筆</td>
+                    <td class="p-3 text-right text-emerald-700">$${formatNumber(totalAmt)}</td>
+                </tr>
+            `;
+
+            showElement(document.getElementById('paymentSummarySection'));
+        }
+
         document.getElementById('btnGenerateReport').addEventListener('click', () => {
             const startDateStr = document.getElementById('reportStartDate').value;
             const endDateStr = document.getElementById('reportEndDate').value;
@@ -2270,8 +2346,8 @@
                 if (methodMatch) fallbackMethod = methodMatch[1];
                 let actualMethod = tx.payMethod || fallbackMethod;
 
-                // 【儲值級距獎金改為：只要支付方式是舊系統轉移，就不計算該筆獎金筆數】
-                if (dAmt > 0 && actualMethod !== '舊系統轉移') {
+                // 【儲值級距獎金改為：只要支付方式不是舊系統轉移，且金額>=5000，才計算該筆獎金筆數】
+                if (dAmt >= 5000 && actualMethod !== '舊系統轉移') {
                     operatorStats[op].depositCount += 1;
                 }
                 
@@ -2466,7 +2542,31 @@
             });
 
             if (loggedInRole !== 'beautician') {
-                const periodExpenses = expenses.filter(e => e.timestamp >= startTs && e.timestamp <= endTs);
+                // 動態更新 P&L 標題，釐清權限視角
+                const lblSales = document.getElementById('lblPnlSales');
+                const lblExp = document.getElementById('lblPnlExp');
+                const lblNet = document.getElementById('lblPnlNet');
+                if (loggedInRole === 'admin') {
+                    lblSales.textContent = '已選帳號服務消費總計';
+                    lblExp.textContent = '已選帳號雜項收支總計';
+                    lblNet.textContent = '已選帳號淨損益 (P&L)';
+                } else {
+                    lblSales.textContent = `本群組 (${loggedInGroup}) 消費總計`;
+                    lblExp.textContent = '本帳號雜項收支總計';
+                    lblNet.textContent = '本帳號結算淨損益 (P&L)';
+                }
+
+                // 處理店務損益表 (P&L)，這裡直接計算目前登入者能看到的所有費用
+                const periodExpenses = expenses.filter(e => e.timestamp >= startTs && e.timestamp <= endTs).filter(e => {
+                    if (loggedInRole === 'admin') {
+                        if (selectedOpsForAdmin.length > 0) {
+                            return selectedOpsForAdmin.includes((e.operator || '系統').toLowerCase());
+                        }
+                        return true;
+                    }
+                    return (e.operator || '').toLowerCase() === loggedInBeautician.toLowerCase();
+                });
+
                 let totalExp = 0; 
 
                 periodExpenses.forEach(e => {
@@ -2494,7 +2594,7 @@
         // Miscellaneous Expenses Business Logic
         // ==========================================
         document.getElementById('btnSubmitExpense').addEventListener('click', async () => {
-            if (isProcessing || loggedInRole === 'beautician') return; 
+            if (isProcessing) return; 
 
             hideElement(document.getElementById('errExpense'));
 
@@ -2543,8 +2643,23 @@
             const startTs = new Date(startDateStr + 'T00:00:00').getTime();
             const endTs = new Date(endDateStr + 'T23:59:59').getTime();
 
+            // 最高權限：連動過濾器
+            let selectedOpsForAdmin = [];
+            if (loggedInRole === 'admin') {
+                selectedOpsForAdmin = Array.from(document.querySelectorAll('.admin-op-cb:checked')).map(cb => cb.value.toLowerCase());
+            }
+
             const periodExpenses = expenses
                 .filter(e => e.timestamp >= startTs && e.timestamp <= endTs)
+                .filter(e => {
+                    if (loggedInRole === 'admin') {
+                        if (selectedOpsForAdmin.length > 0) {
+                            return selectedOpsForAdmin.includes((e.operator || '系統').toLowerCase());
+                        }
+                        return true;
+                    }
+                    return (e.operator || '').toLowerCase() === loggedInBeautician.toLowerCase();
+                })
                 .sort((a,b) => b.timestamp - a.timestamp);
 
             if (periodExpenses.length === 0) {
@@ -2566,7 +2681,7 @@
                     <td class="p-3 text-stone-500 whitespace-nowrap">${formatDate(exp.timestamp)}</td>
                     <td class="p-3"><span class="bg-gray-100 text-stone-700 px-2 py-0.5 rounded text-xs font-semibold">${exp.category}</span></td>
                     <td class="p-3 text-right font-bold ${amtColor}">${amtPrefix}$${formatNumber(exp.amount)}</td>
-                    <td class="p-3 text-xs text-stone-600 max-w-[200px] truncate" title="${exp.remark}">${exp.remark}</td>
+                    <td class="p-3 text-xs text-stone-600 max-w-[200px] truncate" title="操作員: ${exp.operator || '系統'} | 備註: ${exp.remark}">[${exp.operator || '系統'}] ${exp.remark}</td>
                     <td class="p-3 text-center">
                         <button class="btn-delete-expense text-rose-500 hover:text-rose-700 font-bold" data-id="${exp.id}">
                             <i class="ph ph-trash text-lg"></i>
@@ -3086,18 +3201,4 @@
                     if (openModalEl.id === 'modalLogin') document.getElementById('btnSubmitLogin').click();
                     else if (openModalEl.id === 'modalAddMember') document.getElementById('btnSubmitAddMember').click();
                     else if (openModalEl.id === 'modalAdjustAuth') document.getElementById('btnVerifyPin').click();
-                    else if (openModalEl.id === 'modalAdjustForm') document.getElementById('btnSubmitAdjust').click();
-                    else if (openModalEl.id === 'modalConvert') document.getElementById('btnSubmitConvert').click();
-                    else if (openModalEl.id === 'modalTransaction') document.getElementById('btnSubmitTx').click();
-                    else if (openModalEl.id === 'modalConsultSuccess') document.getElementById('btnConfirmConsultSuccess').click();
-                    else if (openModalEl.id === 'modalEditTx') document.getElementById('btnSaveEditTx').click();
-                    else if (openModalEl.id === 'modalOperators') document.getElementById('btnSaveOperator').click();
-                    else if (openModalEl.id === 'modalConfirmDelete') document.getElementById('btnConfirmDelete').click();
-                    else if (openModalEl.id === 'modalCustomDialog') document.getElementById('btnCustomDialogConfirm').click();
-                }
-            }
-        });
-
-    </script>
-</body>
-</html>
+                    else if (openModalEl.id === '
