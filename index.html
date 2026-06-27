@@ -1605,7 +1605,14 @@
                 renderMemberDetail();
             } else if (view === 'consultation') {
                 showElement(DOM.viewConsultation);
-                showElement(DOM.btnBack);
+                
+                // 【安全機制】未登入時隱藏返回鍵，防止顧客按返回看到會員列表
+                if (loggedInBeautician) {
+                    showElement(DOM.btnBack);
+                } else {
+                    hideElement(DOM.btnBack);
+                }
+                
                 hideElement(DOM.btnAddMemberView);
                 hideElement(DOM.btnOpenConsultationView);
                 hideElement(DOM.btnOpenReport);
