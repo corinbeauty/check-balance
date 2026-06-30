@@ -672,6 +672,18 @@
                             <input type="number" id="txPoints" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0" />
                         </div>
                     </div>
+                    
+                    <!-- 結帳備註說明 (新增) -->
+                    <div class="pt-2">
+                        <label class="block text-sm font-medium text-stone-700 mb-1">
+                            結帳備註說明 <span id="txRemarkAsterisk" class="hidden text-rose-500">*</span>
+                        </label>
+                        <textarea id="txRemark" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 outline-none resize-none h-16 transition-all" placeholder="選填 (若為0元結帳則為必填)"></textarea>
+                        <div id="txZeroWarning" class="hidden mt-1 text-sm text-rose-600 font-bold items-center gap-1 animate-pulse">
+                            <i class="ph ph-warning-circle text-lg"></i> 系統偵測為 0 元結帳，請務必填寫結帳原因！
+                        </div>
+                    </div>
+
                     <!-- 即時結帳預覽區 -->
                     <div class="bg-stone-50 p-4 rounded-xl border border-stone-200 space-y-2 relative overflow-hidden">
                         <div class="flex justify-between text-sm">
@@ -1259,7 +1271,7 @@
             currentReportTxs = [];
             
             const fieldsToClear = [
-                'txConsumeTotal', 'txAmount', 'txBonus', 'txPoints', 'txShortfallPaid',
+                'txConsumeTotal', 'txAmount', 'txBonus', 'txPoints', 'txShortfallPaid', 'txRemark',
                 'consultName', 'consultPhone', 'consultYear', 'consultMonth', 'consultDay',
                 'newMemName', 'newMemPhone', 'newMemBirthday', 'newMemArea',
                 'adjAmount', 'adjBonus', 'adjPoints', 'adjRemark',
@@ -1958,6 +1970,28 @@
                 hideElement(shortfallSec);
                 document.getElementById('txShortfallPaid').value = ''; 
             }
+
+            // 0 元結帳動態判斷與樣式
+            const isZeroTx = (consumeTotal === 0 && depositPrincipal === 0 && depositBonus === 0);
+            const txZeroWarning = document.getElementById('txZeroWarning');
+            const txRemarkAsterisk = document.getElementById('txRemarkAsterisk');
+            const txRemarkInput = document.getElementById('txRemark');
+
+            if (isZeroTx) {
+                if(txZeroWarning) { txZeroWarning.classList.remove('hidden'); txZeroWarning.style.display = 'flex'; }
+                if(txRemarkAsterisk) txRemarkAsterisk.classList.remove('hidden');
+                if(txRemarkInput) {
+                    txRemarkInput.classList.add('border-rose-300', 'bg-rose-50', 'ring-1', 'ring-rose-500');
+                    txRemarkInput.classList.remove('border-stone-200');
+                }
+            } else {
+                if(txZeroWarning) { txZeroWarning.classList.add('hidden'); txZeroWarning.style.display = 'none'; }
+                if(txRemarkAsterisk) txRemarkAsterisk.classList.add('hidden');
+                if(txRemarkInput) {
+                    txRemarkInput.classList.remove('border-rose-300', 'bg-rose-50', 'ring-1', 'ring-rose-500');
+                    txRemarkInput.classList.add('border-stone-200');
+                }
+            }
         }
         
         document.getElementById('txConsumeTotal').addEventListener('input', calcUnifiedPreview);
@@ -2112,9 +2146,12 @@
             const payMethod = document.getElementById('txPaymentMethod').value;
             const noSignatureMode = document.getElementById('chkNoConsumeOnlyDeposit').checked;
             const shortfallPaid = parseFloat(document.getElementById('txShortfallPaid').value) || 0;
+            const customRemark = document.getElementById('txRemark').value.trim();
             
-            if (consumeTotal === 0 && depositPrincipal === 0 && depositBonus === 0) {
-                return showError('errTx', '請輸入消費或儲值金額');
+            const isZeroTx = (consumeTotal === 0 && depositPrincipal === 0 && depositBonus === 0);
+
+            if (isZeroTx && !customRemark) {
+                return showError('errTx', '0元結帳請務必於上方填寫結帳備註原因');
             }
 
             if (!noSignatureMode && txPad.isEmpty()) {
@@ -2144,6 +2181,12 @@
             if (consumeTotal > 0) finalRemark += `[服務消費] 總額: $${formatNumber(consumeTotal)}`;
             if (depositPrincipal > 0) finalRemark += (finalRemark?'，':'') + `[儲值入帳] 本金: $${formatNumber(depositPrincipal)} 支付方式: ${payMethod}`;
             if (shortfall > 0) finalRemark += `，${payMethod}補差額: $${formatNumber(shortfall)}`;
+
+            if (customRemark) {
+                finalRemark = finalRemark ? `${finalRemark} | 備註: ${customRemark}` : `[0元結帳] ${customRemark}`;
+            } else if (!finalRemark) {
+                finalRemark = '純金額異動'; 
+            }
 
             setProcessing('btnSubmitTx', '處理中...');
             try {
@@ -3271,6 +3314,7 @@
             document.getElementById('txBonus').value = '';
             document.getElementById('txPoints').value = '';
             document.getElementById('txShortfallPaid').value = '';
+            document.getElementById('txRemark').value = '';
             document.getElementById('chkNoConsumeOnlyDeposit').checked = false;
             calcUnifiedPreview();
             updateSignatureVisibility();
