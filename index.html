@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>美業儲值金會員查詢系統</title>
+    <title>美業管理系統</title>
     
     <!-- LINE與社群分享預覽設定 (OG Tags) -->
     <meta property="og:title" content="美業會員系統">
@@ -31,7 +31,7 @@
         }
     </style>
 </head>
-<body class="bg-stone-50 font-sans text-stone-800 antialiased selection:bg-pink-200 selection:text-pink-900 overflow-x-hidden">
+<body class="bg-stone-50 font-sans text-stone-800 antialiased selection:bg-pink-200 selection:text-pink-900 overflow-x-hidden flex flex-col min-h-screen">
 
     <!-- Loading Screen -->
     <div id="loadingScreen" class="fixed inset-0 bg-pink-50 flex items-center justify-center z-[100] transition-opacity duration-300">
@@ -42,7 +42,7 @@
     </div>
 
     <!-- Main Application Container -->
-    <div id="appContent" class="min-h-screen hidden flex flex-col">
+    <div id="appContent" class="hidden flex-col flex-grow">
         
         <!-- Header -->
         <header class="bg-white shadow-sm border-b border-pink-100 sticky top-0 z-[40] shrink-0">
@@ -50,17 +50,17 @@
                 <div class="flex items-center justify-between w-full sm:w-auto">
                     <div class="flex items-center gap-2">
                         <button id="btnBack" class="hidden p-2 -ml-2 text-stone-500 hover:text-pink-600 rounded-full hover:bg-pink-50 transition">
-                        <i class="ph ph-caret-left text-2xl"></i>
-                    </button>
-                    <div class="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center text-white shadow-sm">
-                        <i class="ph ph-sparkle text-xl"></i>
+                            <i class="ph ph-caret-left text-2xl"></i>
+                        </button>
+                        <div class="w-8 h-8 bg-pink-600 rounded-lg flex items-center justify-center text-white shadow-sm">
+                            <i class="ph ph-sparkle text-xl"></i>
+                        </div>
+                        <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600 truncate max-w-[150px] sm:max-w-none">
+                            美業管理系統
+                        </h1>
                     </div>
-                    <h1 class="text-lg sm:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600 truncate max-w-[150px] sm:max-w-none">
-                        美業管理系統
-                    </h1>
-                </div>
-                
-                <!-- 收合選單按鈕區 (解決頁面卡佔位問題) -->
+                    
+                    <!-- 收合選單按鈕區 -->
                     <div class="flex items-center">
                         <button id="btnToggleTopMenuDesktop" class="hidden sm:block p-1.5 ml-3 text-stone-400 hover:text-pink-600 rounded-lg bg-stone-50 hover:bg-pink-50 transition border border-stone-200" title="收合/展開選單">
                             <i id="iconToggleTopMenuDesktop" class="ph ph-arrows-in-line-horizontal text-xl"></i>
@@ -671,14 +671,22 @@
                             <label class="block text-sm font-medium text-stone-700 mb-1">獲得滿額點數</label>
                             <input type="number" id="txPoints" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-amber-500 outline-none" placeholder="0" />
                         </div>
+                        
+                        <!-- 補單日期選擇 (新增) -->
+                        <div class="col-span-2">
+                            <label class="block text-sm font-medium text-stone-700 mb-1 text-blue-600 flex items-center gap-1">
+                                <i class="ph ph-calendar-plus text-lg"></i> 補單日期時間 <span class="text-xs text-stone-400 font-normal ml-1">(若為當下結帳請留空)</span>
+                            </label>
+                            <input type="datetime-local" id="txCustomDate" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-blue-50/30 text-stone-700 transition" />
+                        </div>
                     </div>
                     
-                    <!-- 結帳備註說明 (新增) -->
-                    <div class="pt-2">
+                    <!-- 結帳備註說明 (改為標準框輸入) -->
+                    <div class="pt-2 border-t border-stone-100">
                         <label class="block text-sm font-medium text-stone-700 mb-1">
                             結帳備註說明 <span id="txRemarkAsterisk" class="hidden text-rose-500">*</span>
                         </label>
-                        <textarea id="txRemark" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 outline-none resize-none h-16 transition-all" placeholder="選填 (若為0元結帳則為必填)"></textarea>
+                        <input type="text" id="txRemark" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-stone-500 outline-none transition-all" placeholder="選填 (若為0元結帳則為必填)" />
                         <div id="txZeroWarning" class="hidden mt-1 text-sm text-rose-600 font-bold items-center gap-1 animate-pulse">
                             <i class="ph ph-warning-circle text-lg"></i> 系統偵測為 0 元結帳，請務必填寫結帳原因！
                         </div>
@@ -1142,7 +1150,7 @@
             isProcessing = false;
         };
 
-        // 點擊背景自動關閉 Modal (Drawer不受影響，維持點擊X關閉)
+        // 點擊背景自動關閉 Modal
         document.querySelectorAll('[id^="modal"]').forEach(modal => {
             modal.addEventListener('click', (e) => {
                 if (e.target === modal && !['modalOperators', 'modalImportExcel'].includes(modal.id)) {
@@ -1271,7 +1279,7 @@
             currentReportTxs = [];
             
             const fieldsToClear = [
-                'txConsumeTotal', 'txAmount', 'txBonus', 'txPoints', 'txShortfallPaid', 'txRemark',
+                'txConsumeTotal', 'txAmount', 'txBonus', 'txPoints', 'txShortfallPaid', 'txRemark', 'txCustomDate',
                 'consultName', 'consultPhone', 'consultYear', 'consultMonth', 'consultDay',
                 'newMemName', 'newMemPhone', 'newMemBirthday', 'newMemArea',
                 'adjAmount', 'adjBonus', 'adjPoints', 'adjRemark',
@@ -1357,7 +1365,7 @@
                     loggedInBeautician = null;
                     loggedInRole = null;
                     loggedInGroup = null;
-                    clearAllData(); // 徹底清除前面輸入的資料
+                    clearAllData(); // 徹底清除資料
                     updateRBACUI();
                     switchView('consultation');
                 });
@@ -1468,7 +1476,7 @@
             const matchedOps = operators.filter(o => (o.username || '').toLowerCase() === user.toLowerCase());
             
             if (matchedOps.length > 0) {
-                // 優先比對「密碼正確」且狀態為「active」的紀錄（只要有一筆合格即放行）
+                // 優先比對「密碼正確」且狀態為「active」的紀錄
                 const validOp = matchedOps.find(o => String(o.password) === pwd && o.status === 'active');
                 
                 if (validOp) {
@@ -1550,7 +1558,7 @@
                 onSnapshot(collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_operators'), (snapshot) => {
                     operators = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     
-                    // 新增防止因為多次掛載(Mount)而同時觸發多筆預設帳號寫入的防護鎖
+                    // 新增防止因為多次掛載而觸發多筆預設帳號寫入的防護鎖
                     if (snapshot.empty && !window._isSeedingOperators) {
                         window._isSeedingOperators = true;
                         const defaults = [
@@ -1971,26 +1979,30 @@
                 document.getElementById('txShortfallPaid').value = ''; 
             }
 
-            // 0 元結帳動態判斷與樣式
+            // Zero Transaction Warning Dynamic Check
+            checkZeroTxWarning();
+        }
+
+        function checkZeroTxWarning() {
+            const consumeTotal = parseFloat(document.getElementById('txConsumeTotal').value) || 0;
+            const depositPrincipal = parseFloat(document.getElementById('txAmount').value) || 0;
+            const depositBonus = parseFloat(document.getElementById('txBonus').value) || 0;
             const isZeroTx = (consumeTotal === 0 && depositPrincipal === 0 && depositBonus === 0);
-            const txZeroWarning = document.getElementById('txZeroWarning');
-            const txRemarkAsterisk = document.getElementById('txRemarkAsterisk');
-            const txRemarkInput = document.getElementById('txRemark');
+            
+            const remarkInput = document.getElementById('txRemark');
+            const zeroWarning = document.getElementById('txZeroWarning');
+            const asterisk = document.getElementById('txRemarkAsterisk');
 
             if (isZeroTx) {
-                if(txZeroWarning) { txZeroWarning.classList.remove('hidden'); txZeroWarning.style.display = 'flex'; }
-                if(txRemarkAsterisk) txRemarkAsterisk.classList.remove('hidden');
-                if(txRemarkInput) {
-                    txRemarkInput.classList.add('border-rose-300', 'bg-rose-50', 'ring-1', 'ring-rose-500');
-                    txRemarkInput.classList.remove('border-stone-200');
-                }
+                remarkInput.classList.add('border-rose-300', 'bg-rose-50', 'focus:ring-rose-500');
+                remarkInput.classList.remove('border-stone-200', 'focus:ring-stone-500');
+                showElement(zeroWarning);
+                showElement(asterisk);
             } else {
-                if(txZeroWarning) { txZeroWarning.classList.add('hidden'); txZeroWarning.style.display = 'none'; }
-                if(txRemarkAsterisk) txRemarkAsterisk.classList.add('hidden');
-                if(txRemarkInput) {
-                    txRemarkInput.classList.remove('border-rose-300', 'bg-rose-50', 'ring-1', 'ring-rose-500');
-                    txRemarkInput.classList.add('border-stone-200');
-                }
+                remarkInput.classList.remove('border-rose-300', 'bg-rose-50', 'focus:ring-rose-500');
+                remarkInput.classList.add('border-stone-200', 'focus:ring-stone-500');
+                hideElement(zeroWarning);
+                hideElement(asterisk);
             }
         }
         
@@ -2121,7 +2133,7 @@
                 pointsChange: payload.pointsChange || 0,
                 remark: payload.remark || '',
                 signature: payload.signature || null,
-                timestamp: new Date().getTime(),
+                timestamp: payload.timestamp || new Date().getTime(),
                 previousBalance: selectedMember.balance || 0,
                 previousBonus: selectedMember.bonusBalance || 0,
                 newBalance: newBalance,
@@ -2147,6 +2159,12 @@
             const noSignatureMode = document.getElementById('chkNoConsumeOnlyDeposit').checked;
             const shortfallPaid = parseFloat(document.getElementById('txShortfallPaid').value) || 0;
             const customRemark = document.getElementById('txRemark').value.trim();
+            const customDateStr = document.getElementById('txCustomDate').value;
+            
+            let finalTimestamp = new Date().getTime();
+            if (customDateStr) {
+                finalTimestamp = new Date(customDateStr).getTime();
+            }
             
             const isZeroTx = (consumeTotal === 0 && depositPrincipal === 0 && depositBonus === 0);
 
@@ -2200,7 +2218,8 @@
                     signature: noSignatureMode ? null : txPad.getData(),
                     remark: finalRemark || '純金額異動',
                     payMethod: payMethod,
-                    shortfallPaid: shortfallPaid
+                    shortfallPaid: shortfallPaid,
+                    timestamp: finalTimestamp
                 });
                 
                 closeModal('modalTransaction');
@@ -2751,7 +2770,7 @@
         // Miscellaneous Expenses Business Logic
         // ==========================================
         document.getElementById('btnSubmitExpense').addEventListener('click', async () => {
-            if (isProcessing) return; 
+            if (isProcessing || loggedInRole === 'beautician') return; 
 
             hideElement(document.getElementById('errExpense'));
 
@@ -3315,6 +3334,7 @@
             document.getElementById('txPoints').value = '';
             document.getElementById('txShortfallPaid').value = '';
             document.getElementById('txRemark').value = '';
+            document.getElementById('txCustomDate').value = '';
             document.getElementById('chkNoConsumeOnlyDeposit').checked = false;
             calcUnifiedPreview();
             updateSignatureVisibility();
