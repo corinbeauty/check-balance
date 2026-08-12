@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VIP 儲值與集點查詢</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <style>
+        .stamp-card { background-color: #df1873; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-stone-50 font-sans text-stone-800 antialiased selection:bg-pink-200 min-h-screen flex flex-col">
+
+    <!-- Loading Overlay -->
+    <div id="loading" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="text-center text-[#df1873]">
+            <i class="ph ph-spinner-gap animate-spin text-4xl mb-2"></i>
+            <p class="font-medium tracking-widest text-sm">資料讀取中...</p>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW 1: 登入驗證區塊
+         ========================================== -->
+    <div id="viewLogin" class="flex-grow flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-lg border border-stone-100 w-full max-w-sm text-center">
+            <div class="w-16 h-16 bg-pink-50 text-[#df1873] rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="ph ph-identification-card text-3xl"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-stone-800 mb-2">VIP 會員查詢</h2>
+            <p class="text-stone-500 text-sm mb-6">請輸入您的手機與生日以查詢儲值金與點數</p>
+
+            <div id="errLogin" class="hidden mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-lg text-left flex items-start gap-2"></div>
+
+            <div class="space-y-4 text-left mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-stone-700 mb-1">手機號碼</label>
+                    <input type="tel" id="inputPhone" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#df1873] outline-none" placeholder="0912345678" maxlength="10">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-stone-700 mb-1">生日 (共4碼)</label>
+                    <input type="tel" id="inputBirthday" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#df1873] outline-none" placeholder="例如: 0101 (1月1日)" maxlength="4">
+                </div>
+            </div>
+
+            <button id="btnLogin" class="w-full py-3 bg-[#df1873] text-white font-bold rounded-xl shadow-md hover:bg-pink-700 transition">
+                立即查詢
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         VIEW 2: 集點卡與儲值金畫面
+         ========================================== -->
+    <div id="viewDashboard" class="hidden flex-col w-full max-w-md mx-auto bg-white min-h-screen relative pb-10">
+        
+        <!-- Header -->
+        <header class="flex items-center justify-between p-4 border-b border-stone-100 sticky top-0 bg-white z-10">
+            <h1 class="text-lg font-bold text-stone-800">集點與儲值卡</h1>
+            <button id="btnLogout" class="text-stone-400 hover:text-stone-600"><i class="ph ph-x text-2xl"></i></button>
+        </header>
+
+        <!-- 儲值金區塊 -->
+        <div class="p-4 flex gap-3">
+            <div class="flex-1 bg-stone-50 p-4 rounded-2xl border border-stone-100">
+                <div class="text-xs text-stone-500 mb-1">儲值本金餘額</div>
+                <div class="text-xl font-bold text-stone-800" id="displayBalance">$0</div>
+            </div>
+            <div class="flex-1 bg-pink-50 p-4 rounded-2xl border border-pink-100">
+                <div class="text-xs text-pink-600 mb-1">贈送金餘額</div>
+                <div class="text-xl font-bold text-[#df1873]" id="displayBonus">$0</div>
+            </div>
+        </div>
+
+        <!-- 療程剩餘區塊 (新增) -->
+        <div class="px-4 pb-4">
+            <div class="w-full bg-stone-50 p-4 rounded-2xl border border-stone-100 flex items-center justify-between shadow-sm">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-pink-100 text-[#df1873] flex items-center justify-center">
+                        <i class="ph-fill ph-sparkle text-lg"></i>
+                    </div>
+                    <div class="text-sm font-bold text-stone-700">暗沉拜拜剩餘堂數</div>
+                </div>
+                <div class="text-2xl font-black text-stone-800" id="displayTreatment">
+                    0 <span class="text-sm font-medium text-stone-500 ml-0.5">堂</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 數位集點卡 (仿照圖片) -->
+        <div class="px-4">
+            <div class="stamp-card rounded-2xl p-6 text-white text-center shadow-md relative overflow-hidden">
+                <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm absolute top-4 left-1/2 -translate-x-1/2">
+                    <span class="text-[#df1873] font-black text-xl">VIP</span>
+                </div>
+                
+                <h2 class="text-2xl font-black mt-10 mb-1 tracking-wide">VIP 專屬回饋集點</h2>
+                <div id="expireText" class="text-pink-100 text-sm mb-6 bg-black/10 inline-block px-3 py-1 rounded-full">
+                    讀取期限中...
+                </div>
+
+                <!-- 點數圈圈 (5格) -->
+                <div class="flex justify-between items-center gap-2 max-w-[280px] mx-auto relative z-10" id="stampsContainer">
+                    <!-- JS 動態生成 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 獎勵兌換區 -->
+        <div class="mt-6 px-4">
+            <div class="border-b border-stone-200 flex text-center mb-4">
+                <div class="flex-1 pb-2 border-b-2 border-stone-800 font-bold text-stone-800">可兌換/累積中獎勵</div>
+            </div>
+
+            <div class="flex gap-4 p-3 rounded-xl border border-stone-100 bg-white shadow-sm items-center">
+                <!-- 高質量配圖 -->
+                <div class="w-24 h-24 rounded-lg bg-stone-200 shrink-0 overflow-hidden relative">
+                    <img src="https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=500&q=80" alt="Spa" class="w-full h-full object-cover">
+                    <div class="absolute top-0 left-0 w-full bg-black/50 text-white text-[10px] py-0.5 text-center flex items-center justify-center gap-1">
+                        <i class="ph ph-lock-key"></i> VIP專屬
+                    </div>
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-stone-800 text-lg mb-1">回饋金 $320 元</h3>
+                    <p id="rewardStatusText" class="text-sm font-medium text-[#df1873]">仍需 5 點</p>
+                    <p id="rewardAvailableText" class="hidden text-sm font-medium text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded inline-block mt-1">可兌換 <span id="redeemCount">0</span> 次</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 使用說明 -->
+        <div class="mt-8 px-4">
+            <h3 class="font-bold text-lg text-stone-800 mb-3">使用說明</h3>
+            <ul class="text-sm text-stone-600 space-y-2 list-disc pl-4 leading-relaxed">
+                <li>來店消費滿額即可獲得點數 1 點。</li>
+                <li>累計 <span class="font-bold text-[#df1873]">5 點</span> 可獲得 <span class="font-bold text-stone-800">回饋金 $320 元</span> (結帳時需主動告知使用)。</li>
+                <li>此集點與儲值資格僅限本人使用。</li>
+                <li>點數期限為 <span class="font-bold text-stone-800">60天</span>，期間若有來店消費或操作，點數將自動展延 60 天；逾期點數將自動失效歸零。</li>
+                <li>若有異常發放、累點，系統將取消使用之權利。</li>
+                <li>本店保有變更商品及終止活動之權利，並保留最終解釋權。</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs & Application Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCe0KE7va2H4-A6XECdzhTUCjhTeT6FOJM",
+            authDomain: "check-balance-13da9.firebaseapp.com",
+            projectId: "check-balance-13da9",
+            storageBucket: "check-balance-13da9.firebasestorage.app",
+            messagingSenderId: "827416952029",
+            appId: "1:827416952029:web:e18ac89b984c8351e36f34"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const APP_ID = "check-balance-13da9"; 
+
+        // 登入狀態與 DOM 節點
+        const DOM = {
+            viewLogin: document.getElementById('viewLogin'),
+            viewDashboard: document.getElementById('viewDashboard'),
+            loading: document.getElementById('loading'),
+            errLogin: document.getElementById('errLogin'),
+            inputPhone: document.getElementById('inputPhone'),
+            inputBirthday: document.getElementById('inputBirthday')
+        };
+
+        const showLoading = () => DOM.loading.classList.remove('hidden');
+        const hideLoading = () => DOM.loading.classList.add('hidden');
+        const showError = (msg) => {
+            // 調整顯示格式，讓錯誤訊息與系統診斷報告排版更乾淨
+            DOM.errLogin.innerHTML = `<i class="ph ph-warning-circle text-lg mt-0.5 shrink-0"></i> <div class="flex-1 w-full overflow-hidden break-words">${msg}</div>`;
+            DOM.errLogin.classList.remove('hidden');
+        };
+
+        // 登入事件
+        document.getElementById('btnLogin').addEventListener('click', async () => {
+            DOM.errLogin.classList.add('hidden');
+            const phone = DOM.inputPhone.value.trim();
+            const birthday = DOM.inputBirthday.value.trim();
+
+            if (!phone || phone.length !== 10) return showError('請輸入完整的手機號碼 (10碼)');
+            if (!birthday || birthday.length !== 4) return showError('請輸入生日 4 碼 (例如: 0520)');
+
+            showLoading();
+
+            try {
+                // 1. 匿名登入 (確保有權限讀取公開數據)
+                await signInAnonymously(auth);
+
+                // 2. 查詢會員電話
+                const membersRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_members');
+                const qPhone = query(membersRef, where('phone', '==', phone));
+                const snapshot = await getDocs(qPhone);
+
+                if (snapshot.empty) {
+                    hideLoading();
+                    return showError('查無此手機號碼，請確認是否輸入正確。');
+                }
+
+                // 3. 驗證生日 (加入強健的解析邏輯與系統診斷)
+                let matchedMember = null;
+                let debugLogs = []; // 收集系統到底抓到什麼資料
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    debugLogs.push(`👉 找到會員 [${data.name || '無名'}]`);
+                    
+                    if (data.birthday) {
+                        let dbBday = String(data.birthday).trim();
+                        let dbMMDD = "";
+
+                        // 情況 1: 格式包含符號 (如 1989-02-11, 1989/2/11, 02-11)
+                        if (dbBday.includes('-') || dbBday.includes('/')) {
+                            const parts = dbBday.split(/[-/]/);
+                            if (parts.length >= 2) {
+                                // 取最後兩段當作 Month 和 Day，並確保自動補零 (使用 trim 去除隱藏空白)
+                                const m = parts[parts.length - 2].trim().padStart(2, '0');
+                                const d = parts[parts.length - 1].trim().padStart(2, '0');
+                                dbMMDD = m + d;
+                            }
+                        } 
+                        // 情況 2: 純數字格式 (如 19890211 或是 0211)
+                        else {
+                            const nums = dbBday.replace(/\D/g, ''); // 移除所有非數字
+                            if (nums.length >= 4) {
+                                dbMMDD = nums.slice(-4);
+                            }
+                        }
+
+                        debugLogs.push(`- 資料庫原始生日: "${dbBday}"`);
+                        debugLogs.push(`- 系統解析比對值: "${dbMMDD}" vs 您輸入的: "${birthday}"`);
+
+                        // 比對使用者輸入的 4 碼
+                        if (dbMMDD === birthday) {
+                            matchedMember = { id: doc.id, ...data };
+                            debugLogs.push(`- 結果: ✅ 比對成功`);
+                        } else {
+                            debugLogs.push(`- 結果: ❌ 不符合`);
+                        }
+                    } else {
+                        debugLogs.push('- 結果: 該會員沒有建立生日資料');
+                    }
+                });
+
+                if (!matchedMember) {
+                    hideLoading();
+                    // 將除錯訊息直接顯示在畫面上，方便一眼看穿問題
+                    return showError(`生日驗證失敗。<br><br><span class="text-xs text-stone-500 font-mono text-left block leading-relaxed border-t border-red-200 pt-2 mt-2">🔍 系統診斷資訊：<br>${debugLogs.join('<br>')}</span>`);
+                }
+
+                // 4. 取得該會員的最後一筆交易紀錄 (用來計算到期日)
+                const txRef = collection(db, 'artifacts', APP_ID, 'public', 'data', 'beauty_transactions');
+                const qTx = query(txRef, where('memberId', '==', matchedMember.id));
+                const txSnapshot = await getDocs(qTx);
+                
+                let lastActivityTime = matchedMember.createdAt || Date.now();
+                
+                // 找出最新一筆交易時間
+                if (!txSnapshot.empty) {
+                    let latest = 0;
+                    txSnapshot.forEach(doc => {
+                        const ts = doc.data().timestamp;
+                        if (ts > latest) latest = ts;
+                    });
+                    if (latest > 0) lastActivityTime = latest;
+                }
+
+                renderDashboard(matchedMember, lastActivityTime);
+
+            } catch (error) {
+                console.error(error);
+                showError('系統連線異常，請稍後再試。');
+            }
+            hideLoading();
+        });
+
+        // 渲染登入後的畫面
+        function renderDashboard(member, lastActivityTime) {
+            DOM.viewLogin.classList.add('hidden');
+            DOM.viewDashboard.classList.remove('hidden');
+            DOM.viewDashboard.classList.add('flex');
+
+            // 儲值金
+            document.getElementById('displayBalance').textContent = `$${(member.balance || 0).toLocaleString()}`;
+            document.getElementById('displayBonus').textContent = `$${(member.bonusBalance || 0).toLocaleString()}`;
+            
+            // 暗沉拜拜剩餘堂數 (對應資料庫欄位名稱: dullnessSessions，若無則預設為 0)
+            const dullnessSessions = member.dullnessSessions || 0;
+            document.getElementById('displayTreatment').innerHTML = `${dullnessSessions} <span class="text-sm font-medium text-stone-500 ml-0.5">堂</span>`;
+
+            const points = member.points || 0;
+            const currentCardPoints = points % 5; // 現在這張卡收集了幾點
+            const availableRedeems = Math.floor(points / 5); // 可兌換幾次
+
+            // 繪製圈圈
+            const stampsContainer = document.getElementById('stampsContainer');
+            stampsContainer.innerHTML = '';
+            for (let i = 1; i <= 5; i++) {
+                if (i <= currentCardPoints) {
+                    // 已集點 (顯示實心圖示)
+                    stampsContainer.innerHTML += `
+                        <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center text-[#df1873] shadow-inner">
+                            <i class="ph-fill ph-seal-check text-3xl"></i>
+                        </div>
+                    `;
+                } else {
+                    // 未集點 (顯示空心圈)
+                    stampsContainer.innerHTML += `
+                        <div class="w-12 h-12 rounded-full flex items-center justify-center border-2 border-pink-300 text-pink-300 bg-black/5">
+                            <i class="ph ph-star text-xl"></i>
+                        </div>
+                    `;
+                }
+            }
+
+            // 獎勵文字狀態
+            const rewardStatusText = document.getElementById('rewardStatusText');
+            const rewardAvailableText = document.getElementById('rewardAvailableText');
+            
+            if (availableRedeems > 0) {
+                rewardAvailableText.classList.remove('hidden');
+                document.getElementById('redeemCount').textContent = availableRedeems;
+            } else {
+                rewardAvailableText.classList.add('hidden');
+            }
+
+            const pointsNeeded = 5 - currentCardPoints;
+            rewardStatusText.textContent = pointsNeeded === 5 && availableRedeems > 0 ? '已集滿一輪！' : `仍需 ${pointsNeeded} 點可兌換`;
+
+            // 計算過期日 (最後活動日 + 60天)
+            const MS_PER_DAY = 1000 * 60 * 60 * 24;
+            const expireTime = lastActivityTime + (60 * MS_PER_DAY);
+            const now = Date.now();
+            const diffDays = Math.ceil((expireTime - now) / MS_PER_DAY);
+            const expireEl = document.getElementById('expireText');
+
+            if (diffDays > 0) {
+                expireEl.innerHTML = `<i class="ph ph-clock"></i> 點數有效天數：還剩 <span class="font-bold text-white">${diffDays}</span> 天`;
+                expireEl.classList.replace('bg-black/10', 'bg-black/20');
+            } else {
+                expireEl.innerHTML = `<i class="ph ph-warning-circle"></i> 點數已逾期失效`;
+                expireEl.classList.replace('bg-black/10', 'bg-red-500/80');
+            }
+        }
+
+        // 登出按鈕
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            DOM.inputPhone.value = '';
+            DOM.inputBirthday.value = '';
+            DOM.viewDashboard.classList.add('hidden');
+            DOM.viewDashboard.classList.remove('flex');
+            DOM.viewLogin.classList.remove('hidden');
+        });
+    </script>
+</body>
+</html>
