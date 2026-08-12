@@ -46,7 +46,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-stone-700 mb-1">生日 (共4碼)</label>
-                    <input type="tel" id="inputBirthday" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#df1873] outline-none" placeholder="例如: 0101 (1月1日)" maxlength="4">
+                    <input type="tel" id="inputBirthday" class="w-full p-3 border border-stone-200 rounded-xl focus:ring-2 focus:ring-[#df1873] outline-none" placeholder="例如: 0211 (2月11日)" maxlength="4">
                 </div>
             </div>
 
@@ -79,7 +79,7 @@
             </div>
         </div>
 
-        <!-- 療程剩餘區塊 (新增) -->
+        <!-- 療程剩餘區塊 -->
         <div class="px-4 pb-4">
             <div class="w-full bg-stone-50 p-4 rounded-2xl border border-stone-100 flex items-center justify-between shadow-sm">
                 <div class="flex items-center gap-2">
@@ -94,7 +94,7 @@
             </div>
         </div>
 
-        <!-- 數位集點卡 (仿照圖片) -->
+        <!-- 數位集點卡 -->
         <div class="px-4">
             <div class="stamp-card rounded-2xl p-6 text-white text-center shadow-md relative overflow-hidden">
                 <div class="w-12 h-12 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-sm absolute top-4 left-1/2 -translate-x-1/2">
@@ -120,7 +120,6 @@
             </div>
 
             <div class="flex gap-4 p-3 rounded-xl border border-stone-100 bg-white shadow-sm items-center">
-                <!-- 高質量配圖 -->
                 <div class="w-24 h-24 rounded-lg bg-stone-200 shrink-0 overflow-hidden relative">
                     <img src="https://images.unsplash.com/photo-1616394584738-fc6e612e71b9?w=500&q=80" alt="Spa" class="w-full h-full object-cover">
                     <div class="absolute top-0 left-0 w-full bg-black/50 text-white text-[10px] py-0.5 text-center flex items-center justify-center gap-1">
@@ -181,8 +180,9 @@
 
         const showLoading = () => DOM.loading.classList.remove('hidden');
         const hideLoading = () => DOM.loading.classList.add('hidden');
+        
+        // 恢復原本單純乾淨的錯誤提示
         const showError = (msg) => {
-            // 調整顯示格式，讓錯誤訊息與系統診斷報告排版更乾淨
             DOM.errLogin.innerHTML = `<i class="ph ph-warning-circle text-lg mt-0.5 shrink-0"></i> <div class="flex-1 w-full overflow-hidden break-words">${msg}</div>`;
             DOM.errLogin.classList.remove('hidden');
         };
@@ -194,7 +194,7 @@
             const birthday = DOM.inputBirthday.value.trim();
 
             if (!phone || phone.length !== 10) return showError('請輸入完整的手機號碼 (10碼)');
-            if (!birthday || birthday.length !== 4) return showError('請輸入生日 4 碼 (例如: 0520)');
+            if (!birthday || birthday.length !== 4) return showError('請輸入生日 4 碼 (例如: 0211)');
 
             showLoading();
 
@@ -212,13 +212,11 @@
                     return showError('查無此手機號碼，請確認是否輸入正確。');
                 }
 
-                // 3. 驗證生日 (加入強健的解析邏輯與系統診斷)
+                // 3. 驗證生日 (採用強健的解析邏輯，移除除錯訊息)
                 let matchedMember = null;
-                let debugLogs = []; // 收集系統到底抓到什麼資料
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
-                    debugLogs.push(`👉 找到會員 [${data.name || '無名'}]`);
                     
                     if (data.birthday) {
                         let dbBday = String(data.birthday).trim();
@@ -242,25 +240,16 @@
                             }
                         }
 
-                        debugLogs.push(`- 資料庫原始生日: "${dbBday}"`);
-                        debugLogs.push(`- 系統解析比對值: "${dbMMDD}" vs 您輸入的: "${birthday}"`);
-
                         // 比對使用者輸入的 4 碼
                         if (dbMMDD === birthday) {
                             matchedMember = { id: doc.id, ...data };
-                            debugLogs.push(`- 結果: ✅ 比對成功`);
-                        } else {
-                            debugLogs.push(`- 結果: ❌ 不符合`);
                         }
-                    } else {
-                        debugLogs.push('- 結果: 該會員沒有建立生日資料');
                     }
                 });
 
                 if (!matchedMember) {
                     hideLoading();
-                    // 將除錯訊息直接顯示在畫面上，方便一眼看穿問題
-                    return showError(`生日驗證失敗。<br><br><span class="text-xs text-stone-500 font-mono text-left block leading-relaxed border-t border-red-200 pt-2 mt-2">🔍 系統診斷資訊：<br>${debugLogs.join('<br>')}</span>`);
+                    return showError('生日驗證失敗，請確認是否為登記的生日。');
                 }
 
                 // 4. 取得該會員的最後一筆交易紀錄 (用來計算到期日)
